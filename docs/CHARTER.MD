@@ -1,4 +1,4 @@
-# Project Charter: {_Project Title_}
+# Project Charter: CampusEvent
 
 ## 1. Project Purpose and Objectives
 The primary objective of this project is to develop a social sports-matching platform designed for university students to easily organize, join, and track amateur campus sports activities. The system aims to eliminate the friction in finding teammates or opponents, facilitate campus sports facility reservations, and foster an active community through automated scheduling and skill-based matchmaking.
