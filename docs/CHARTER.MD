@@ -1,58 +1,54 @@
 # Project Charter: {_Project Title_}
 
 ## 1. Project Purpose and Objectives
-{_The idea of your project in **a few** sentences_}
+The primary objective of this project is to develop a social sports-matching platform designed for university students to easily organize, join, and track amateur campus sports activities. The system aims to eliminate the friction in finding teammates or opponents, facilitate campus sports facility reservations, and foster an active community through automated scheduling and skill-based matchmaking.
 
 ## 2. Stakeholders & Roles
-* **Product Owner:** {_Contact Person for Your Team_}
-* **Software Engineering Team:** {_Team Members and Their Roles / Include PM as Member 1_}
-    * {_Member 1_} : {_Role 1_} 
-    * {_Member 2_} : {_Role 2_}
-    * {_Member 3_} : {_Role 3_} 
-    * {_Member 4_} : {_Role 4_} {_Minimum amount of members_}
-    * {_Member 5_} : {_Role 5_}
-    * {_Member 6_} : {_Role 6_} {_Maximum amount of members_}
+* **Product Owner:** Emre arda kum
+* **Software Engineering Team:** 
+    * {Heval hüseyin demir} : Project Manager & Database Designer
+    * {Emre arda kum} : Backend Developer 
+    * {Emir gül} : AI Engineer
+    * {Harun gündaş} : Backend Developer
+    * {Onur alioğlu} : DevOps Engineer
 * **GH Repo/Project URL:** {_Do not fill this field in yet; to be filled after charter approval_}
 
 ## 3. Project Scope
 ### Project domain
-{_Hypothetical application domain (e.g. aviation, education, sports, gaming, etc.), possible customers and key users of your system._}
+Higher Education & Recreational Sports / Social Community Platform
 ### In-Scope 
-* {_Epic 1_} 
-* {_Epic 2_} 
+* User Authentication & Profile Management
+* Activity & Match Creation Management
+* Campus Tournament & Bracket System
+* Social Interaction & Communication
 
-    ...
-* {_Epic N_} 
+  
 
 ### Out-of-Scope 
-* {_Epic 1_} 
-* {_Epic 2_} 
-
-    ...
-* {_Epic N_} 
+* Financial Transactions & Payment Gateway Integration (No credit card or paid field booking features)
+* Real-time GPS Tracking of Participants (Only predefined campus facility locations will be used)
+* Direct University SIS/Banner Database Integration (Authentication relies on email domain verification rather than internal school APIs)
+* Live Audio/Video Streaming or In-App Calling (Communication is restricted to text-based chat)
+* Native Mobile App Development for iOS/Android (The application will be developed as a responsive web platform; standalone app stores deployment is out-of-scope)
 
 ## 4. Technology Stack
 
 ### Backend Stack
-* {_Technology 1_} 
-* {_Technology 2_} 
+* Python
+* Java
 
-    ...
-* {_Technology N_} 
+
 
 ### Frontend Stack
-* {_Technology 1_} 
-* {_Technology 2_} 
-
-    ...
-* {_Technology N_} 
+* HTML
+* CSS
+* JavaScript
 
 ### AI Stack
-* {_Technology 1_} 
-* {_Technology 2_} 
+* GeminiPRO 
+* ChatGPT
+* Claude
 
-    ...
-* {_Technology N_} 
 
 ## 5. Project Milestones
 | Deliverable                       | Deadline          |
