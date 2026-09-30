@@ -11,7 +11,7 @@ The primary objective of this project is to develop a social sports-matching pla
     * {Emir gül} : AI Engineer
     * {Harun gündaş} : Backend Developer
     * {Onur alioğlu} : DevOps Engineer
-* **GH Repo/Project URL:** {_Do not fill this field in yet; to be filled after charter approval_}
+* **GH Repo/Project URL:** https://github.com/emir-heval-arda-harun/CMPE-331-project
 
 ## 3. Project Scope
 ### Project domain
