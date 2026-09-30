@@ -18,15 +18,23 @@ The primary objective of this project is to develop a social sports-matching pla
 
 ## 3. Project Scope
 ### Project domain
-Higher Education & Recreational Sports / Social Community Platform
+Higher Education & Recreational Sports / Social Community Platform. 
+This project operates at the intersection of university campus life and amateur sports management. It focuses on enhancing student well-being and social connectivity by providing a centralized digital ecosystem for recreational activities, skill-based sports matchmaking, and community-driven event organization within higher education institutions.
+
+
 ### In-Scope 
-* User Authentication & Profile Management
-* Activity & Match Creation Management
-* Campus Tournament & Bracket System
-* Social Interaction & Communication
+*  User Authentication & Profile Management
+  * Customizable user profiles displaying preferred sports, personal skill levels, and availability.
+* **Activity & Match Creation Management:** 
+  * Interfaces for students to create, browse, and join amateur sports matches 
+  * Filtering options based on date, time, sport type, and required skill level.
+* **Campus Tournament & Bracket System:** 
+  * Tools for student clubs to organize structured campus-wide tournaments.
+  * Automated bracket generation, score tracking, and team advancement management.
+* **Facility Coordination:**
+  * Integration of predefined campus sports facility schedules to help users plan matches without location conflicts.
 
   
-
 ### Out-of-Scope 
 * Financial Transactions & Payment Gateway Integration (No credit card or paid field booking features)
 * Real-time GPS Tracking of Participants (Only predefined campus facility locations will be used)
