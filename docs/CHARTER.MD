@@ -12,6 +12,9 @@ The primary objective of this project is to develop a social sports-matching pla
     * {Harun gündaş} : Backend Developer
     * {Onur alioğlu} : DevOps Engineer
 * **GH Repo/Project URL:** https://github.com/emir-heval-arda-harun/CMPE-331-project
+* **Potential users:**
+    * University students looking to organize, join, and track amateur campus sports activities.
+    * Campus sports facility management personnel overseeing field and court reservations.
 
 ## 3. Project Scope
 ### Project domain
