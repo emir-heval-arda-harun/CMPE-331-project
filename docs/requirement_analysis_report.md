@@ -470,7 +470,7 @@ Reading the use cases against each other showed the following gaps. Each has a p
 | R-01 | Gemini Pro is slow, unavailable or its quota runs out | Medium | Medium | Fallback to declared skill levels (UC-07 alt. 2a), a short timeout, caching of ratings (F-05) |
 | R-02 | Double booking or overfull matches caused by simultaneous requests | Medium | High | Transactions and database constraints (section 3.3) and tests with parallel requests |
 | R-03 | Verification e-mails land in spam or are delayed | Medium | Medium | Resend option (UC-01 alt. 5a), short test with both university domains, clear message to the user |
-| R-04 | The critical path of 56 days leaves little slack before the codebase deadline of 30.11.2026 | Medium | High | Build High priority use cases first (UC-01 to 06, 11), then Medium ones; Low priority UC-13 last |
+| R-04 | The critical path (71 days, see the [PERT chart](plan/README.md#pert-chart)) has no slack: a delay in Accounts & Profiles, the Web UI or Deployment delays the codebase deadline of 30.11.2026 | Medium | High | Build High priority use cases first (UC-01 to 06, 11), then Medium ones; Low priority UC-13 last |
 | R-05 | Unresolved gaps (section 6) change the design late | Medium | Medium | Decide F-01 to F-05 before the Software Design Report on 15.11.2026 |
 | R-06 | Personal data of students is exposed or processed unlawfully (KVKK) | Low | High | BR-03, hashed passwords, HTTPS, public profile limited to non-sensitive fields (F-09) |
 
