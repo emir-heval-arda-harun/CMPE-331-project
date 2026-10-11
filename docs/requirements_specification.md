@@ -75,7 +75,7 @@ The planning documents are in [`docs/plan/`](plan/README.md).
 ![Gantt chart](plan/gantt_chart.png)
 
 ### 3.2 PERT Chart
-Critical path: 1.0 → 2.0 → 3.1 → 4.2 → 5.0 → 6.3 → 7.0 → 8.0 (**56 days**).
+Critical path (orange): Software Design Report (15 Nov) → DB Integration → Backend: Facilities → Software Testing Report (22 Nov) → Final Codebase Delivery (30 Nov).
 
 ![PERT chart](plan/pert_chart.png)
 

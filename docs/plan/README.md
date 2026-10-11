@@ -11,6 +11,6 @@
 
 ## PERT Chart
 Highlighted (orange) activities form the critical path:
-1.0 → 2.0 → 3.1 → 4.2 → 5.0 → 6.3 → 7.0 → 8.0 (10 + 7 + 6 + 16 + 7 + 6 + 4 = **56 days**).
+Software Design Report (15 Nov) → DB Integration → Backend: Facilities → Software Testing Report (22 Nov) → Final Codebase Delivery (30 Nov).
 
 ![PERT chart](pert_chart.png)
