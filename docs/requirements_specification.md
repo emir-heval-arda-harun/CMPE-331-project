@@ -32,7 +32,8 @@ CampusEvent lets students organize, find and join amateur sports matches on camp
 
 ### 1.4 References
 - [Project Charter](CHARTER.MD)
-- [Project plan: Gantt and PERT charts](plan/README.md)
+- [Project plan: WBS, Gantt and PERT charts](plan/README.md)
+- [Requirement Analysis Report](requirement_analysis_report.md)
 - [Use case documents](requirements/README.md)
 
 ---
@@ -71,18 +72,18 @@ CampusEvent is a new, standalone, responsive web application. It uses Gemini Pro
 
 The planning documents are in [`docs/plan/`](plan/README.md).
 
-### 3.1 Gantt Chart
-![Gantt chart](plan/gantt_chart.png)
-
-### 3.2 PERT Chart
-Critical path (orange): Software Design Report (15 Nov) → DB Integration → Backend: Facilities → Software Testing Report (22 Nov) → Final Codebase Delivery (30 Nov).
-
-![PERT chart](plan/pert_chart.png)
-
-### 3.3 Work Breakdown Structure (WBS)
-The project is split into four work packages: 1.0 Planning & Analysis, 2.0 Software Design, 3.0 Implementation and 4.0 Testing & Delivery. The Gantt and PERT charts schedule exactly these tasks.
+### 3.1 Work Breakdown Structure (WBS)
+The project is split into four work packages: 1.0 Planning & Analysis, 2.0 Software Design, 3.0 Implementation and 4.0 Testing & Delivery. Every use case is covered by a backend task and a web UI task. The WBS, Gantt and PERT charts show the same 21 tasks; the task list with owners and dates is in [`docs/plan/README.md`](plan/README.md#task-list).
 
 ![WBS diagram](plan/WBS_Diagram.png)
+
+### 3.2 Gantt Chart
+![Gantt chart](plan/gantt_chart.png)
+
+### 3.3 PERT Chart
+Critical path (orange): 1.1 Project Charter → 1.2 Requirements Definition → 1.3 Requirement Analysis → 2.3 UI/UX & AI Logic → 2.4 Software Design Report → 3.1 DB Integration → 3.3 Backend: Accounts & Profiles → 3.7 Web UI: Accounts, Profiles & Matches → 4.4 Deployment → 4.5 Final Codebase Delivery (**71 days**).
+
+![PERT chart](plan/pert_chart.png)
 
 ### 3.4 Milestones
 | Deliverable | Deadline |

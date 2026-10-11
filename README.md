@@ -4,9 +4,10 @@ A social sports-matching platform for university students to organize, join and 
 
 ## Documents
 - [Project Charter](docs/CHARTER.MD)
-- [Project plan (Gantt & PERT)](docs/plan/README.md)
+- [Project plan (WBS, Gantt & PERT)](docs/plan/README.md)
 - [Use cases](docs/requirements/README.md)
 - [Requirements Specification Report](docs/requirements_specification.md)
+- [Requirement Analysis Report](docs/requirement_analysis_report.md)
 
 ## Running the requirement tests
 ```bash
