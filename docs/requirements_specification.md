@@ -79,7 +79,12 @@ Critical path (orange): Software Design Report (15 Nov) → DB Integration → B
 
 ![PERT chart](plan/pert_chart.png)
 
-### 3.3 Milestones
+### 3.3 Work Breakdown Structure (WBS)
+The project is split into four work packages: 1.0 Planning & Analysis, 2.0 Software Design, 3.0 Implementation and 4.0 Testing & Delivery. The Gantt and PERT charts schedule exactly these tasks.
+
+![WBS diagram](plan/WBS_Diagram.png)
+
+### 3.4 Milestones
 | Deliverable | Deadline |
 |---|---|
 | Project Charter | 02.10.2026 |
@@ -135,7 +140,7 @@ The functional requirements are written in **use case format**. Each use case is
 
 ## 6. Requirement Tests
 
-Every use case has a test file under [`tests/`](../tests). The tests describe the expected behaviour of the main flow and the important alternative flows.
+Every use case has a test file under [`tests/`](../tests). The tests describe the expected behaviour of the main flow and the important alternative flows. The testable non-functional requirements (NFR-02 to NFR-07) are covered in [`tests/test_nfr.py`](../tests/test_nfr.py); NFR-01, NFR-08 and NFR-09 are verified manually (see [`docs/requirements/README.md`](requirements/README.md#non-functional-requirement-tests)).
 
 The code under [`src/campusevent/`](../src/campusevent) is only **boilerplate**: domain models, service classes and method signatures. Every service method raises `NotImplementedError`, so **all tests currently fail by design**. They will pass as the features are implemented in the development phase.
 
@@ -145,7 +150,7 @@ pip install -r requirements-dev.txt
 python -m pytest
 ```
 
-**Current result:** 36 tests, 36 failed (expected).
+**Current result:** 47 tests (36 use case tests + 11 non-functional tests), 47 failed (expected).
 
 ---
 
@@ -166,6 +171,7 @@ python -m pytest
 | UC-11 | [test_uc11_facility_availability.py](../tests/test_uc11_facility_availability.py) | 2 | [facilities.py](../src/campusevent/facilities.py) |
 | UC-12 | [test_uc12_manage_facility_schedule.py](../tests/test_uc12_manage_facility_schedule.py) | 2 | [facilities.py](../src/campusevent/facilities.py) |
 | UC-13 | [test_uc13_activity_history.py](../tests/test_uc13_activity_history.py) | 2 | [matches.py](../src/campusevent/matches.py) |
+| NFR-02 ... NFR-07 | [test_nfr.py](../tests/test_nfr.py) | 11 | [matches.py](../src/campusevent/matches.py), [matchmaking.py](../src/campusevent/matchmaking.py), [auth.py](../src/campusevent/auth.py), [facilities.py](../src/campusevent/facilities.py), [tournaments.py](../src/campusevent/tournaments.py) |
 
 ---
 
