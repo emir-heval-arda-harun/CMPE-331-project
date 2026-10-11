@@ -4,7 +4,7 @@
 **Group:** 14
 **Team:** Heval Hüseyin Demir, Emre Arda Kum, Emir Gül, Harun Gündaş, Onur Alioğlu
 **Repository:** https://github.com/emir-heval-arda-harun/CMPE-331-project
-**Version:** Draft 1 – 11.10.2026 (deadline 18.10.2026 23:59)
+**Version:** 1.0 – 12.10.2026 (deadline 18.10.2026 23:59)
 
 ---
 
@@ -20,9 +20,9 @@ Each use case was read together with the domain classes in [`src/campusevent/mod
 2. a data model with an E-R diagram and data dictionary (section 3),
 3. sequence and state diagrams for the critical behavior (section 4),
 4. a consolidated list of business rules (section 5),
-5. open issues and risks with proposed decisions (sections 6 and 7).
+5. open issues and risks with decisions (sections 6 and 7).
 
-Items marked **(proposed)** are not in the Requirements Specification yet. They are suggestions that the team should confirm.
+Items marked **(proposed)** are not in the Requirements Specification yet. They are analysis proposals that will be added to the use cases during design.
 
 ### 1.3 Inputs
 | Document | Location |
@@ -268,7 +268,7 @@ erDiagram
 | PROFILE_SPORT | One row per user and sport; `skill_level` is 1 to 3; a profile needs at least one row | UC-03 |
 | AVAILABILITY_SLOT | `end_time` is after `start_time` | UC-03 alt. 6b |
 | FACILITY_SPORT | A facility supports at least one sport | UC-12 |
-| FACILITY_BLOCK | `end_time` is after `start_time`; blocks of one facility must not overlap each other (proposed) | UC-11, 12 |
+| FACILITY_BLOCK | `end_time` is after `start_time`; blocks of one facility must not overlap each other | UC-11, 12 |
 | MATCH | `capacity` is at least 2; the facility must support the sport; the time slot must not overlap any block or other match of the same facility | UC-04, UC-11 |
 | MATCH | `status` is one of open, full, completed, cancelled | `MatchStatus` enum |
 | MATCH_PARTICIPANT | A user can join a match only once (composite key); number of rows is at most `capacity` | UC-06 |
@@ -387,16 +387,16 @@ sequenceDiagram
 
 ### 4.5 State diagrams
 
-**Match** (UC-04, UC-06, UC-13). Transitions marked *(proposed)* have no use case yet.
+**Match** (UC-04, UC-06, UC-13). Transitions marked *(proposed)* have no use case yet; the use cases for them were decided in F-01.
 ```mermaid
 stateDiagram-v2
     [*] --> Open : UC-04 match created
     Open --> Full : UC-06 capacity reached
-    Full --> Open : participant leaves (proposed)
-    Open --> Cancelled : organizer cancels (proposed)
-    Full --> Cancelled : organizer cancels (proposed)
-    Open --> Completed : end time passed (proposed)
-    Full --> Completed : end time passed (proposed)
+    Full --> Open : participant leaves
+    Open --> Cancelled : organizer cancels
+    Full --> Cancelled : organizer cancels
+    Open --> Completed : end time passed
+    Full --> Completed : end time passed
     Completed --> [*]
     Cancelled --> [*]
 ```
@@ -446,9 +446,9 @@ stateDiagram-v2
 
 ## 6. Analysis Findings: Gaps and Proposed Decisions
 
-Reading the use cases against each other showed the following gaps. Each has a proposal so the team can decide quickly.
+Reading the use cases against each other showed the following gaps. Each has a decision. The team accepted the proposed decisions for F-01 to F-05 on 12.10.2026; F-06 to F-10 will be decided during design.
 
-| # | Finding | Why it matters | Proposed decision |
+| # | Finding | Why it matters | Decision |
 |---|---|---|---|
 | F-01 | `MatchStatus` has Completed and Cancelled, but no use case completes, cancels or leaves a match | UC-13 lists completed matches, so something must set that status | Add small use cases: leave match, cancel match. Mark a match Completed automatically when its end time has passed |
 | F-02 | UC-07 needs "teams × 2" players, but no use case defines the number of teams of a match | The balancing algorithm needs the team count | Add `team_count` (default 2) to the match in UC-04 |
@@ -471,7 +471,7 @@ Reading the use cases against each other showed the following gaps. Each has a p
 | R-02 | Double booking or overfull matches caused by simultaneous requests | Medium | High | Transactions and database constraints (section 3.3) and tests with parallel requests |
 | R-03 | Verification e-mails land in spam or are delayed | Medium | Medium | Resend option (UC-01 alt. 5a), short test with both university domains, clear message to the user |
 | R-04 | The critical path (71 days, see the [PERT chart](plan/README.md#pert-chart)) has no slack: a delay in Accounts & Profiles, the Web UI or Deployment delays the codebase deadline of 30.11.2026 | Medium | High | Build High priority use cases first (UC-01 to 06, 11), then Medium ones; Low priority UC-13 last |
-| R-05 | Unresolved gaps (section 6) change the design late | Medium | Medium | Decide F-01 to F-05 before the Software Design Report on 15.11.2026 |
+| R-05 | Unresolved gaps (section 6) change the design late | Medium | Medium | F-01 to F-05 are decided (section 6); F-06 to F-10 are decided before the Software Design Report on 15.11.2026 |
 | R-06 | Personal data of students is exposed or processed unlawfully (KVKK) | Low | High | BR-03, hashed passwords, HTTPS, public profile limited to non-sensitive fields (F-09) |
 
 ---
@@ -498,4 +498,4 @@ Reading the use cases against each other showed the following gaps. Each has a p
 
 ## 9. Conclusion
 
-The 13 use cases form a consistent base for design. The analysis added a database-ready data model, four sequence diagrams for the critical flows, state diagrams for matches, accounts and tournaments, 13 business rules, 10 findings and 6 risks. Findings F-01 to F-05 should be decided first, because they change use cases and data structures; the rest can be decided during design.
+The 13 use cases form a consistent base for design. The analysis added a database-ready data model, four sequence diagrams for the critical flows, state diagrams for matches, accounts and tournaments, 13 business rules, 10 findings and 6 risks. Findings F-01 to F-05 were decided by the team because they change use cases and data structures; the rest will be decided during design.
