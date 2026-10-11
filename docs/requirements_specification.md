@@ -33,7 +33,6 @@ CampusEvent lets students organize, find and join amateur sports matches on camp
 ### 1.4 References
 - [Project Charter](CHARTER.MD)
 - [Project plan: WBS, Gantt and PERT charts](plan/README.md)
-- [Requirement Analysis Report](requirement_analysis_report.md)
 - [Use case documents](requirements/README.md)
 
 ---
