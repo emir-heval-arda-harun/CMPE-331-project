@@ -15,6 +15,8 @@ The project is split into four work packages: 1.0 Planning & Analysis, 2.0 Softw
 ## Gantt Chart
 ![Gantt chart](gantt_chart.png)
 
+The chart is generated from [gantt_chart.mmd](gantt_chart.mmd) (Mermaid). Edit that file and render it again to change the Gantt chart. Task names and owners follow the PERT chart.
+
 ## PERT Chart
 Highlighted (orange) activities form the critical path:
 Software Design Report (15 Nov) → DB Integration → Backend: Facilities → Software Testing Report (22 Nov) → Final Codebase Delivery (30 Nov).

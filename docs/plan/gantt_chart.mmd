@@ -1,0 +1,29 @@
+%%{init: {"gantt": {"barHeight": 28, "barGap": 11, "topPadding": 70, "leftPadding": 110, "fontSize": 14, "sectionFontSize": 14, "gridLineStartPadding": 40}}}%%
+gantt
+    title CampusEvent: Strictly Synchronized GANTT
+    dateFormat YYYY-MM-DD
+    axisFormat %d %b
+    tickInterval 1week
+    weekday sunday
+
+    section Planning & Analysis
+    Project Charter (Heval & E.Arda)   :done, t11, 2026-09-20, 2026-10-02
+    Req. Definition (Harun & Emir)     :done, t12, 2026-10-02, 2026-10-11
+    Req. Analysis (Heval & Onur)       :active, t13, 2026-10-11, 2026-10-18
+
+    section Software Design
+    Cloud Infra Plan (Onur)            :t21, 2026-10-18, 2026-11-11
+    API & ER Diagrams (Heval & Harun)  :t22, 2026-10-18, 2026-11-12
+    UI/UX & AI Logic (E.Arda & Emir)   :t23, 2026-10-18, 2026-11-13
+    Software Design Report (All)       :t24, 2026-11-15, 1d
+
+    section Implementation
+    DB Integration (Heval)             :t31, 2026-11-16, 2026-11-19
+    AI Matchmaking (Emir)              :t32, 2026-11-16, 2026-11-21
+    Backend - Tournaments (Harun)      :t33, 2026-11-19, 2026-11-22
+    Backend - Facilities (E.Arda)      :t34, 2026-11-19, 2026-11-22
+    CI/CD & Deploy (Onur)              :t35, 2026-11-16, 2026-11-30
+
+    section Testing & Delivery
+    Software Testing Report (All)      :t41, 2026-11-22, 1d
+    Final Codebase Delivery            :milestone, t42, 2026-11-30, 0d
