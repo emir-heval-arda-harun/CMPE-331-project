@@ -1,0 +1,21 @@
+sequenceDiagram
+    actor S as Student
+    participant W as Web app
+    participant A as Auth service
+    participant D as Database
+    participant M as E-mail service
+
+    S->>W: Enter name, e-mail, password
+    W->>A: register(name, email, password)
+    A->>A: Check university domain (BR-01)
+    A->>D: Find user by e-mail
+    D-->>A: none
+    A->>D: Save unverified user with password hash
+    A->>M: Send one-time code
+    A-->>W: Registration pending
+    S->>W: Enter code
+    W->>A: verify(email, code)
+    A->>D: Check code and expiry
+    A->>D: Set is_verified = true
+    A-->>W: Account verified
+    W-->>S: Continue to profile setup (UC-03)

@@ -1,0 +1,105 @@
+erDiagram
+    USER ||--o{ VERIFICATION_CODE : receives
+    USER ||--o{ PROFILE_SPORT : declares
+    SPORT ||--o{ PROFILE_SPORT : "rated in"
+    USER ||--o{ AVAILABILITY_SLOT : offers
+    USER ||--o{ MATCH : organizes
+    USER ||--o{ MATCH_PARTICIPANT : joins
+    MATCH ||--o{ MATCH_PARTICIPANT : has
+    SPORT ||--o{ MATCH : "played in"
+    FACILITY ||--o{ MATCH : hosts
+    FACILITY ||--o{ FACILITY_SPORT : supports
+    SPORT ||--o{ FACILITY_SPORT : "supported by"
+    FACILITY ||--o{ FACILITY_BLOCK : "closed by"
+    USER ||--o{ TOURNAMENT : organizes
+    SPORT ||--o{ TOURNAMENT : "played in"
+    TOURNAMENT ||--o{ TEAM : registers
+    TOURNAMENT ||--o{ BRACKET_MATCH : contains
+    TEAM ||--o{ BRACKET_MATCH : plays
+
+    USER {
+        int id PK
+        string email UK
+        string full_name
+        string password_hash
+        string role
+        bool is_verified
+    }
+    VERIFICATION_CODE {
+        int id PK
+        int user_id FK
+        string code_hash
+        datetime expires_at
+        bool used
+    }
+    SPORT {
+        int id PK
+        string name UK
+    }
+    PROFILE_SPORT {
+        int user_id PK
+        int sport_id PK
+        int skill_level
+    }
+    AVAILABILITY_SLOT {
+        int id PK
+        int user_id FK
+        datetime start_time
+        datetime end_time
+    }
+    FACILITY {
+        int id PK
+        string name UK
+    }
+    FACILITY_SPORT {
+        int facility_id PK
+        int sport_id PK
+    }
+    FACILITY_BLOCK {
+        int id PK
+        int facility_id FK
+        datetime start_time
+        datetime end_time
+        string reason
+    }
+    MATCH {
+        int id PK
+        int organizer_id FK
+        int sport_id FK
+        int facility_id FK
+        datetime start_time
+        datetime end_time
+        int capacity
+        int skill_level
+        string status
+    }
+    MATCH_PARTICIPANT {
+        int match_id PK
+        int user_id PK
+        int team_no
+        datetime joined_at
+    }
+    TOURNAMENT {
+        int id PK
+        int organizer_id FK
+        int sport_id FK
+        string name
+        int champion_team_id FK
+    }
+    TEAM {
+        int id PK
+        int tournament_id FK
+        string name
+    }
+    BRACKET_MATCH {
+        int id PK
+        int tournament_id FK
+        int round_number
+        int position
+        int team_a_id FK
+        int team_b_id FK
+        int score_a
+        int score_b
+        int winner_team_id FK
+        int next_match_id FK
+    }

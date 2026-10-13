@@ -136,6 +136,8 @@ classDiagram
     User "1" --> "*" ActivityRecord : history
 ```
 
+*Diagram files: [`domain_class_model.png`](analysis/data/domain_class_model.png), [source `domain_class_model.mmd`](analysis/data/domain_class_model.mmd)*
+
 ### 2.3 Glossary of analysis terms
 | Term | Meaning |
 |---|---|
@@ -260,6 +262,8 @@ erDiagram
     }
 ```
 
+*Diagram files: [`er_diagram.png`](analysis/data/er_diagram.png), [source `er_diagram.mmd`](analysis/data/er_diagram.mmd)*
+
 ### 3.2 Data dictionary (main constraints)
 | Entity | Constraint | Source |
 |---|---|---|
@@ -313,6 +317,8 @@ sequenceDiagram
     W-->>S: Continue to profile setup (UC-03)
 ```
 
+*Diagram files: [`sequence_uc01_register_verify.png`](analysis/behavior/sequence_uc01_register_verify.png), [source `sequence_uc01_register_verify.mmd`](analysis/behavior/sequence_uc01_register_verify.mmd)*
+
 ### 4.2 Sequence: create a match with conflict check (UC-04 and UC-11)
 ```mermaid
 sequenceDiagram
@@ -340,6 +346,8 @@ sequenceDiagram
         W-->>S: Show match in the list
     end
 ```
+
+*Diagram files: [`sequence_uc04_uc11_create_match.png`](analysis/behavior/sequence_uc04_uc11_create_match.png), [source `sequence_uc04_uc11_create_match.mmd`](analysis/behavior/sequence_uc04_uc11_create_match.mmd)*
 Analysis note: the availability check and the insert must run in **one transaction**; otherwise two students can both pass the check for the same slot.
 
 ### 4.3 Sequence: AI team balancing with fallback (UC-07)
@@ -363,6 +371,8 @@ sequenceDiagram
     MM->>D: Save team_no for every participant
     MM-->>O: Teams shown to all participants
 ```
+
+*Diagram files: [`sequence_uc07_team_balancing.png`](analysis/behavior/sequence_uc07_team_balancing.png), [source `sequence_uc07_team_balancing.mmd`](analysis/behavior/sequence_uc07_team_balancing.mmd)*
 Analysis note: NFR-03 allows 10 seconds including the AI call. The timeout for the AI call must therefore be shorter (about 5 seconds is proposed) so that the fallback still fits in the limit.
 
 ### 4.4 Sequence: record a score and advance the winner (UC-10)
@@ -385,6 +395,8 @@ sequenceDiagram
     TS-->>R: Updated bracket
 ```
 
+*Diagram files: [`sequence_uc10_record_score.png`](analysis/behavior/sequence_uc10_record_score.png), [source `sequence_uc10_record_score.mmd`](analysis/behavior/sequence_uc10_record_score.mmd)*
+
 ### 4.5 State diagrams
 
 **Match** (UC-04, UC-06, UC-13). Transitions marked *(proposed)* have no use case yet; the use cases for them were decided in F-01.
@@ -401,6 +413,8 @@ stateDiagram-v2
     Cancelled --> [*]
 ```
 
+*Diagram files: [`state_match.png`](analysis/behavior/state_match.png), [source `state_match.mmd`](analysis/behavior/state_match.mmd)*
+
 **User account** (UC-01, UC-02).
 ```mermaid
 stateDiagram-v2
@@ -409,6 +423,8 @@ stateDiagram-v2
     Unverified --> Verified : correct code
     Verified --> [*]
 ```
+
+*Diagram files: [`state_user_account.png`](analysis/behavior/state_user_account.png), [source `state_user_account.mmd`](analysis/behavior/state_user_account.mmd)*
 Only verified accounts can log in (UC-02 step 3).
 
 **Tournament** (UC-08, UC-09, UC-10).
@@ -421,6 +437,8 @@ stateDiagram-v2
     InProgress --> Finished : final recorded, champion set
     Finished --> [*]
 ```
+
+*Diagram files: [`state_tournament.png`](analysis/behavior/state_tournament.png), [source `state_tournament.mmd`](analysis/behavior/state_tournament.mmd)*
 
 ---
 

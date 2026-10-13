@@ -1,0 +1,83 @@
+classDiagram
+    class User {
+        +int id
+        +string email
+        +string fullName
+        +Role role
+        +bool isVerified
+    }
+    class Profile {
+        +int userId
+        +map sports
+    }
+    class TimeSlot {
+        +datetime start
+        +datetime end
+        +overlaps(other) bool
+    }
+    class Facility {
+        +int id
+        +string name
+        +list sports
+    }
+    class FacilityBlock {
+        +string reason
+    }
+    class Match {
+        +int id
+        +string sport
+        +int capacity
+        +SkillLevel skillLevel
+        +MatchStatus status
+    }
+    class Tournament {
+        +int id
+        +string name
+        +string sport
+        +string champion
+    }
+    class BracketMatch {
+        +int id
+        +int roundNumber
+        +int scoreA
+        +int scoreB
+        +string winner
+    }
+    class ActivityRecord {
+        +int matchId
+        +string sport
+    }
+    class Role {
+        <<enumeration>>
+        STUDENT
+        CLUB_REPRESENTATIVE
+        FACILITY_STAFF
+    }
+    class SkillLevel {
+        <<enumeration>>
+        BEGINNER
+        INTERMEDIATE
+        ADVANCED
+    }
+    class MatchStatus {
+        <<enumeration>>
+        OPEN
+        FULL
+        COMPLETED
+        CANCELLED
+    }
+
+    User "1" --> "0..1" Profile : has
+    User --> Role
+    Profile --> SkillLevel : skill per sport
+    Profile "1" o-- "*" TimeSlot : availability
+    User "1" --> "*" Match : organizes
+    Match "*" --> "*" User : participants
+    Match --> TimeSlot
+    Match "*" --> "1" Facility : played at
+    Match --> MatchStatus
+    Facility "1" o-- "*" FacilityBlock : blocked periods
+    FacilityBlock --> TimeSlot
+    User "1" --> "*" Tournament : organizes
+    Tournament "1" *-- "*" BracketMatch : bracket
+    User "1" --> "*" ActivityRecord : history

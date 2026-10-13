@@ -1,0 +1,24 @@
+sequenceDiagram
+    actor S as Student
+    participant W as Web app
+    participant MS as Match service
+    participant FS as Facility service
+    participant D as Database
+
+    S->>W: Sport, facility, date, time, capacity, skill level
+    W->>MS: createMatch(request)
+    MS->>MS: Validate capacity at least 2
+    MS->>FS: isAvailable(facility, slot)
+    FS->>D: Read blocks and matches of the facility
+    D-->>FS: busy slots
+    alt Slot overlaps a busy slot
+        FS-->>MS: conflict
+        MS-->>W: Rejected, free slots of the day suggested
+        W-->>S: Show conflict and free slots
+    else Slot is free
+        FS-->>MS: available
+        MS->>D: Insert match with status open
+        MS->>D: Insert organizer as first participant
+        MS-->>W: Match created
+        W-->>S: Show match in the list
+    end
