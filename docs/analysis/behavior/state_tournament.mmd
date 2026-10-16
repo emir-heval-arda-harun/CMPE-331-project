@@ -1,7 +1,0 @@
-stateDiagram-v2
-    [*] --> Created : UC-08
-    Created --> BracketReady : UC-09 bracket generated
-    BracketReady --> InProgress : first score recorded
-    InProgress --> InProgress : score recorded, winner advances
-    InProgress --> Finished : final recorded, champion set
-    Finished --> [*]

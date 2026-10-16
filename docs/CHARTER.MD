@@ -1,7 +1,7 @@
 # Project Charter: CampusEvent
 
 ## 1. Project Purpose and Objectives
-The primary objective of this project is to develop a social sports-matching platform designed for university students to easily organize, join, and track amateur campus sports activities. The system aims to eliminate the friction in finding teammates or opponents, facilitate campus sports facility reservations, and foster an active community through automated scheduling and skill-based matchmaking.
+The primary objective of this project is to develop a campus event platform designed for university students to easily organize, join, and track events of any kind (for example sports matches, study groups, board game nights, club meetings, or workshops). The system aims to eliminate the friction in finding people to take part in an activity, facilitate campus facility reservations without conflicts, and foster an active community through shared scheduling and event discovery.
 
 
 ## 2. Stakeholders & Roles
@@ -14,26 +14,26 @@ The primary objective of this project is to develop a social sports-matching pla
     * {Onur alioğlu} : DevOps Engineer
 * **GH Repo/Project URL:** https://github.com/emir-heval-arda-harun/CMPE-331-project
 * **Potential users:**
-    * University students looking to organize, join, and track amateur campus sports activities.
-    * Campus sports facility management personnel overseeing field and court reservations.
+    * University students looking to organize, join, and track campus events.
+    * Campus facility management personnel overseeing hall, field, court and room reservations.
 
 
 ## 3. Project Scope
 ### Project domain
-Higher Education & Recreational Sports / Social Community Platform. 
-This project operates at the intersection of university campus life and amateur sports management. It focuses on enhancing student well-being and social connectivity by providing a centralized digital ecosystem for recreational activities, skill-based sports matchmaking, and community-driven event organization within higher education institutions.
+Higher Education & Campus Life / Social Community Platform. 
+This project operates at the intersection of university campus life and event management. It focuses on enhancing student well-being and social connectivity by providing a centralized digital ecosystem for organizing and joining events of any category (sports, study, hobbies, clubs) within higher education institutions.
 
 ### In-Scope 
 *  User Authentication & Profile Management
-  * Customizable user profiles displaying preferred sports, personal skill levels, and availability.
-* **Activity & Match Creation Management:** 
-  * Interfaces for students to create, browse, and join amateur sports matches 
-  * Filtering options based on date, time, sport type, and required skill level.
-* **Campus Tournament & Bracket System:** 
-  * Tools for student clubs to organize structured campus-wide tournaments.
-  * Automated bracket generation, score tracking, and team advancement management.
+  * Customizable user profiles displaying interests (free-text event categories) and availability.
+* **Event Creation & Participation Management:** 
+  * Interfaces for students to create, browse, join, leave, and cancel events of any kind, with a free-text category and a participant capacity.
+  * Filtering options based on category, date, time, and keyword.
 * **Facility Coordination:**
-  * Integration of predefined campus sports facility schedules to help users plan matches without location conflicts.
+  * Predefined campus facilities with capacities and schedules, so that users can plan events without location conflicts.
+  * Facility staff can define facilities and block unavailable time periods.
+* **Activity History:**
+  * Students can see the events they have taken part in.
 
 ### Out-of-Scope 
 * Financial Transactions & Payment Gateway Integration (No credit card or paid field booking features)

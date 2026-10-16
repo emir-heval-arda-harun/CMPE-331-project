@@ -1,0 +1,12 @@
+sequenceDiagram
+    actor S as Student
+    participant W as Web app
+    participant ES as Event service
+    participant D as Database
+
+    S->>W: Open My Activities
+    W->>ES: getActivityHistory(userId)
+    ES->>D: Read events of the user with status completed
+    D-->>ES: events (cancelled and upcoming are excluded)
+    ES-->>W: Records newest first (title, category, date, time, facility)
+    W-->>S: Show list or empty message

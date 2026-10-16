@@ -4,22 +4,15 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from enum import Enum, IntEnum
+from enum import Enum
 
 
 class Role(str, Enum):
     STUDENT = "student"
-    CLUB_REPRESENTATIVE = "club_representative"
     FACILITY_STAFF = "facility_staff"
 
 
-class SkillLevel(IntEnum):
-    BEGINNER = 1
-    INTERMEDIATE = 2
-    ADVANCED = 3
-
-
-class MatchStatus(str, Enum):
+class EventStatus(str, Enum):
     OPEN = "open"
     FULL = "full"
     COMPLETED = "completed"
@@ -47,16 +40,15 @@ class User:
 @dataclass
 class Profile:
     user_id: int
-    sports: dict[str, SkillLevel] = field(default_factory=dict)
+    interests: list[str] = field(default_factory=list)  # free-text event categories
     availability: list[TimeSlot] = field(default_factory=list)
-    ai_ratings: dict[str, float] = field(default_factory=dict)  # last AI rating per sport (UC-07)
 
 
 @dataclass
 class Facility:
     id: int
     name: str
-    sports: list[str]
+    capacity: int
 
 
 @dataclass
@@ -69,44 +61,23 @@ class FacilityBlock:
 
 
 @dataclass
-class Match:
+class Event:
     id: int
     organizer_id: int
-    sport: str
+    title: str
+    category: str  # free text, for example "football", "study group", "board games"
     facility_id: int
     slot: TimeSlot
     capacity: int
-    skill_level: SkillLevel
-    team_count: int = 2
+    description: str = ""
     participant_ids: list[int] = field(default_factory=list)
-    status: MatchStatus = MatchStatus.OPEN
-
-
-@dataclass
-class BracketMatch:
-    id: int
-    round_number: int
-    team_a: str | None
-    team_b: str | None
-    score_a: int | None = None
-    score_b: int | None = None
-    winner: str | None = None
-
-
-@dataclass
-class Tournament:
-    id: int
-    organizer_id: int
-    name: str
-    sport: str
-    teams: list[str]
-    bracket: list[BracketMatch] = field(default_factory=list)
-    champion: str | None = None
+    status: EventStatus = EventStatus.OPEN
 
 
 @dataclass
 class ActivityRecord:
-    match_id: int
-    sport: str
+    event_id: int
+    title: str
+    category: str
     slot: TimeSlot
     facility_id: int

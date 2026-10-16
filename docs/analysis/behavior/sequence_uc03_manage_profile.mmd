@@ -6,16 +6,16 @@ sequenceDiagram
 
     S->>W: Open My Profile
     W->>PS: getProfile(userId)
-    PS->>D: Read profile sports and availability
+    PS->>D: Read profile interests and availability
     D-->>PS: profile data
     PS-->>W: Current profile
-    S->>W: Sports, skill level per sport, availability slots
-    W->>PS: updateProfile(userId, sports, availability)
-    alt No sport selected or slot end before start
+    S->>W: Interests (free text), availability slots
+    W->>PS: updateProfile(userId, interests, availability)
+    alt No interest entered or slot end before start
         PS-->>W: Validation error
         W-->>S: Show message, nothing saved
     else Valid
-        PS->>D: Replace PROFILE_SPORT and AVAILABILITY_SLOT rows
+        PS->>D: Replace PROFILE_INTEREST and AVAILABILITY_SLOT rows
         PS-->>W: Saved
         W-->>S: Show updated profile
     end

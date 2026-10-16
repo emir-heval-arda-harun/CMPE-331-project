@@ -8,11 +8,7 @@ classDiagram
     }
     class Profile {
         +int userId
-        +map sports
-        +map aiRatings
-    }
-    class Sport {
-        +string name
+        +list interests
     }
     class VerificationCode {
         +string codeHash
@@ -21,11 +17,6 @@ classDiagram
     }
     class Participation {
         +datetime joinedAt
-        +int teamNo
-    }
-    class Team {
-        +int id
-        +string name
     }
     class TimeSlot {
         +datetime start
@@ -35,47 +26,32 @@ classDiagram
     class Facility {
         +int id
         +string name
+        +int capacity
     }
     class FacilityBlock {
         +string reason
         +TimeSlot slot
     }
-    class Match {
+    class Event {
         +int id
+        +string title
+        +string category
+        +string description
         +int capacity
-        +int teamCount
-        +SkillLevel skillLevel
-        +MatchStatus status
+        +EventStatus status
         +TimeSlot slot
     }
-    class Tournament {
-        +int id
-        +string name
-    }
-    class BracketMatch {
-        +int id
-        +int roundNumber
-        +int position
-        +int scoreA
-        +int scoreB
-    }
     class ActivityRecord {
-        +int matchId
-        +string sport
+        +int eventId
+        +string title
+        +string category
     }
     class Role {
         <<enumeration>>
         STUDENT
-        CLUB_REPRESENTATIVE
         FACILITY_STAFF
     }
-    class SkillLevel {
-        <<enumeration>>
-        BEGINNER
-        INTERMEDIATE
-        ADVANCED
-    }
-    class MatchStatus {
+    class EventStatus {
         <<enumeration>>
         OPEN
         FULL
@@ -86,22 +62,11 @@ classDiagram
     User "1" --> "0..1" Profile : has
     User --> Role
     User "1" --> "*" VerificationCode : receives
-    Profile --> SkillLevel : skill per sport
-    Profile "*" --> "*" Sport : rated in
     Profile "1" o-- "*" TimeSlot : availability
-    User "1" --> "*" Match : organizes
-    Match "1" *-- "*" Participation : participants
+    User "1" --> "*" Event : organizes
+    Event "1" *-- "*" Participation : participants
     Participation "*" --> "1" User
-    Match "*" --> "1" Sport
-    Match "*" --> "1" Facility : played at
-    Match --> MatchStatus
-    Facility "*" --> "*" Sport : supports
+    Event "*" --> "1" Facility : held at
+    Event --> EventStatus
     Facility "1" o-- "*" FacilityBlock : blocked periods
-    User "1" --> "*" Tournament : organizes
-    Tournament "1" *-- "*" Team : registers
-    Tournament "*" --> "1" Sport
-    Tournament "1" *-- "*" BracketMatch : bracket
-    BracketMatch "*" --> "0..2" Team : plays
-    BracketMatch "*" --> "0..1" Team : winner
-    BracketMatch "*" --> "0..1" Facility : optional slot
     User "1" --> "*" ActivityRecord : history

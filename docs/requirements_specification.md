@@ -4,31 +4,30 @@
 **Group:** 14
 **Team:** Heval Hüseyin Demir, Emre Arda Kum, Emir Gül, Harun Gündaş, Onur Alioğlu
 **Repository:** https://github.com/emir-heval-arda-harun/CMPE-331-project
-**Date:** 07.10.2026
+**Date:** 07.10.2026 (updated 16.10.2026: scope generalized to all event types)
 
 ---
 
 ## 1. Introduction
 
 ### 1.1 Purpose
-This document defines the requirements of **CampusEvent**, a social sports-matching platform for university students. It is the reference for the design, implementation and testing phases of the project.
+This document defines the requirements of **CampusEvent**, a campus event platform for university students, where students organize and join events of any kind (sports, study groups, game nights, club meetings and more). It is the reference for the design, implementation and testing phases of the project.
 
 ### 1.2 Scope
-CampusEvent lets students organize, find and join amateur sports matches on campus, balances teams using AI, supports club tournaments with automatic brackets, and prevents facility booking conflicts.
+CampusEvent lets students organize, find and join events at campus facilities, and prevents facility booking conflicts. An event has a free-text category, so any kind of event is possible.
 
-**In scope:** user authentication and profiles, match creation and joining, filtering, AI team balancing, tournaments and brackets, facility schedules, activity history.
+**In scope:** user authentication and profiles, event creation, joining, leaving and cancelling, filtering by category/date/keyword, facility schedules and capacities, activity history.
 
 **Out of scope** (from the [Project Charter](CHARTER.MD)): payments, real-time GPS tracking, SIS/Banner integration, live audio/video and in-app chat, native mobile apps.
 
 ### 1.3 Definitions
 | Term | Meaning |
 |---|---|
-| Match | An amateur sports activity at a campus facility, created by a student |
-| Organizer | The student who created a match |
-| Skill level | Beginner / Intermediate / Advanced, declared per sport |
-| Bracket | The single-elimination tree of a tournament |
-| Bye | A free pass to the next round when the team count is not a power of two |
-| Facility block | A period when a facility is closed to student matches |
+| Event | An activity of any kind (sport, study group, game night, club meeting ...) held at a campus facility and created by a student |
+| Category | A free-text label of an event, e.g. "football" or "study group" |
+| Organizer | The student who created an event |
+| Capacity | The maximum number of participants of an event; it cannot exceed the capacity of the facility |
+| Facility block | A period when a facility is closed to student events |
 
 ### 1.4 References
 - [Project Charter](CHARTER.MD)
@@ -40,15 +39,13 @@ CampusEvent lets students organize, find and join amateur sports matches on camp
 ## 2. Overall Description
 
 ### 2.1 Product Perspective
-CampusEvent is a new, standalone, responsive web application. It uses Gemini Pro as an external AI service for skill rating and an e-mail service for account verification. It does **not** connect to university information systems.
+CampusEvent is a new, standalone, responsive web application. It uses an e-mail service for account verification. It does **not** connect to university information systems.
 
 ### 2.2 User Classes
 | Actor | Description |
 |---|---|
-| **Student** | Main user. Creates, finds and joins matches, manages a profile. |
-| **Club Representative** | A student with a club role. Organizes tournaments. |
-| **Facility Staff** | Campus sports personnel. Define facilities and block unavailable times. |
-| **Gemini Pro (external)** | AI service that rates players' skill for team balancing. |
+| **Student** | Main user. Creates, finds and joins events, manages a profile. |
+| **Facility Staff** | Campus personnel. Define facilities (with capacity) and block unavailable times. |
 | **E-mail Service (external)** | Sends verification codes. |
 
 ### 2.3 Operating Environment
@@ -63,9 +60,8 @@ CampusEvent is a new, standalone, responsive web application. It uses Gemini Pro
 ### 2.5 Assumptions and Dependencies
 - Students have an active university e-mail address.
 - Facility staff keep facility schedules up to date.
-- The Gemini Pro API is reachable; if not, the system falls back to self-declared skill levels (UC-07).
-- A-04: The roles Club Representative and Facility Staff are assigned by an administrator or loaded as seed data for the demo; there is no self-service role request.
-- A-05: Tournament teams are plain team names without user accounts; a tournament game may optionally get a facility and time slot (UC-11).
+- A-04: The role Facility Staff is assigned by an administrator or loaded as seed data for the demo; there is no self-service role request.
+- A-05: Event categories are free text; the system does not keep a fixed category list.
 
 ---
 
@@ -74,7 +70,7 @@ CampusEvent is a new, standalone, responsive web application. It uses Gemini Pro
 The planning documents are in [`docs/plan/`](plan/README.md).
 
 ### 3.1 Work Breakdown Structure (WBS)
-The project is split into four work packages: 1.0 Planning & Analysis, 2.0 Software Design, 3.0 Implementation and 4.0 Testing & Delivery. Every use case is covered by a backend task and a web UI task. The WBS, Gantt and PERT charts show the same 21 tasks; the task list with owners and dates is in [`docs/plan/README.md`](plan/README.md#task-list).
+The project is split into four work packages: 1.0 Planning & Analysis, 2.0 Software Design, 3.0 Implementation and 4.0 Testing & Delivery. Every use case is covered by a backend task and a web UI task. The WBS, Gantt and PERT charts show the same 19 tasks; the task list with owners and dates is in [`docs/plan/README.md`](plan/README.md#task-list).
 
 ![WBS diagram](plan/WBS_Diagram.png)
 
@@ -82,7 +78,7 @@ The project is split into four work packages: 1.0 Planning & Analysis, 2.0 Softw
 ![Gantt chart](plan/gantt_chart.png)
 
 ### 3.3 PERT Chart
-Critical path (orange): 1.1 Project Charter → 1.2 Requirements Definition → 1.3 Requirement Analysis → 2.3 UI/UX & AI Logic → 2.4 Software Design Report → 3.1 DB Integration → 3.3 Backend: Accounts & Profiles → 3.7 Web UI: Accounts, Profiles & Matches → 4.4 Deployment → 4.5 Final Codebase Delivery (**71 days**).
+Critical path (orange): 1.1 Project Charter → 1.2 Requirements Definition → 1.3 Requirement Analysis → 2.3 UI/UX Design → 2.4 Software Design Report → 3.1 DB Integration → 3.2 Backend: Accounts & Profiles → 3.5 Web UI: Accounts, Profiles & Events → 4.4 Deployment → 4.5 Final Codebase Delivery (**71 days**).
 
 ![PERT chart](plan/pert_chart.png)
 
@@ -110,19 +106,15 @@ The functional requirements are written in **use case format**. Each use case is
 |---|---|---|---|---|
 | [UC-01](requirements/UC-01_register_and_verify.md) | Register & verify e-mail | Student | High | Sign up with a university e-mail; account activated with an e-mailed code. |
 | [UC-02](requirements/UC-02_login.md) | Log in | All users | High | Verified users log in with e-mail and password. |
-| [UC-03](requirements/UC-03_manage_profile.md) | Manage profile | Student | High | Preferred sports, skill level per sport, availability. |
-| [UC-04](requirements/UC-04_create_match.md) | Create match | Student | High | Sport, facility, time, capacity, skill level; facility must be free. |
-| [UC-05](requirements/UC-05_browse_and_filter_matches.md) | Browse & filter matches | Student | High | Filter by date, time, sport, skill level. |
-| [UC-06](requirements/UC-06_join_match.md) | Join match | Student | High | Join if free places exist; match becomes Full at capacity. |
-| [UC-07](requirements/UC-07_ai_team_balancing.md) | AI team balancing | Organizer, Gemini Pro | Medium | AI rates players; teams get similar total skill; fallback without AI. |
-| [UC-08](requirements/UC-08_create_tournament.md) | Create tournament | Club Representative | Medium | Name, sport, teams; only club representatives. |
-| [UC-09](requirements/UC-09_generate_bracket.md) | Generate bracket | Club Representative | Medium | Automatic single-elimination bracket with byes. |
-| [UC-10](requirements/UC-10_record_score.md) | Record score & advance | Club Representative | Medium | Enter scores, winner advances, final sets the champion. |
-| [UC-11](requirements/UC-11_facility_availability.md) | Facility schedule & conflicts | Student | High | Show busy slots; prevent overlapping bookings. |
-| [UC-12](requirements/UC-12_manage_facility_schedule.md) | Manage facility schedule | Facility Staff | Medium | Add facilities and blocked periods. |
-| [UC-13](requirements/UC-13_activity_history.md) | Track activity history | Student | Low | List completed matches the student played in. |
-| [UC-14](requirements/UC-14_leave_match.md) | Leave match | Student | Medium | A participant leaves; a full match becomes open again. |
-| [UC-15](requirements/UC-15_cancel_match.md) | Cancel match | Student (organizer) | Medium | The organizer cancels; the facility slot becomes free. |
+| [UC-03](requirements/UC-03_manage_profile.md) | Manage profile | Student | High | Interests (free-text categories) and availability. |
+| [UC-04](requirements/UC-04_create_event.md) | Create event | Student | High | Title, category, facility, time, capacity; facility must be free and large enough. |
+| [UC-05](requirements/UC-05_browse_and_filter_events.md) | Browse & filter events | Student | High | Filter by category, date, time, keyword. |
+| [UC-06](requirements/UC-06_join_event.md) | Join event | Student | High | Join if free places exist; event becomes Full at capacity. |
+| [UC-07](requirements/UC-07_facility_availability.md) | Facility schedule & conflicts | Student | High | Show busy slots; prevent overlapping bookings. |
+| [UC-08](requirements/UC-08_manage_facility_schedule.md) | Manage facility schedule | Facility Staff | Medium | Add facilities with capacity and blocked periods. |
+| [UC-09](requirements/UC-09_activity_history.md) | Track activity history | Student | Low | List completed events the student took part in. |
+| [UC-10](requirements/UC-10_leave_event.md) | Leave event | Student | Medium | A participant leaves; a full event becomes open again. |
+| [UC-11](requirements/UC-11_cancel_event.md) | Cancel event | Student (organizer) | Medium | The organizer cancels; the facility slot becomes free. |
 
 ---
 
@@ -131,20 +123,18 @@ The functional requirements are written in **use case format**. Each use case is
 | ID | Category | Requirement |
 |---|---|---|
 | NFR-01 | Usability | The web interface is responsive and usable on screens from 360 px (phone) to desktop width. |
-| NFR-02 | Performance | Match search (UC-05) returns results in under 2 seconds for up to 1,000 open matches. |
-| NFR-03 | Performance | Team balancing (UC-07) completes in under 10 seconds, including the AI call. |
-| NFR-04 | Security | Passwords are stored only as salted hashes; all traffic uses HTTPS. |
-| NFR-05 | Security | Role-based access: only club representatives manage tournaments, only facility staff manage facilities. |
-| NFR-06 | Privacy | Only data needed for rating (sports, skill levels, match history) is sent to the AI service; no names or e-mail addresses. Personal data is processed in line with KVKK. |
-| NFR-07 | Reliability | If the AI service is unavailable, team balancing still works using declared skill levels. |
-| NFR-08 | Maintainability | Each use case has automated tests; the test suite runs with a single command (`python -m pytest`). |
-| NFR-09 | Portability | The system runs on current versions of Chrome, Firefox, Safari and Edge. |
+| NFR-02 | Performance | Event search (UC-05) returns results in under 2 seconds for up to 1,000 open events. |
+| NFR-03 | Security | Passwords are stored only as salted hashes; all traffic uses HTTPS. |
+| NFR-04 | Security | Role-based access: only facility staff manage facilities; only the organizer cancels an event. |
+| NFR-05 | Privacy | Other students see only the data needed for an event (name, category, time, participants); e-mail addresses are never shown. Personal data is processed in line with KVKK. |
+| NFR-06 | Maintainability | Each use case has automated tests; the test suite runs with a single command (`python -m pytest`). |
+| NFR-07 | Portability | The system runs on current versions of Chrome, Firefox, Safari and Edge. |
 
 ---
 
 ## 6. Requirement Tests
 
-Every use case has a test file under [`tests/`](../tests). The tests describe the expected behaviour of the main flow and the important alternative flows. The testable non-functional requirements (NFR-02 to NFR-07) are covered in [`tests/test_nfr.py`](../tests/test_nfr.py); NFR-01, NFR-08 and NFR-09 are verified manually (see [`docs/requirements/README.md`](requirements/README.md#non-functional-requirement-tests)).
+Every use case has a test file under [`tests/`](../tests). The tests describe the expected behaviour of the main flow and the important alternative flows. The testable non-functional requirements (NFR-02 to NFR-04) are covered in [`tests/test_nfr.py`](../tests/test_nfr.py); NFR-01, NFR-05, NFR-06 and NFR-07 are verified manually (see [`docs/requirements/README.md`](requirements/README.md#non-functional-requirement-tests)).
 
 The code under [`src/campusevent/`](../src/campusevent) is only **boilerplate**: domain models, service classes and method signatures. Every service method raises `NotImplementedError`, so **all tests currently fail by design**. They will pass as the features are implemented in the development phase.
 
@@ -154,7 +144,7 @@ pip install -r requirements-dev.txt
 python -m pytest
 ```
 
-**Current result:** 54 tests (43 use case tests + 11 non-functional tests), 54 failed (expected).
+**Current result:** 39 tests (33 use case tests + 6 non-functional tests), 39 failed (expected).
 
 ---
 
@@ -165,19 +155,15 @@ python -m pytest
 | UC-01 | [test_uc01_register_and_verify.py](../tests/test_uc01_register_and_verify.py) | 5 | [auth.py](../src/campusevent/auth.py) |
 | UC-02 | [test_uc02_login.py](../tests/test_uc02_login.py) | 3 | [auth.py](../src/campusevent/auth.py) |
 | UC-03 | [test_uc03_manage_profile.py](../tests/test_uc03_manage_profile.py) | 2 | [profiles.py](../src/campusevent/profiles.py) |
-| UC-04 | [test_uc04_create_match.py](../tests/test_uc04_create_match.py) | 4 | [matches.py](../src/campusevent/matches.py) |
-| UC-05 | [test_uc05_browse_and_filter_matches.py](../tests/test_uc05_browse_and_filter_matches.py) | 3 | [matches.py](../src/campusevent/matches.py) |
-| UC-06 | [test_uc06_join_match.py](../tests/test_uc06_join_match.py) | 3 | [matches.py](../src/campusevent/matches.py) |
-| UC-07 | [test_uc07_ai_team_balancing.py](../tests/test_uc07_ai_team_balancing.py) | 2 | [matchmaking.py](../src/campusevent/matchmaking.py) |
-| UC-08 | [test_uc08_create_tournament.py](../tests/test_uc08_create_tournament.py) | 3 | [tournaments.py](../src/campusevent/tournaments.py) |
-| UC-09 | [test_uc09_generate_bracket.py](../tests/test_uc09_generate_bracket.py) | 2 | [tournaments.py](../src/campusevent/tournaments.py) |
-| UC-10 | [test_uc10_record_score.py](../tests/test_uc10_record_score.py) | 4 | [tournaments.py](../src/campusevent/tournaments.py) |
-| UC-11 | [test_uc11_facility_availability.py](../tests/test_uc11_facility_availability.py) | 2 | [facilities.py](../src/campusevent/facilities.py) |
-| UC-12 | [test_uc12_manage_facility_schedule.py](../tests/test_uc12_manage_facility_schedule.py) | 2 | [facilities.py](../src/campusevent/facilities.py) |
-| UC-13 | [test_uc13_activity_history.py](../tests/test_uc13_activity_history.py) | 2 | [matches.py](../src/campusevent/matches.py) |
-| UC-14 | [test_uc14_leave_match.py](../tests/test_uc14_leave_match.py) | 3 | [matches.py](../src/campusevent/matches.py) |
-| UC-15 | [test_uc15_cancel_match.py](../tests/test_uc15_cancel_match.py) | 3 | [matches.py](../src/campusevent/matches.py) |
-| NFR-02 ... NFR-07 | [test_nfr.py](../tests/test_nfr.py) | 11 | [matches.py](../src/campusevent/matches.py), [matchmaking.py](../src/campusevent/matchmaking.py), [auth.py](../src/campusevent/auth.py), [facilities.py](../src/campusevent/facilities.py), [tournaments.py](../src/campusevent/tournaments.py) |
+| UC-04 | [test_uc04_create_event.py](../tests/test_uc04_create_event.py) | 4 | [events.py](../src/campusevent/events.py) |
+| UC-05 | [test_uc05_browse_and_filter_events.py](../tests/test_uc05_browse_and_filter_events.py) | 4 | [events.py](../src/campusevent/events.py) |
+| UC-06 | [test_uc06_join_event.py](../tests/test_uc06_join_event.py) | 3 | [events.py](../src/campusevent/events.py) |
+| UC-07 | [test_uc07_facility_availability.py](../tests/test_uc07_facility_availability.py) | 2 | [facilities.py](../src/campusevent/facilities.py) |
+| UC-08 | [test_uc08_manage_facility_schedule.py](../tests/test_uc08_manage_facility_schedule.py) | 2 | [facilities.py](../src/campusevent/facilities.py) |
+| UC-09 | [test_uc09_activity_history.py](../tests/test_uc09_activity_history.py) | 2 | [events.py](../src/campusevent/events.py) |
+| UC-10 | [test_uc10_leave_event.py](../tests/test_uc10_leave_event.py) | 3 | [events.py](../src/campusevent/events.py) |
+| UC-11 | [test_uc11_cancel_event.py](../tests/test_uc11_cancel_event.py) | 3 | [events.py](../src/campusevent/events.py) |
+| NFR-02 ... NFR-04 | [test_nfr.py](../tests/test_nfr.py) | 6 | [events.py](../src/campusevent/events.py), [auth.py](../src/campusevent/auth.py), [facilities.py](../src/campusevent/facilities.py) |
 
 ---
 

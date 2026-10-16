@@ -1,0 +1,31 @@
+sequenceDiagram
+    actor S as Student
+    participant W as Web app
+    participant ES as Event service
+    participant FS as Facility service
+    participant D as Database
+
+    S->>W: Title, category, facility, date, time, capacity
+    W->>ES: createEvent(request)
+    ES->>ES: Validate title, category and capacity at least 2
+    ES->>FS: getFacility(facility)
+    FS->>D: Read facility capacity
+    alt Capacity larger than facility capacity
+        ES-->>W: Rejected, facility capacity shown
+        W-->>S: Show message
+    else Capacity fits
+        ES->>FS: isAvailable(facility, slot)
+        FS->>D: Read blocks and active events of the facility
+        D-->>FS: busy slots
+        alt Slot overlaps a busy slot
+            FS-->>ES: conflict
+            ES-->>W: Rejected, free slots of the day suggested
+            W-->>S: Show conflict and free slots
+        else Slot is free
+            FS-->>ES: available
+            ES->>D: Insert event with status open
+            ES->>D: Insert organizer as first participant
+            ES-->>W: Event created
+            W-->>S: Show event in the list
+        end
+    end

@@ -2,27 +2,13 @@ erDiagram
     USER ||--o{ VERIFICATION_CODE : receives
     USER ||--o{ FACILITY : manages
     USER ||--o{ FACILITY_BLOCK : "creates"
-    USER ||--o{ PROFILE_SPORT : declares
-    SPORT ||--o{ PROFILE_SPORT : "rated in"
+    USER ||--o{ PROFILE_INTEREST : declares
     USER ||--o{ AVAILABILITY_SLOT : offers
-    USER ||--o{ MATCH : organizes
-    USER ||--o{ MATCH_PARTICIPANT : joins
-    MATCH ||--o{ MATCH_PARTICIPANT : has
-    SPORT ||--o{ MATCH : "played in"
-    FACILITY ||--o{ MATCH : hosts
-    FACILITY ||--o{ FACILITY_SPORT : supports
-    SPORT ||--o{ FACILITY_SPORT : "supported by"
+    USER ||--o{ EVENT : organizes
+    USER ||--o{ EVENT_PARTICIPANT : joins
+    EVENT ||--o{ EVENT_PARTICIPANT : has
+    FACILITY ||--o{ EVENT : hosts
     FACILITY ||--o{ FACILITY_BLOCK : "closed by"
-    USER ||--o{ TOURNAMENT : organizes
-    SPORT ||--o{ TOURNAMENT : "played in"
-    TOURNAMENT ||--o{ TEAM : registers
-    TOURNAMENT ||--o{ BRACKET_MATCH : contains
-    TEAM |o--o{ BRACKET_MATCH : "plays as team A"
-    TEAM |o--o{ BRACKET_MATCH : "plays as team B"
-    TEAM |o--o{ BRACKET_MATCH : "wins"
-    TEAM |o--o| TOURNAMENT : "is champion of"
-    BRACKET_MATCH |o--o| BRACKET_MATCH : "winner advances to"
-    FACILITY |o--o{ BRACKET_MATCH : "optionally hosts"
 
     USER {
         int id PK
@@ -39,15 +25,9 @@ erDiagram
         datetime expires_at
         bool used
     }
-    SPORT {
-        int id PK
-        string name UK
-    }
-    PROFILE_SPORT {
+    PROFILE_INTEREST {
         int user_id PK
-        int sport_id PK
-        int skill_level
-        float ai_rating
+        string interest PK
     }
     AVAILABILITY_SLOT {
         int id PK
@@ -59,10 +39,7 @@ erDiagram
         int id PK
         int manager_id FK
         string name UK
-    }
-    FACILITY_SPORT {
-        int facility_id PK
-        int sport_id PK
+        int capacity
     }
     FACILITY_BLOCK {
         int id PK
@@ -72,48 +49,20 @@ erDiagram
         datetime end_time
         string reason
     }
-    MATCH {
+    EVENT {
         int id PK
         int organizer_id FK
-        int sport_id FK
         int facility_id FK
+        string title
+        string category
+        string description
         datetime start_time
         datetime end_time
         int capacity
-        int team_count
-        int skill_level
         string status
     }
-    MATCH_PARTICIPANT {
-        int match_id PK
+    EVENT_PARTICIPANT {
+        int event_id PK
         int user_id PK
-        int team_no
         datetime joined_at
-    }
-    TOURNAMENT {
-        int id PK
-        int organizer_id FK
-        int sport_id FK
-        string name
-        int champion_team_id FK
-    }
-    TEAM {
-        int id PK
-        int tournament_id FK
-        string name
-    }
-    BRACKET_MATCH {
-        int id PK
-        int tournament_id FK
-        int round_number
-        int position
-        int team_a_id FK
-        int team_b_id FK
-        int score_a
-        int score_b
-        int winner_team_id FK
-        int next_match_id FK
-        int facility_id FK
-        datetime start_time
-        datetime end_time
     }

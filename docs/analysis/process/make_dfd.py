@@ -2,20 +2,18 @@
 from pathlib import Path
 from xml.sax.saxutils import escape
 
-W, H = 1560, 1010
-PX, SX = 560, 1200
+W, H = 1360, 780
+PX, SX = 560, 1100
 ENT = {  # name: (x, y, w, h)
-    "mail": (140, 55, 180, 50, "E-mail service"), "stu": (140, 300, 180, 50, "Student"),
-    "ai": (1440, 385, 180, 56, "Gemini Pro AI service"), "staff": (140, 770, 180, 50, "Facility staff"),
-    "club": (140, 920, 180, 50, "Club representative"),
+    "mail": (140, 55, 180, 50, "E-mail service"), "stu": (140, 330, 180, 50, "Student"),
+    "staff": (140, 640, 180, 50, "Facility staff"),
 }
 PROC = {  # centre y
-    "p1": (110, "1.0 Manage accounts and profiles"), "p6": (270, "6.0 Show activity history"),
-    "p3": (430, "3.0 Balance teams"), "p2": (590, "2.0 Manage matches"),
-    "p5": (770, "5.0 Manage facility schedule"), "p4": (920, "4.0 Manage tournaments"),
+    "p1": (110, "1.0 Manage accounts and profiles"), "p3": (270, "3.0 Show activity history"),
+    "p2": (440, "2.0 Manage events"), "p4": (640, "4.0 Manage facility schedule"),
 }
-STORE = {"d1": (110, "D1 Users and verification codes"), "d2": (270, "D2 Profiles"), "d3": (500, "D3 Matches and participants"),
-         "d4": (770, "D4 Facilities and blocks"), "d5": (920, "D5 Tournaments, teams, bracket")}
+STORE = {"d1": (80, "D1 Users and verification codes"), "d2": (180, "D2 Profiles"), "d3": (355, "D3 Events and participants"),
+         "d4": (640, "D4 Facilities and blocks")}
 
 
 def box(n):
@@ -38,21 +36,13 @@ FLOWS = [  # a, b, label lines, direction: '>' a->b, '<' b->a, '=' both
     ("p1", "mail", ["→ verification code"], ">"),
     ("p1", "d1", ["users, codes"], "="),
     ("p1", "d2", ["profile data"], "="),
-    ("stu", "p6", ["→ history request", "← completed matches"], "="),
-    ("d3", "p6", ["completed matches"], ">"),
-    ("p3", "stu", ["teams"], ">"),
-    ("p3", "ai", ["→ profile data, no names", "← skill ratings"], "="),
-    ("d2", "p3", ["skill levels in, ratings out"], "="),
-    ("p3", "d3", ["teams"], ">"),
-    ("p2", "p3", ["full match"], ">"),
-    ("stu", "p2", ["→ search, create, join, leave, cancel", "← match list, details"], "="),
-    ("p2", "d3", ["matches, participants"], "="),
-    ("p2", "d4", ["→ slot check", "← busy slots"], "="),
-    ("staff", "p5", ["→ facilities, blocks", "← schedule"], "="),
-    ("p5", "d4", ["facilities, blocks"], "="),
-    ("club", "p4", ["→ tournament data, scores", "← bracket, results"], "="),
-    ("p4", "d5", ["tournament data"], "="),
-    ("p4", "d4", ["optional game slot"], ">"),
+    ("stu", "p3", ["→ history request", "← completed events"], "="),
+    ("d3", "p3", ["completed events"], ">"),
+    ("stu", "p2", ["→ search, create, join, leave, cancel", "← event list, details"], "="),
+    ("p2", "d3", ["events, participants"], "="),
+    ("p2", "d4", ["→ slot and capacity check", "← busy slots"], "="),
+    ("staff", "p4", ["→ facilities, blocks", "← schedule"], "="),
+    ("p4", "d4", ["facilities, blocks"], "="),
 ]
 
 
@@ -81,7 +71,7 @@ def build():
                  f'<line x1="{SX-120}" y1="{y+25}" x2="{SX+120}" y2="{y+25}" stroke="#2e7d32" stroke-width="2"/>'
                  f'<rect x="{SX-120}" y="{y-25}" width="240" height="50" fill="#e6f4ea" fill-opacity="0.6" stroke="none"/>'
                  f'<text x="{SX}" y="{y+4}" text-anchor="middle" font-size="13">{escape(lab)}</text>')
-    o.append('<text x="30" y="995" font-size="11" fill="#555">Orange: external entities. Blue: processes. Green: data stores.</text>')
+    o.append('<text x="30" y="765" font-size="11" fill="#555">Orange: external entities. Blue: processes. Green: data stores.</text>')
     o.append("</svg>")
     return "\n".join(o)
 

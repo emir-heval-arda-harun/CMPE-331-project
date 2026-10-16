@@ -1,67 +1,44 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1560" height="1010" viewBox="0 0 1560 1010" font-family="Helvetica, Arial, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" width="1360" height="780" viewBox="0 0 1360 780" font-family="Helvetica, Arial, sans-serif">
 <rect width="100%" height="100%" fill="white"/>
 <defs><marker id="a" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto-start-reverse"><path d="M0,0 L9,3.5 L0,7 z" fill="#333"/></marker></defs>
-<text x="780.0" y="24" text-anchor="middle" font-size="17" font-weight="bold">DFD level 1: CampusEvent</text>
-<line x1="195" y1="275" x2="483" y2="145" stroke="#333" stroke-width="1.6" marker-end="url(#a)" marker-start="url(#a)"/>
-<text x="339" y="207" text-anchor="middle" font-size="11.5" fill="#222" paint-order="stroke" stroke="white" stroke-width="5">→ registration, login, profile</text>
-<text x="339" y="221" text-anchor="middle" font-size="11.5" fill="#222" paint-order="stroke" stroke="white" stroke-width="5">← confirmation, session</text>
+<text x="680.0" y="24" text-anchor="middle" font-size="17" font-weight="bold">DFD level 1: CampusEvent</text>
+<line x1="188" y1="305" x2="493" y2="145" stroke="#333" stroke-width="1.6" marker-end="url(#a)" marker-start="url(#a)"/>
+<text x="340" y="222" text-anchor="middle" font-size="11.5" fill="#222" paint-order="stroke" stroke="white" stroke-width="5">→ registration, login, profile</text>
+<text x="340" y="236" text-anchor="middle" font-size="11.5" fill="#222" paint-order="stroke" stroke="white" stroke-width="5">← confirmation, session</text>
 <line x1="445" y1="95" x2="230" y2="67" stroke="#333" stroke-width="1.6" marker-end="url(#a)"/>
 <text x="338" y="85" text-anchor="middle" font-size="11.5" fill="#222" paint-order="stroke" stroke="white" stroke-width="5">→ verification code</text>
-<line x1="675" y1="110" x2="1080" y2="110" stroke="#333" stroke-width="1.6" marker-end="url(#a)" marker-start="url(#a)"/>
-<text x="878" y="114" text-anchor="middle" font-size="11.5" fill="#222" paint-order="stroke" stroke="white" stroke-width="5">users, codes</text>
-<line x1="675" y1="139" x2="1100" y2="245" stroke="#333" stroke-width="1.6" marker-end="url(#a)" marker-start="url(#a)"/>
-<text x="888" y="196" text-anchor="middle" font-size="11.5" fill="#222" paint-order="stroke" stroke="white" stroke-width="5">profile data</text>
-<line x1="230" y1="294" x2="445" y2="278" stroke="#333" stroke-width="1.6" marker-end="url(#a)" marker-start="url(#a)"/>
-<text x="338" y="283" text-anchor="middle" font-size="11.5" fill="#222" paint-order="stroke" stroke="white" stroke-width="5">→ history request</text>
-<text x="338" y="297" text-anchor="middle" font-size="11.5" fill="#222" paint-order="stroke" stroke="white" stroke-width="5">← completed matches</text>
-<line x1="1130" y1="475" x2="657" y2="305" stroke="#333" stroke-width="1.6" marker-end="url(#a)"/>
-<text x="894" y="394" text-anchor="middle" font-size="11.5" fill="#222" paint-order="stroke" stroke="white" stroke-width="5">completed matches</text>
-<line x1="447" y1="395" x2="221" y2="325" stroke="#333" stroke-width="1.6" marker-end="url(#a)"/>
-<text x="334" y="364" text-anchor="middle" font-size="11.5" fill="#222" paint-order="stroke" stroke="white" stroke-width="5">teams</text>
-<line x1="675" y1="424" x2="1350" y2="390" stroke="#333" stroke-width="1.6" marker-end="url(#a)" marker-start="url(#a)"/>
-<text x="1012" y="404" text-anchor="middle" font-size="11.5" fill="#222" paint-order="stroke" stroke="white" stroke-width="5">→ profile data, no names</text>
-<text x="1012" y="418" text-anchor="middle" font-size="11.5" fill="#222" paint-order="stroke" stroke="white" stroke-width="5">← skill ratings</text>
-<line x1="1100" y1="295" x2="675" y2="401" stroke="#333" stroke-width="1.6" marker-end="url(#a)" marker-start="url(#a)"/>
-<text x="888" y="352" text-anchor="middle" font-size="11.5" fill="#222" paint-order="stroke" stroke="white" stroke-width="5">skill levels in, ratings out</text>
-<line x1="675" y1="443" x2="1080" y2="487" stroke="#333" stroke-width="1.6" marker-end="url(#a)"/>
-<text x="878" y="469" text-anchor="middle" font-size="11.5" fill="#222" paint-order="stroke" stroke="white" stroke-width="5">teams</text>
-<line x1="560" y1="555" x2="560" y2="465" stroke="#333" stroke-width="1.6" marker-end="url(#a)"/>
-<text x="560" y="514" text-anchor="middle" font-size="11.5" fill="#222" paint-order="stroke" stroke="white" stroke-width="5">full match</text>
-<line x1="176" y1="325" x2="509" y2="555" stroke="#333" stroke-width="1.6" marker-end="url(#a)" marker-start="url(#a)"/>
-<text x="343" y="437" text-anchor="middle" font-size="11.5" fill="#222" paint-order="stroke" stroke="white" stroke-width="5">→ search, create, join, leave, cancel</text>
-<text x="343" y="451" text-anchor="middle" font-size="11.5" fill="#222" paint-order="stroke" stroke="white" stroke-width="5">← match list, details</text>
-<line x1="675" y1="574" x2="1080" y2="517" stroke="#333" stroke-width="1.6" marker-end="url(#a)" marker-start="url(#a)"/>
-<text x="878" y="549" text-anchor="middle" font-size="11.5" fill="#222" paint-order="stroke" stroke="white" stroke-width="5">matches, participants</text>
-<line x1="675" y1="622" x2="1111" y2="745" stroke="#333" stroke-width="1.6" marker-end="url(#a)" marker-start="url(#a)"/>
-<text x="893" y="681" text-anchor="middle" font-size="11.5" fill="#222" paint-order="stroke" stroke="white" stroke-width="5">→ slot check</text>
-<text x="893" y="695" text-anchor="middle" font-size="11.5" fill="#222" paint-order="stroke" stroke="white" stroke-width="5">← busy slots</text>
-<line x1="230" y1="770" x2="445" y2="770" stroke="#333" stroke-width="1.6" marker-end="url(#a)" marker-start="url(#a)"/>
-<text x="338" y="767" text-anchor="middle" font-size="11.5" fill="#222" paint-order="stroke" stroke="white" stroke-width="5">→ facilities, blocks</text>
-<text x="338" y="781" text-anchor="middle" font-size="11.5" fill="#222" paint-order="stroke" stroke="white" stroke-width="5">← schedule</text>
-<line x1="675" y1="770" x2="1080" y2="770" stroke="#333" stroke-width="1.6" marker-end="url(#a)" marker-start="url(#a)"/>
-<text x="878" y="774" text-anchor="middle" font-size="11.5" fill="#222" paint-order="stroke" stroke="white" stroke-width="5">facilities, blocks</text>
-<line x1="230" y1="920" x2="445" y2="920" stroke="#333" stroke-width="1.6" marker-end="url(#a)" marker-start="url(#a)"/>
-<text x="338" y="917" text-anchor="middle" font-size="11.5" fill="#222" paint-order="stroke" stroke="white" stroke-width="5">→ tournament data, scores</text>
-<text x="338" y="931" text-anchor="middle" font-size="11.5" fill="#222" paint-order="stroke" stroke="white" stroke-width="5">← bracket, results</text>
-<line x1="675" y1="920" x2="1080" y2="920" stroke="#333" stroke-width="1.6" marker-end="url(#a)" marker-start="url(#a)"/>
-<text x="878" y="924" text-anchor="middle" font-size="11.5" fill="#222" paint-order="stroke" stroke="white" stroke-width="5">tournament data</text>
-<line x1="675" y1="893" x2="1093" y2="795" stroke="#333" stroke-width="1.6" marker-end="url(#a)"/>
-<text x="884" y="848" text-anchor="middle" font-size="11.5" fill="#222" paint-order="stroke" stroke="white" stroke-width="5">optional game slot</text>
+<line x1="675" y1="104" x2="980" y2="87" stroke="#333" stroke-width="1.6" marker-end="url(#a)" marker-start="url(#a)"/>
+<text x="828" y="99" text-anchor="middle" font-size="11.5" fill="#222" paint-order="stroke" stroke="white" stroke-width="5">users, codes</text>
+<line x1="675" y1="125" x2="980" y2="164" stroke="#333" stroke-width="1.6" marker-end="url(#a)" marker-start="url(#a)"/>
+<text x="828" y="149" text-anchor="middle" font-size="11.5" fill="#222" paint-order="stroke" stroke="white" stroke-width="5">profile data</text>
+<line x1="230" y1="317" x2="445" y2="286" stroke="#333" stroke-width="1.6" marker-end="url(#a)" marker-start="url(#a)"/>
+<text x="338" y="299" text-anchor="middle" font-size="11.5" fill="#222" paint-order="stroke" stroke="white" stroke-width="5">→ history request</text>
+<text x="338" y="313" text-anchor="middle" font-size="11.5" fill="#222" paint-order="stroke" stroke="white" stroke-width="5">← completed events</text>
+<line x1="980" y1="336" x2="675" y2="288" stroke="#333" stroke-width="1.6" marker-end="url(#a)"/>
+<text x="828" y="316" text-anchor="middle" font-size="11.5" fill="#222" paint-order="stroke" stroke="white" stroke-width="5">completed events</text>
+<line x1="230" y1="354" x2="445" y2="410" stroke="#333" stroke-width="1.6" marker-end="url(#a)" marker-start="url(#a)"/>
+<text x="338" y="379" text-anchor="middle" font-size="11.5" fill="#222" paint-order="stroke" stroke="white" stroke-width="5">→ search, create, join, leave, cancel</text>
+<text x="338" y="393" text-anchor="middle" font-size="11.5" fill="#222" paint-order="stroke" stroke="white" stroke-width="5">← event list, details</text>
+<line x1="675" y1="422" x2="980" y2="374" stroke="#333" stroke-width="1.6" marker-end="url(#a)" marker-start="url(#a)"/>
+<text x="828" y="402" text-anchor="middle" font-size="11.5" fill="#222" paint-order="stroke" stroke="white" stroke-width="5">events, participants</text>
+<line x1="654" y1="475" x2="1032" y2="615" stroke="#333" stroke-width="1.6" marker-end="url(#a)" marker-start="url(#a)"/>
+<text x="844" y="542" text-anchor="middle" font-size="11.5" fill="#222" paint-order="stroke" stroke="white" stroke-width="5">→ slot and capacity check</text>
+<text x="844" y="556" text-anchor="middle" font-size="11.5" fill="#222" paint-order="stroke" stroke="white" stroke-width="5">← busy slots</text>
+<line x1="230" y1="640" x2="445" y2="640" stroke="#333" stroke-width="1.6" marker-end="url(#a)" marker-start="url(#a)"/>
+<text x="338" y="637" text-anchor="middle" font-size="11.5" fill="#222" paint-order="stroke" stroke="white" stroke-width="5">→ facilities, blocks</text>
+<text x="338" y="651" text-anchor="middle" font-size="11.5" fill="#222" paint-order="stroke" stroke="white" stroke-width="5">← schedule</text>
+<line x1="675" y1="640" x2="980" y2="640" stroke="#333" stroke-width="1.6" marker-end="url(#a)" marker-start="url(#a)"/>
+<text x="828" y="644" text-anchor="middle" font-size="11.5" fill="#222" paint-order="stroke" stroke="white" stroke-width="5">facilities, blocks</text>
 <rect x="50.0" y="30.0" width="180" height="50" fill="#fff4e6" stroke="#c96a1b" stroke-width="2"/><text x="140" y="59" text-anchor="middle" font-size="13">E-mail service</text>
-<rect x="50.0" y="275.0" width="180" height="50" fill="#fff4e6" stroke="#c96a1b" stroke-width="2"/><text x="140" y="304" text-anchor="middle" font-size="13">Student</text>
-<rect x="1350.0" y="357.0" width="180" height="56" fill="#fff4e6" stroke="#c96a1b" stroke-width="2"/><text x="1440" y="389" text-anchor="middle" font-size="13">Gemini Pro AI service</text>
-<rect x="50.0" y="745.0" width="180" height="50" fill="#fff4e6" stroke="#c96a1b" stroke-width="2"/><text x="140" y="774" text-anchor="middle" font-size="13">Facility staff</text>
-<rect x="50.0" y="895.0" width="180" height="50" fill="#fff4e6" stroke="#c96a1b" stroke-width="2"/><text x="140" y="924" text-anchor="middle" font-size="13">Club representative</text>
+<rect x="50.0" y="305.0" width="180" height="50" fill="#fff4e6" stroke="#c96a1b" stroke-width="2"/><text x="140" y="334" text-anchor="middle" font-size="13">Student</text>
+<rect x="50.0" y="615.0" width="180" height="50" fill="#fff4e6" stroke="#c96a1b" stroke-width="2"/><text x="140" y="644" text-anchor="middle" font-size="13">Facility staff</text>
 <rect x="445" y="75" width="230" height="70" rx="14" fill="#e8ecf4" stroke="#3f51b5" stroke-width="2"/><text x="560" y="114" text-anchor="middle" font-size="13" font-weight="bold">1.0 Manage accounts and profiles</text>
-<rect x="445" y="235" width="230" height="70" rx="14" fill="#e8ecf4" stroke="#3f51b5" stroke-width="2"/><text x="560" y="274" text-anchor="middle" font-size="13" font-weight="bold">6.0 Show activity history</text>
-<rect x="445" y="395" width="230" height="70" rx="14" fill="#e8ecf4" stroke="#3f51b5" stroke-width="2"/><text x="560" y="434" text-anchor="middle" font-size="13" font-weight="bold">3.0 Balance teams</text>
-<rect x="445" y="555" width="230" height="70" rx="14" fill="#e8ecf4" stroke="#3f51b5" stroke-width="2"/><text x="560" y="594" text-anchor="middle" font-size="13" font-weight="bold">2.0 Manage matches</text>
-<rect x="445" y="735" width="230" height="70" rx="14" fill="#e8ecf4" stroke="#3f51b5" stroke-width="2"/><text x="560" y="774" text-anchor="middle" font-size="13" font-weight="bold">5.0 Manage facility schedule</text>
-<rect x="445" y="885" width="230" height="70" rx="14" fill="#e8ecf4" stroke="#3f51b5" stroke-width="2"/><text x="560" y="924" text-anchor="middle" font-size="13" font-weight="bold">4.0 Manage tournaments</text>
-<line x1="1080" y1="85" x2="1320" y2="85" stroke="#2e7d32" stroke-width="2"/><line x1="1080" y1="135" x2="1320" y2="135" stroke="#2e7d32" stroke-width="2"/><rect x="1080" y="85" width="240" height="50" fill="#e6f4ea" fill-opacity="0.6" stroke="none"/><text x="1200" y="114" text-anchor="middle" font-size="13">D1 Users and verification codes</text>
-<line x1="1080" y1="245" x2="1320" y2="245" stroke="#2e7d32" stroke-width="2"/><line x1="1080" y1="295" x2="1320" y2="295" stroke="#2e7d32" stroke-width="2"/><rect x="1080" y="245" width="240" height="50" fill="#e6f4ea" fill-opacity="0.6" stroke="none"/><text x="1200" y="274" text-anchor="middle" font-size="13">D2 Profiles</text>
-<line x1="1080" y1="475" x2="1320" y2="475" stroke="#2e7d32" stroke-width="2"/><line x1="1080" y1="525" x2="1320" y2="525" stroke="#2e7d32" stroke-width="2"/><rect x="1080" y="475" width="240" height="50" fill="#e6f4ea" fill-opacity="0.6" stroke="none"/><text x="1200" y="504" text-anchor="middle" font-size="13">D3 Matches and participants</text>
-<line x1="1080" y1="745" x2="1320" y2="745" stroke="#2e7d32" stroke-width="2"/><line x1="1080" y1="795" x2="1320" y2="795" stroke="#2e7d32" stroke-width="2"/><rect x="1080" y="745" width="240" height="50" fill="#e6f4ea" fill-opacity="0.6" stroke="none"/><text x="1200" y="774" text-anchor="middle" font-size="13">D4 Facilities and blocks</text>
-<line x1="1080" y1="895" x2="1320" y2="895" stroke="#2e7d32" stroke-width="2"/><line x1="1080" y1="945" x2="1320" y2="945" stroke="#2e7d32" stroke-width="2"/><rect x="1080" y="895" width="240" height="50" fill="#e6f4ea" fill-opacity="0.6" stroke="none"/><text x="1200" y="924" text-anchor="middle" font-size="13">D5 Tournaments, teams, bracket</text>
-<text x="30" y="995" font-size="11" fill="#555">Orange: external entities. Blue: processes. Green: data stores.</text>
+<rect x="445" y="235" width="230" height="70" rx="14" fill="#e8ecf4" stroke="#3f51b5" stroke-width="2"/><text x="560" y="274" text-anchor="middle" font-size="13" font-weight="bold">3.0 Show activity history</text>
+<rect x="445" y="405" width="230" height="70" rx="14" fill="#e8ecf4" stroke="#3f51b5" stroke-width="2"/><text x="560" y="444" text-anchor="middle" font-size="13" font-weight="bold">2.0 Manage events</text>
+<rect x="445" y="605" width="230" height="70" rx="14" fill="#e8ecf4" stroke="#3f51b5" stroke-width="2"/><text x="560" y="644" text-anchor="middle" font-size="13" font-weight="bold">4.0 Manage facility schedule</text>
+<line x1="980" y1="55" x2="1220" y2="55" stroke="#2e7d32" stroke-width="2"/><line x1="980" y1="105" x2="1220" y2="105" stroke="#2e7d32" stroke-width="2"/><rect x="980" y="55" width="240" height="50" fill="#e6f4ea" fill-opacity="0.6" stroke="none"/><text x="1100" y="84" text-anchor="middle" font-size="13">D1 Users and verification codes</text>
+<line x1="980" y1="155" x2="1220" y2="155" stroke="#2e7d32" stroke-width="2"/><line x1="980" y1="205" x2="1220" y2="205" stroke="#2e7d32" stroke-width="2"/><rect x="980" y="155" width="240" height="50" fill="#e6f4ea" fill-opacity="0.6" stroke="none"/><text x="1100" y="184" text-anchor="middle" font-size="13">D2 Profiles</text>
+<line x1="980" y1="330" x2="1220" y2="330" stroke="#2e7d32" stroke-width="2"/><line x1="980" y1="380" x2="1220" y2="380" stroke="#2e7d32" stroke-width="2"/><rect x="980" y="330" width="240" height="50" fill="#e6f4ea" fill-opacity="0.6" stroke="none"/><text x="1100" y="359" text-anchor="middle" font-size="13">D3 Events and participants</text>
+<line x1="980" y1="615" x2="1220" y2="615" stroke="#2e7d32" stroke-width="2"/><line x1="980" y1="665" x2="1220" y2="665" stroke="#2e7d32" stroke-width="2"/><rect x="980" y="615" width="240" height="50" fill="#e6f4ea" fill-opacity="0.6" stroke="none"/><text x="1100" y="644" text-anchor="middle" font-size="13">D4 Facilities and blocks</text>
+<text x="30" y="765" font-size="11" fill="#555">Orange: external entities. Blue: processes. Green: data stores.</text>
 </svg>

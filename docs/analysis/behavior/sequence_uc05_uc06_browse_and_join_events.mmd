@@ -1,0 +1,27 @@
+sequenceDiagram
+    actor S as Student
+    participant W as Web app
+    participant ES as Event service
+    participant D as Database
+
+    S->>W: Open Find an Event, set filters
+    W->>ES: searchEvents(category, day, time range, keyword)
+    ES->>D: Read open events that satisfy all filters
+    D-->>ES: events ordered by start time
+    ES-->>W: Event list
+    W-->>S: Show list (empty list suggests Create Event)
+    S->>W: Open an event and select Join
+    W->>ES: joinEvent(eventId, userId)
+    ES->>D: Lock event row, read participants
+    alt Event is full
+        ES-->>W: This event is full
+    else Student already joined
+        ES-->>W: You have already joined this event
+    else Free place
+        ES->>D: Insert EVENT_PARTICIPANT
+        opt Capacity reached
+            ES->>D: Set status full
+        end
+        ES-->>W: Joined
+        W-->>S: Confirmation
+    end

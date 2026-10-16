@@ -41,9 +41,9 @@ class FacilityConflictError(CampusEventError):
     """The facility is not available in the requested time slot."""
 
 
-class MatchFullError(CampusEventError):
-    """The match has no free places left."""
+class EventFullError(CampusEventError):
+    """The event has no free places left."""
 
 
 class AlreadyJoinedError(CampusEventError):
-    """The user is already a participant of the match."""
+    """The user is already a participant of the event."""

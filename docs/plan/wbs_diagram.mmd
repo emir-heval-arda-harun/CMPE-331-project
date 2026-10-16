@@ -15,7 +15,7 @@ flowchart LR
     p2 --> n2_1
     n2_2["2.2 API & ER Diagrams"]
     p2 --> n2_2
-    n2_3["2.3 UI/UX & AI Logic"]
+    n2_3["2.3 UI/UX Design"]
     p2 --> n2_3
     n2_4["2.4 Software Design Report"]
     p2 --> n2_4
@@ -23,22 +23,18 @@ flowchart LR
     root --> p3
     n3_1["3.1 DB Integration"]
     p3 --> n3_1
-    n3_2["3.2 AI Matchmaking<br/>(UC-07)"]
+    n3_2["3.2 Backend - Accounts & Profiles<br/>(UC-01 to 03)"]
     p3 --> n3_2
-    n3_3["3.3 Backend - Accounts & Profiles<br/>(UC-01 to 03)"]
+    n3_3["3.3 Backend - Facilities<br/>(UC-07, 08)"]
     p3 --> n3_3
-    n3_4["3.4 Backend - Tournaments<br/>(UC-08 to 10)"]
+    n3_4["3.4 Backend - Events<br/>(UC-04 to 06, 09 to 11)"]
     p3 --> n3_4
-    n3_5["3.5 Backend - Facilities<br/>(UC-11, 12)"]
+    n3_5["3.5 Web UI - Accounts, Profiles & Events<br/>(UC-01 to 06, 09 to 11)"]
     p3 --> n3_5
-    n3_6["3.6 Backend - Matches<br/>(UC-04 to 06, 13)"]
+    n3_6["3.6 Web UI - Facilities<br/>(UC-07, 08)"]
     p3 --> n3_6
-    n3_7["3.7 Web UI - Accounts, Profiles & Matches<br/>(UC-01 to 06, 13)"]
+    n3_7["3.7 CI/CD Pipeline Setup"]
     p3 --> n3_7
-    n3_8["3.8 Web UI - Facilities & Tournaments<br/>(UC-08 to 12)"]
-    p3 --> n3_8
-    n3_9["3.9 CI/CD Pipeline Setup"]
-    p3 --> n3_9
     p4["4.0 Testing & Delivery"]
     root --> p4
     n4_1["4.1 Software Testing Report"]
@@ -56,4 +52,4 @@ flowchart LR
     classDef task fill:#ffffff,stroke:#333,stroke-width:1.5px,color:#111
     class root root
     class p1,p2,p3,p4 ph
-    class n1_1,n1_2,n1_3,n2_1,n2_2,n2_3,n2_4,n3_1,n3_2,n3_3,n3_4,n3_5,n3_6,n3_7,n3_8,n3_9,n4_1,n4_2,n4_3,n4_4,n4_5 task
+    class n1_1,n1_2,n1_3,n2_1,n2_2,n2_3,n2_4,n3_1,n3_2,n3_3,n3_4,n3_5,n3_6,n3_7,n4_1,n4_2,n4_3,n4_4,n4_5 task

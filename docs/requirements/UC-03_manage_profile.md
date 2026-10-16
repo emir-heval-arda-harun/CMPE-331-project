@@ -8,7 +8,7 @@
 | **Test** | [tests/test_uc03_manage_profile.py](../../tests/test_uc03_manage_profile.py) |
 
 ## Description
-The student records preferred sports, a self-declared skill level per sport, and weekly availability. This data is used for filtering (UC-05) and AI team balancing (UC-07).
+The student records interests (free-text event categories such as "football", "study group" or "board games") and weekly availability. This data is shown on the student's page and is used to pre-fill the filters of UC-05.
 
 ## Preconditions
 - The student is logged in (UC-02).
@@ -18,15 +18,17 @@ The student opens **My Profile**.
 
 ## Main Success Scenario
 1. The system shows the current profile.
-2. The student selects one or more sports.
-3. For each sport, the student chooses a skill level (Beginner, Intermediate, Advanced).
-4. The student adds availability time slots.
-5. The student saves the profile.
-6. The system validates and stores the profile and shows it on the student's public page.
+2. The student adds one or more interests.
+3. The student adds availability time slots.
+4. The student saves the profile.
+5. The system validates and stores the profile.
 
 ## Alternative Flows
-- **6a. No sport selected:** the system rejects the change: "Select at least one sport."
-- **6b. Invalid time slot (end before start):** the system rejects the slot.
+- **5a. No interest entered:** the system rejects the change: "Add at least one interest."
+- **5b. Invalid time slot (end before start):** the system rejects the slot.
 
 ## Postconditions
-- The profile is updated and used by other features.
+- The profile is updated.
+
+## Business Rules
+- BR-14: Categories are free text; they are trimmed and compared without regard to upper or lower case.

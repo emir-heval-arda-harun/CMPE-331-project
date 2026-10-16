@@ -1,0 +1,26 @@
+sequenceDiagram
+    actor P as Participant
+    actor O as Organizer
+    participant W as Web app
+    participant ES as Event service
+    participant D as Database
+
+    P->>W: Leave
+    W->>ES: leaveEvent(eventId, userId)
+    alt Not a participant, or user is the organizer
+        ES-->>W: Refused (organizer must cancel)
+    else Participant
+        ES->>D: Delete EVENT_PARTICIPANT row
+        opt Event was full
+            ES->>D: Set status open
+        end
+        ES-->>W: Left
+    end
+    O->>W: Cancel Event
+    W->>ES: cancelEvent(eventId, userId)
+    alt User is not the organizer, or event already completed or cancelled
+        ES-->>W: Refused
+    else Organizer
+        ES->>D: Set status cancelled (slot is free again)
+        ES-->>W: Cancelled, removed from list and history
+    end

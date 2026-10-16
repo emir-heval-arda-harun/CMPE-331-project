@@ -1,0 +1,10 @@
+stateDiagram-v2
+    [*] --> Open : UC-04 event created
+    Open --> Full : UC-06 capacity reached
+    Full --> Open : participant leaves
+    Open --> Cancelled : organizer cancels
+    Full --> Cancelled : organizer cancels
+    Open --> Completed : end time passed
+    Full --> Completed : end time passed
+    Completed --> [*]
+    Cancelled --> [*]

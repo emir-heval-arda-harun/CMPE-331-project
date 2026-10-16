@@ -1,6 +1,6 @@
 # CMPE-331-project – CampusEvent
 
-A social sports-matching platform for university students to organize, join and track amateur campus sports activities.
+A campus event platform for university students to organize, join and track events of any kind (sports, study groups, game nights, club meetings and more).
 
 ## Documents
 - [Project Charter](docs/CHARTER.MD)

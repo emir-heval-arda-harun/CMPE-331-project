@@ -5,17 +5,15 @@ flowchart TD
     n1_3["1.3 Requirement Analysis<br/>Heval & Onur<br/>Due Oct 18<br/>Dur 7d | ES 21 EF 28<br/>LS 21 LF 28 | Slack 0"]
     n2_1["2.1 Cloud Infra Plan<br/>Onur<br/>Dur 24d | ES 28 EF 52<br/>LS 30 LF 54 | Slack 2"]
     n2_2["2.2 API & ER Diagrams<br/>Heval & Harun<br/>Dur 25d | ES 28 EF 53<br/>LS 29 LF 54 | Slack 1"]
-    n2_3["2.3 UI/UX & AI Logic<br/>E.Arda & Emir<br/>Dur 26d | ES 28 EF 54<br/>LS 28 LF 54 | Slack 0"]
+    n2_3["2.3 UI/UX Design<br/>E.Arda & Emir<br/>Dur 26d | ES 28 EF 54<br/>LS 28 LF 54 | Slack 0"]
     n2_4["2.4 Software Design Report<br/>All<br/>Due Nov 15<br/>Dur 3d | ES 54 EF 57<br/>LS 54 LF 57 | Slack 0"]
     n3_1["3.1 DB Integration<br/>Heval<br/>Dur 3d | ES 57 EF 60<br/>LS 57 LF 60 | Slack 0"]
-    n3_2["3.2 AI Matchmaking<br/>Emir<br/>Dur 5d | ES 57 EF 62<br/>LS 58 LF 63 | Slack 1"]
-    n3_3["3.3 Backend - Accounts & Profiles<br/>Heval<br/>Dur 3d | ES 60 EF 63<br/>LS 60 LF 63 | Slack 0"]
-    n3_4["3.4 Backend - Tournaments<br/>Harun<br/>Dur 3d | ES 60 EF 63<br/>LS 61 LF 64 | Slack 1"]
-    n3_5["3.5 Backend - Facilities<br/>E.Arda<br/>Dur 3d | ES 60 EF 63<br/>LS 61 LF 64 | Slack 1"]
-    n3_6["3.6 Backend - Matches<br/>E.Arda<br/>Dur 3d | ES 63 EF 66<br/>LS 65 LF 68 | Slack 2"]
-    n3_7["3.7 Web UI - Accounts, Profiles & Matches<br/>Emir<br/>Dur 5d | ES 63 EF 68<br/>LS 63 LF 68 | Slack 0"]
-    n3_8["3.8 Web UI - Facilities & Tournaments<br/>Harun<br/>Dur 4d | ES 63 EF 67<br/>LS 64 LF 68 | Slack 1"]
-    n3_9["3.9 CI/CD Pipeline Setup<br/>Onur<br/>Dur 4d | ES 57 EF 61<br/>LS 64 LF 68 | Slack 7"]
+    n3_2["3.2 Backend - Accounts & Profiles<br/>Heval<br/>Dur 3d | ES 60 EF 63<br/>LS 60 LF 63 | Slack 0"]
+    n3_3["3.3 Backend - Facilities<br/>Harun<br/>Dur 3d | ES 60 EF 63<br/>LS 61 LF 64 | Slack 1"]
+    n3_4["3.4 Backend - Events<br/>E.Arda<br/>Dur 3d | ES 63 EF 66<br/>LS 65 LF 68 | Slack 2"]
+    n3_5["3.5 Web UI - Accounts, Profiles & Events<br/>Emir<br/>Dur 5d | ES 63 EF 68<br/>LS 63 LF 68 | Slack 0"]
+    n3_6["3.6 Web UI - Facilities<br/>Harun<br/>Dur 4d | ES 63 EF 67<br/>LS 64 LF 68 | Slack 1"]
+    n3_7["3.7 CI/CD Pipeline Setup<br/>Onur<br/>Dur 4d | ES 57 EF 61<br/>LS 64 LF 68 | Slack 7"]
     n4_1["4.1 Software Testing Report<br/>All<br/>Due Nov 22<br/>Dur 1d | ES 63 EF 64<br/>LS 70 LF 71 | Slack 7"]
     n4_2["4.2 Integration Testing & Bug Fixing<br/>All<br/>Dur 2d | ES 68 EF 70<br/>LS 69 LF 71 | Slack 1"]
     n4_3["4.3 Documentation & Presentation Prep<br/>All<br/>Dur 2d | ES 68 EF 70<br/>LS 69 LF 71 | Slack 1"]
@@ -30,31 +28,25 @@ flowchart TD
     n2_2 --> n2_4
     n2_3 --> n2_4
     n2_4 --> n3_1
-    n2_4 --> n3_2
+    n3_1 --> n3_2
     n3_1 --> n3_3
-    n3_1 --> n3_4
-    n3_1 --> n3_5
+    n3_2 --> n3_4
+    n3_3 --> n3_4
+    n3_2 --> n3_5
     n3_3 --> n3_6
-    n3_5 --> n3_6
-    n3_2 --> n3_7
-    n3_3 --> n3_7
-    n3_4 --> n3_8
-    n3_5 --> n3_8
-    n2_4 --> n3_9
+    n2_4 --> n3_7
     n3_2 --> n4_1
     n3_3 --> n4_1
-    n3_4 --> n4_1
-    n3_5 --> n4_1
+    n3_4 --> n4_2
+    n3_5 --> n4_2
     n3_6 --> n4_2
     n3_7 --> n4_2
-    n3_8 --> n4_2
-    n3_9 --> n4_2
-    n3_7 --> n4_3
-    n3_8 --> n4_3
+    n3_5 --> n4_3
+    n3_6 --> n4_3
+    n3_4 --> n4_4
+    n3_5 --> n4_4
     n3_6 --> n4_4
     n3_7 --> n4_4
-    n3_8 --> n4_4
-    n3_9 --> n4_4
     n4_1 --> n4_5
     n4_2 --> n4_5
     n4_3 --> n4_5
@@ -63,7 +55,7 @@ flowchart TD
     classDef crit fill:#ff9a64,stroke:#c2410c,stroke-width:3px,color:#111
     classDef norm fill:#ffffff,stroke:#333,stroke-width:1.5px,color:#111
     classDef leg fill:#f5f5f5,stroke:#999,stroke-dasharray:4 3,color:#333
-    class n1_1,n1_2,n1_3,n2_3,n2_4,n3_1,n3_3,n3_7,n4_4,n4_5 crit
-    class n2_1,n2_2,n3_2,n3_4,n3_5,n3_6,n3_8,n3_9,n4_1,n4_2,n4_3 norm
+    class n1_1,n1_2,n1_3,n2_3,n2_4,n3_1,n3_2,n3_5,n4_4,n4_5 crit
+    class n2_1,n2_2,n3_3,n3_4,n3_6,n3_7,n4_1,n4_2,n4_3 norm
     class legend leg
-    linkStyle 0,1,4,7,8,10,16,31,37 stroke:#c2410c,stroke-width:4px
+    linkStyle 0,1,4,7,8,9,13,25,31 stroke:#c2410c,stroke-width:4px

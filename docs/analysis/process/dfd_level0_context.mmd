@@ -1,18 +1,12 @@
 flowchart LR
     stu[Student]:::ext
-    club[Club representative]:::ext
     staff[Facility staff]:::ext
     mail[E-mail service]:::ext
-    ai[Gemini Pro AI service]:::ext
     sys((0 CampusEvent system))
-    stu -- registration data, login, profile, match requests, join and leave requests --> sys
-    sys -- match lists, schedules, teams, history --> stu
-    club -- tournament data, scores --> sys
-    sys -- bracket, results --> club
-    staff -- facilities, blocked periods --> sys
+    stu -- registration data, login, profile, event requests, join and leave requests --> sys
+    sys -- event lists, schedules, history --> stu
+    staff -- facilities with capacity, blocked periods --> sys
     sys -- facility schedule --> staff
     sys -- verification code request --> mail
     mail -- delivery status --> sys
-    sys -- profile data without names or e-mail --> ai
-    ai -- skill ratings --> sys
     classDef ext fill:#fff4e6,stroke:#c96a1b
