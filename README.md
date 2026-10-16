@@ -7,7 +7,7 @@ A social sports-matching platform for university students to organize, join and 
 - [Project plan (WBS, Gantt & PERT)](docs/plan/README.md)
 - [Use cases](docs/requirements/README.md)
 - [Requirements Specification Report](docs/requirements_specification.md)
-- [Requirement Analysis Report](docs/requirement_analysis_report.md) and [analysis models](docs/analysis/README.md)
+- [Requirement Analysis Report](docs/requirement_analysis_report.md), [analysis models, BPD, DFD](docs/analysis/README.md) and [UI mockups](docs/analysis/ui/README.md)
 
 ## Running the requirement tests
 ```bash

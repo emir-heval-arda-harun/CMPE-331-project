@@ -20,7 +20,7 @@ The student opens a facility page, or a match is being created (UC-04).
 
 ## Main Success Scenario
 1. The student selects a facility and a day.
-2. The system shows all busy slots: staff blocks (UC-12) and scheduled matches.
+2. The system shows all busy slots: staff blocks (UC-12), scheduled matches and tournament games that have a facility slot. Cancelled matches (UC-15) do not occupy a slot.
 3. When a match is being created, the system checks the requested slot against all busy slots.
 4. If there is no overlap, the slot is reported as available.
 

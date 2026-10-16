@@ -1,0 +1,21 @@
+sequenceDiagram
+    actor S as Student
+    participant W as Web app
+    participant PS as Profile service
+    participant D as Database
+
+    S->>W: Open My Profile
+    W->>PS: getProfile(userId)
+    PS->>D: Read profile sports and availability
+    D-->>PS: profile data
+    PS-->>W: Current profile
+    S->>W: Sports, skill level per sport, availability slots
+    W->>PS: updateProfile(userId, sports, availability)
+    alt No sport selected or slot end before start
+        PS-->>W: Validation error
+        W-->>S: Show message, nothing saved
+    else Valid
+        PS->>D: Replace PROFILE_SPORT and AVAILABILITY_SLOT rows
+        PS-->>W: Saved
+        W-->>S: Show updated profile
+    end

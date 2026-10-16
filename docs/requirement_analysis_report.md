@@ -4,32 +4,35 @@
 **Group:** 14
 **Team:** Heval Hüseyin Demir, Emre Arda Kum, Emir Gül, Harun Gündaş, Onur Alioğlu
 **Repository:** https://github.com/emir-heval-arda-harun/CMPE-331-project
-**Version:** 1.0 – 12.10.2026 (deadline 18.10.2026 23:59)
+**Version:** 1.1 – 16.10.2026 (deadline 18.10.2026 23:59)
 
 ---
 
 ## 1. Introduction
 
 ### 1.1 Purpose
-The [Requirements Specification](requirements_specification.md) states **what** CampusEvent must do in 13 use cases (UC-01 to UC-13). This report **analyzes** those requirements. It builds the conceptual and data models, shows how the system behaves in the important scenarios, collects the business rules, and lists the gaps and risks found in the requirements. The Software Design Report will take these results as its input.
+The [Requirements Specification](requirements_specification.md) states **what** CampusEvent must do in 15 use cases (UC-01 to UC-15). This report **analyzes** those requirements. It builds the conceptual and data models, shows how the system behaves in the important scenarios, collects the business rules, and lists the gaps and risks found in the requirements. The Software Design Report will take these results as its input.
 
 ### 1.2 Method
 Each use case was read together with the domain classes in [`src/campusevent/models.py`](../src/campusevent/models.py). From them we derived:
 
-1. a conceptual class model (section 2),
+1. a conceptual class model, business process diagrams (BPD) and data flow diagrams (DFD) (section 2),
 2. a data model with an E-R diagram and data dictionary (section 3),
-3. sequence and state diagrams for the critical behavior (section 4),
+3. sequence and state diagrams for every use case (section 4),
 4. a consolidated list of business rules (section 5),
-5. open issues and risks with decisions (sections 6 and 7).
+5. open issues and risks with decisions (sections 6 and 7),
+6. a consistency check between requirements and models (section 9) and preliminary UI mockups (section 10).
 
-Items marked **(proposed)** are not in the Requirements Specification yet. They are analysis proposals that will be added to the use cases during design.
+All diagrams are also stored as separate files (Mermaid source, PNG, SVG) in [`analysis/`](analysis/README.md).
+
+Items marked **(proposed)** are analysis proposals that are not part of a use case yet and will be decided during design. The decisions F-01 to F-05 are already applied to the requirements and models (section 9).
 
 ### 1.3 Inputs
 | Document | Location |
 |---|---|
 | Project Charter | [CHARTER.MD](CHARTER.MD) |
 | Requirements Specification | [requirements_specification.md](requirements_specification.md) |
-| Use cases UC-01 … UC-13 | [requirements/](requirements/README.md) |
+| Use cases UC-01 … UC-15 | [requirements/](requirements/README.md) |
 | Domain classes | [`src/campusevent/models.py`](../src/campusevent/models.py) |
 
 ---
@@ -39,7 +42,7 @@ Items marked **(proposed)** are not in the Requirements Specification yet. They 
 ### 2.1 Actors and use-case relations
 | Actor | Use cases |
 |---|---|
-| Student | UC-01, 02, 03, 04, 05, 06, 07 (as organizer), 11, 13 |
+| Student | UC-01 to UC-07 (UC-04, 07, 15 as organizer), UC-11, UC-13, UC-14 |
 | Club Representative | UC-02, 08, 09, 10 |
 | Facility Staff | UC-02, 12 |
 | Gemini Pro (external) | UC-07 |
@@ -48,7 +51,7 @@ Items marked **(proposed)** are not in the Requirements Specification yet. They 
 Relations between use cases: UC-04 **includes** UC-11 (facility check). UC-06 **extends** UC-05 (join from the match list). UC-09 needs the tournament from UC-08, and UC-10 needs the bracket from UC-09.
 
 ### 2.2 Domain class model
-The model below comes from `models.py` and is extended with the relations the use cases imply.
+The model below comes from `models.py` and is extended with the relations the use cases imply. Compared with the first version it now also contains `Sport`, `Team`, `Participation` (with the team number of UC-07) and `VerificationCode`, the number of teams of a match (F-02), the stored AI ratings of a profile (F-05) and the optional facility slot of a bracket game (F-04), so that it matches the E-R diagram.
 
 ```mermaid
 classDiagram
@@ -62,6 +65,23 @@ classDiagram
     class Profile {
         +int userId
         +map sports
+        +map aiRatings
+    }
+    class Sport {
+        +string name
+    }
+    class VerificationCode {
+        +string codeHash
+        +datetime expiresAt
+        +bool used
+    }
+    class Participation {
+        +datetime joinedAt
+        +int teamNo
+    }
+    class Team {
+        +int id
+        +string name
     }
     class TimeSlot {
         +datetime start
@@ -71,30 +91,29 @@ classDiagram
     class Facility {
         +int id
         +string name
-        +list sports
     }
     class FacilityBlock {
         +string reason
+        +TimeSlot slot
     }
     class Match {
         +int id
-        +string sport
         +int capacity
+        +int teamCount
         +SkillLevel skillLevel
         +MatchStatus status
+        +TimeSlot slot
     }
     class Tournament {
         +int id
         +string name
-        +string sport
-        +string champion
     }
     class BracketMatch {
         +int id
         +int roundNumber
+        +int position
         +int scoreA
         +int scoreB
-        +string winner
     }
     class ActivityRecord {
         +int matchId
@@ -122,17 +141,25 @@ classDiagram
 
     User "1" --> "0..1" Profile : has
     User --> Role
+    User "1" --> "*" VerificationCode : receives
     Profile --> SkillLevel : skill per sport
+    Profile "*" --> "*" Sport : rated in
     Profile "1" o-- "*" TimeSlot : availability
     User "1" --> "*" Match : organizes
-    Match "*" --> "*" User : participants
-    Match --> TimeSlot
+    Match "1" *-- "*" Participation : participants
+    Participation "*" --> "1" User
+    Match "*" --> "1" Sport
     Match "*" --> "1" Facility : played at
     Match --> MatchStatus
+    Facility "*" --> "*" Sport : supports
     Facility "1" o-- "*" FacilityBlock : blocked periods
-    FacilityBlock --> TimeSlot
     User "1" --> "*" Tournament : organizes
+    Tournament "1" *-- "*" Team : registers
+    Tournament "*" --> "1" Sport
     Tournament "1" *-- "*" BracketMatch : bracket
+    BracketMatch "*" --> "0..2" Team : plays
+    BracketMatch "*" --> "0..1" Team : winner
+    BracketMatch "*" --> "0..1" Facility : optional slot
     User "1" --> "*" ActivityRecord : history
 ```
 
@@ -147,16 +174,51 @@ classDiagram
 | Bye | A free pass to round 2 for a team without an opponent in round 1 |
 | Team rating | The sum of the numeric skill ratings of the players in a team |
 
+### 2.4 Business process models (BPD)
+The business process diagrams show who does what in the important processes. Each lane is an actor or the system; diamonds are decisions.
+
+![BPD 1: account registration and profile setup](analysis/process/bpd_account_onboarding.png)
+*Files: [png](analysis/process/bpd_account_onboarding.png), [svg](analysis/process/bpd_account_onboarding.svg)*
+
+![BPD 2: organizing and playing a match](analysis/process/bpd_match_lifecycle.png)
+*Files: [png](analysis/process/bpd_match_lifecycle.png), [svg](analysis/process/bpd_match_lifecycle.svg)*
+
+![BPD 3: running a tournament](analysis/process/bpd_tournament.png)
+*Files: [png](analysis/process/bpd_tournament.png), [svg](analysis/process/bpd_tournament.svg)*
+
+![BPD 4: facility schedule and conflict check](analysis/process/bpd_facility_management.png)
+*Files: [png](analysis/process/bpd_facility_management.png), [svg](analysis/process/bpd_facility_management.svg)*
+
+### 2.5 Data flow models (DFD)
+The context diagram (level 0) shows CampusEvent as one process with its five external parties. Level 1 splits it into six processes and five data stores. Data flows to the AI service never contain names or e-mail addresses (BR-03).
+
+![DFD level 0: context diagram](analysis/process/dfd_level0_context.png)
+*Files: [png](analysis/process/dfd_level0_context.png), [mermaid source](analysis/process/dfd_level0_context.mmd)*
+
+![DFD level 1](analysis/process/dfd_level1.png)
+*Files: [png](analysis/process/dfd_level1.png), [svg](analysis/process/dfd_level1.svg)*
+
+| Process | Use cases | Data stores used |
+|---|---|---|
+| 1.0 Manage accounts and profiles | UC-01, UC-02, UC-03 | D1, D2 |
+| 2.0 Manage matches | UC-04, UC-05, UC-06, UC-14, UC-15 | D3, D4 |
+| 3.0 Balance teams | UC-07 | D2, D3 |
+| 4.0 Manage tournaments | UC-08, UC-09, UC-10 | D5, D4 |
+| 5.0 Manage facility schedule | UC-11, UC-12 | D4 |
+| 6.0 Show activity history | UC-13 | D3 |
+
 ---
 
 ## 3. Data Analysis
 
 ### 3.1 E-R diagram
-The class model keeps sports and teams as plain strings. For a database this is not enough: sports must be shared by profiles, facilities, matches and tournaments, and tournament teams need their own identity so that bracket games can reference them. The E-R diagram therefore adds `SPORT`, `TEAM` and link tables **(proposed)**.
+The class model keeps sports and teams as plain strings. For a database this is not enough: sports must be shared by profiles, facilities, matches and tournaments, and tournament teams need their own identity so that bracket games can reference them. The E-R diagram therefore adds `SPORT`, `TEAM` and link tables.
 
 ```mermaid
 erDiagram
     USER ||--o{ VERIFICATION_CODE : receives
+    USER ||--o{ FACILITY : manages
+    USER ||--o{ FACILITY_BLOCK : "creates"
     USER ||--o{ PROFILE_SPORT : declares
     SPORT ||--o{ PROFILE_SPORT : "rated in"
     USER ||--o{ AVAILABILITY_SLOT : offers
@@ -172,7 +234,12 @@ erDiagram
     SPORT ||--o{ TOURNAMENT : "played in"
     TOURNAMENT ||--o{ TEAM : registers
     TOURNAMENT ||--o{ BRACKET_MATCH : contains
-    TEAM ||--o{ BRACKET_MATCH : plays
+    TEAM |o--o{ BRACKET_MATCH : "plays as team A"
+    TEAM |o--o{ BRACKET_MATCH : "plays as team B"
+    TEAM |o--o{ BRACKET_MATCH : "wins"
+    TEAM |o--o| TOURNAMENT : "is champion of"
+    BRACKET_MATCH |o--o| BRACKET_MATCH : "winner advances to"
+    FACILITY |o--o{ BRACKET_MATCH : "optionally hosts"
 
     USER {
         int id PK
@@ -197,6 +264,7 @@ erDiagram
         int user_id PK
         int sport_id PK
         int skill_level
+        float ai_rating
     }
     AVAILABILITY_SLOT {
         int id PK
@@ -206,6 +274,7 @@ erDiagram
     }
     FACILITY {
         int id PK
+        int manager_id FK
         string name UK
     }
     FACILITY_SPORT {
@@ -215,6 +284,7 @@ erDiagram
     FACILITY_BLOCK {
         int id PK
         int facility_id FK
+        int created_by FK
         datetime start_time
         datetime end_time
         string reason
@@ -227,6 +297,7 @@ erDiagram
         datetime start_time
         datetime end_time
         int capacity
+        int team_count
         int skill_level
         string status
     }
@@ -259,6 +330,9 @@ erDiagram
         int score_b
         int winner_team_id FK
         int next_match_id FK
+        int facility_id FK
+        datetime start_time
+        datetime end_time
     }
 ```
 
@@ -270,15 +344,20 @@ erDiagram
 | USER | `email` unique; domain must be `bilgiedu.net` or `bilgi.edu.tr`; `password_hash` is never plain text | UC-01, BR-01, BR-02 |
 | USER | `role` is one of student, club_representative, facility_staff | `Role` enum |
 | PROFILE_SPORT | One row per user and sport; `skill_level` is 1 to 3; a profile needs at least one row | UC-03 |
+| PROFILE_SPORT | `ai_rating` holds the last AI rating of this sport (empty until UC-07 ran) | UC-07, F-05 |
+| FACILITY | `manager_id` is a user with the facility staff role | UC-12, F-03 |
+| FACILITY_BLOCK | `created_by` is the facility staff member who blocked the time | UC-12 |
 | AVAILABILITY_SLOT | `end_time` is after `start_time` | UC-03 alt. 6b |
 | FACILITY_SPORT | A facility supports at least one sport | UC-12 |
 | FACILITY_BLOCK | `end_time` is after `start_time`; blocks of one facility must not overlap each other | UC-11, 12 |
 | MATCH | `capacity` is at least 2; the facility must support the sport; the time slot must not overlap any block or other match of the same facility | UC-04, UC-11 |
+| MATCH | `team_count` is at least 2 (default 2) and `capacity` is at least `team_count` × 2 | UC-04, UC-07, F-02 |
 | MATCH | `status` is one of open, full, completed, cancelled | `MatchStatus` enum |
 | MATCH_PARTICIPANT | A user can join a match only once (composite key); number of rows is at most `capacity` | UC-06 |
 | MATCH_PARTICIPANT | `team_no` is set by UC-07; team sizes differ by at most 1 | UC-07 |
 | TOURNAMENT | At least 2 teams before a bracket can be generated | UC-08, UC-09 |
 | TEAM | Team name unique inside a tournament | UC-08 alt. 3a |
+| BRACKET_MATCH | `facility_id`, `start_time` and `end_time` are optional; if set, the slot counts as busy for UC-11 | UC-11, F-04 |
 | BRACKET_MATCH | `round_number` and `position` unique per tournament; `score_a` and `score_b` must differ; `winner_team_id` is one of the two teams | UC-09, UC-10 |
 
 ### 3.3 Design notes for the database
@@ -399,7 +478,7 @@ sequenceDiagram
 
 ### 4.5 State diagrams
 
-**Match** (UC-04, UC-06, UC-13). Transitions marked *(proposed)* have no use case yet; the use cases for them were decided in F-01.
+**Match** (UC-04, UC-06, UC-13). Leaving (UC-14) and cancelling (UC-15) are use cases since F-01 was applied; the transition to Completed happens automatically when the end time has passed.
 ```mermaid
 stateDiagram-v2
     [*] --> Open : UC-04 match created
@@ -440,6 +519,61 @@ stateDiagram-v2
 
 *Diagram files: [`state_tournament.png`](analysis/behavior/state_tournament.png), [source `state_tournament.mmd`](analysis/behavior/state_tournament.mmd)*
 
+### 4.6 Sequence diagrams of the remaining use cases
+
+**UC-02 Log in**
+
+![UC-02 Log in](analysis/behavior/sequence_uc02_login.png)
+*Files: [png](analysis/behavior/sequence_uc02_login.png), [source](analysis/behavior/sequence_uc02_login.mmd)*
+
+**UC-03 Manage profile**
+
+![UC-03 Manage profile](analysis/behavior/sequence_uc03_manage_profile.png)
+*Files: [png](analysis/behavior/sequence_uc03_manage_profile.png), [source](analysis/behavior/sequence_uc03_manage_profile.mmd)*
+
+**UC-05, UC-06 Browse, filter and join**
+
+![UC-05, UC-06 Browse, filter and join](analysis/behavior/sequence_uc05_uc06_browse_and_join.png)
+*Files: [png](analysis/behavior/sequence_uc05_uc06_browse_and_join.png), [source](analysis/behavior/sequence_uc05_uc06_browse_and_join.mmd)*
+
+**UC-08, UC-09 Create tournament and generate bracket**
+
+![UC-08, UC-09 Create tournament and generate bracket](analysis/behavior/sequence_uc08_uc09_tournament_and_bracket.png)
+*Files: [png](analysis/behavior/sequence_uc08_uc09_tournament_and_bracket.png), [source](analysis/behavior/sequence_uc08_uc09_tournament_and_bracket.mmd)*
+
+**UC-12 Manage facility schedule**
+
+![UC-12 Manage facility schedule](analysis/behavior/sequence_uc12_manage_facility_schedule.png)
+*Files: [png](analysis/behavior/sequence_uc12_manage_facility_schedule.png), [source](analysis/behavior/sequence_uc12_manage_facility_schedule.mmd)*
+
+**UC-13 Track activity history**
+
+![UC-13 Track activity history](analysis/behavior/sequence_uc13_activity_history.png)
+*Files: [png](analysis/behavior/sequence_uc13_activity_history.png), [source](analysis/behavior/sequence_uc13_activity_history.mmd)*
+
+**UC-14, UC-15 Leave and cancel a match**
+
+![UC-14, UC-15 Leave and cancel a match](analysis/behavior/sequence_uc14_uc15_leave_and_cancel.png)
+*Files: [png](analysis/behavior/sequence_uc14_uc15_leave_and_cancel.png), [source](analysis/behavior/sequence_uc14_uc15_leave_and_cancel.mmd)*
+
+### 4.7 Behavior model coverage
+Every use case has at least one behavioral model.
+
+| Use case | Model |
+|---|---|
+| UC-01 | Sequence 4.1, account state 4.5, BPD 1 |
+| UC-02 | Sequence 4.6, account state 4.5, BPD 1 |
+| UC-03 | Sequence 4.6, BPD 1 |
+| UC-04 | Sequence 4.2, match state 4.5, BPD 2 |
+| UC-05, UC-06 | Sequence 4.6, match state 4.5, BPD 2 |
+| UC-07 | Sequence 4.3, BPD 2 |
+| UC-08, UC-09 | Sequence 4.6, tournament state 4.5, BPD 3 |
+| UC-10 | Sequence 4.4, tournament state 4.5, BPD 3 |
+| UC-11 | Sequence 4.2, BPD 4 |
+| UC-12 | Sequence 4.6, BPD 4 |
+| UC-13 | Sequence 4.6, match state 4.5 |
+| UC-14, UC-15 | Sequence 4.6, match state 4.5, BPD 2 |
+
 ---
 
 ## 5. Business Rules
@@ -459,6 +593,8 @@ stateDiagram-v2
 | BR-11 | Every team appears exactly once in round 1, as a player or with a bye **(derived)** | UC-09 |
 | BR-12 | Every participant belongs to exactly one team after balancing; sizes differ by at most 1 **(derived)** | UC-07 |
 | BR-13 | The history shows only completed matches, newest first **(derived)** | UC-13 |
+| BR-14 | An organizer cannot leave their own match; the match has to be cancelled | UC-14 |
+| BR-15 | A cancelled match never appears in the activity history and does not occupy its facility slot | UC-15, UC-11, UC-13 |
 
 ---
 
@@ -468,11 +604,11 @@ Reading the use cases against each other showed the following gaps. Each has a d
 
 | # | Finding | Why it matters | Decision |
 |---|---|---|---|
-| F-01 | `MatchStatus` has Completed and Cancelled, but no use case completes, cancels or leaves a match | UC-13 lists completed matches, so something must set that status | Add small use cases: leave match, cancel match. Mark a match Completed automatically when its end time has passed |
-| F-02 | UC-07 needs "teams × 2" players, but no use case defines the number of teams of a match | The balancing algorithm needs the team count | Add `team_count` (default 2) to the match in UC-04 |
-| F-03 | Nothing says how a user becomes a Club Representative or Facility Staff | Roles protect UC-08 to UC-12, so they must come from somewhere | Roles are assigned by an administrator or loaded as seed data for the demo; document this as an assumption |
-| F-04 | Tournament teams are plain names with no users, and bracket games have no facility or time | The charter lists facility coordination, but tournament games ignore it | For the MVP keep teams as names, and add an optional facility slot to a bracket game so UC-11 also protects tournament games |
-| F-05 | The AI returns a rating, but no place stores it | Ratings would be recomputed on every balancing and cannot be checked later | Store the last rating per user and sport in `PROFILE_SPORT` (optional column) |
+| F-01 | `MatchStatus` has Completed and Cancelled, but no use case completes, cancels or leaves a match | UC-13 lists completed matches, so something must set that status | Add small use cases: leave match, cancel match. Mark a match Completed automatically when its end time has passed **Applied** (section 9) |
+| F-02 | UC-07 needs "teams × 2" players, but no use case defines the number of teams of a match | The balancing algorithm needs the team count | Add `team_count` (default 2) to the match in UC-04 **Applied** (section 9) |
+| F-03 | Nothing says how a user becomes a Club Representative or Facility Staff | Roles protect UC-08 to UC-12, so they must come from somewhere | Roles are assigned by an administrator or loaded as seed data for the demo; document this as an assumption **Applied** (section 9) |
+| F-04 | Tournament teams are plain names with no users, and bracket games have no facility or time | The charter lists facility coordination, but tournament games ignore it | For the MVP keep teams as names, and add an optional facility slot to a bracket game so UC-11 also protects tournament games **Applied** (section 9) |
+| F-05 | The AI returns a rating, but no place stores it | Ratings would be recomputed on every balancing and cannot be checked later | Store the last rating per user and sport in `PROFILE_SPORT` (optional column) **Applied** (section 9) |
 | F-06 | Password reset is missing | A forgotten password locks the account | Add as a Low priority use case, or declare it out of scope |
 | F-07 | Charter lists Python and Java as backend, the specification and code use Python only | Two languages would split the team's effort | Confirm Python as the single backend language and update the charter |
 | F-08 | The charter's out-of-scope list says communication is "text-based chat", the specification says in-app chat is out of scope | The two documents contradict each other | Treat chat as out of scope and correct the charter wording |
@@ -510,10 +646,75 @@ Reading the use cases against each other showed the following gaps. Each has a d
 | UC-10 | Sequence 4.4, entity BRACKET_MATCH (`next_match_id`), BR-10 |
 | UC-11 | Sequence 4.2, entities FACILITY_BLOCK and MATCH, BR-06, R-02 |
 | UC-12 | Entities FACILITY, FACILITY_SPORT and FACILITY_BLOCK, BR-09, F-03 |
-| UC-13 | Match state 4.5, BR-13, F-01, F-10 |
+| UC-13 | Match state 4.5, BR-13, BR-15, F-01, F-10 |
+| UC-14 | Sequence 4.6, match state 4.5, BR-14, F-01 |
+| UC-15 | Sequence 4.6, match state 4.5, BR-15, F-01 |
 
 ---
 
-## 9. Conclusion
+## 9. Consistency Check between Requirements and Models
+The requirements (use cases, tests, specification) and the analysis models were compared one by one. The differences found and what was changed:
 
-The 13 use cases form a consistent base for design. The analysis added a database-ready data model, four sequence diagrams for the critical flows, state diagrams for matches, accounts and tournaments, 13 business rules, 10 findings and 6 risks. Findings F-01 to F-05 were decided by the team because they change use cases and data structures; the rest will be decided during design.
+| # | Difference found | Change |
+|---|---|---|
+| 1 | The match state diagram had transitions (leave, cancel) without a use case (F-01) | New use cases [UC-14](requirements/UC-14_leave_match.md) and [UC-15](requirements/UC-15_cancel_match.md), tests, use case diagram, specification and traceability updated |
+| 2 | UC-07 needs "teams × 2" players, but UC-04 had no number of teams (F-02) | UC-04 asks for the number of teams; `team_count` added to `Match`, MATCH and the tests |
+| 3 | The AI rating of UC-07 was not stored anywhere (F-05) | UC-07 step 3 stores it; `ai_ratings` in `Profile`, `ai_rating` in PROFILE_SPORT |
+| 4 | The domain model used plain strings for sports and teams while the E-R diagram had SPORT and TEAM | Domain model now has `Sport`, `Team`, `Participation` and `VerificationCode` |
+| 5 | E-R: no relation for the champion, the three team roles of a bracket game, the next game and the optional facility slot (F-04) | Added `TEAM` relations (team A, team B, winner, champion), `BRACKET_MATCH` self relation and `FACILITY` relation; columns `facility_id`, `start_time`, `end_time` |
+| 6 | E-R: nobody was linked to facilities and blocks, although UC-12 is done by facility staff (F-03) | Relations `USER manages FACILITY` and `USER creates FACILITY_BLOCK` (`manager_id`, `created_by`) |
+| 7 | UC-11 only knew matches and blocks as busy slots | UC-11 also counts tournament games with a slot and ignores cancelled matches |
+| 8 | UC-13 did not say what happens to cancelled matches | UC-13 and BR-15: cancelled matches are never shown |
+| 9 | Roles of club representatives and facility staff had no source (F-03) | Assumption A-04 in the Requirements Specification and in UC-12 |
+| 10 | Only 4 of 13 use cases had a behavioral model | All 15 use cases are covered (section 4.7) |
+
+Test counts after the change: 54 tests (43 use case tests and 11 non-functional tests), all failing by design.
+
+## 10. Preliminary UI Mockups
+The frontend design starts with low-fidelity mockups of the main screens. They are plain HTML pages ([`analysis/ui/`](analysis/ui/README.md)); the final design will be refined with the team. Yellow notes show error cases and rules from the use cases. NFR-01 requires a responsive layout, so a 390 px mobile view is included.
+
+**UC-01 Sign up and verify**
+
+![UC-01 Sign up and verify](analysis/ui/01_sign_up.png)
+
+**UC-02 Log in**
+
+![UC-02 Log in](analysis/ui/02_log_in.png)
+
+**UC-03 My profile**
+
+![UC-03 My profile](analysis/ui/03_my_profile.png)
+
+**UC-05, UC-06 Find a match**
+
+![UC-05, UC-06 Find a match](analysis/ui/04_find_match.png)
+
+**UC-06, UC-07, UC-14, UC-15 Match details**
+
+![UC-06, UC-07, UC-14, UC-15 Match details](analysis/ui/05_match_details.png)
+
+**UC-04, UC-11 Create match**
+
+![UC-04, UC-11 Create match](analysis/ui/06_create_match.png)
+
+**UC-08, UC-09, UC-10 Tournament bracket**
+
+![UC-08, UC-09, UC-10 Tournament bracket](analysis/ui/07_tournament.png)
+
+**UC-11, UC-12 Facility management**
+
+![UC-11, UC-12 Facility management](analysis/ui/08_facility_management.png)
+
+**UC-13 My activities**
+
+![UC-13 My activities](analysis/ui/09_my_activities.png)
+
+**NFR-01 Find a match on a phone (390 px)**
+
+![NFR-01 Find a match on a phone (390 px)](analysis/ui/10_find_match_mobile.png)
+
+---
+
+## 11. Conclusion
+
+The 15 use cases form a consistent base for design. The analysis added a database-ready data model, business process and data flow diagrams, eleven sequence diagrams and three state diagrams that cover every use case, ten UI mockups, 15 business rules, 10 findings and 6 risks. Findings F-01 to F-05 were decided by the team because they change use cases and data structures; the rest will be decided during design.

@@ -10,7 +10,7 @@
 The WBS, the Gantt chart and the PERT chart show the same 21 tasks, owners and dates. The charts are drawn with Mermaid from the `.mmd` source files. To change a chart, edit its `.mmd` file and render it again.
 
 ## Work Breakdown Structure (WBS)
-The project is split into four work packages: 1.0 Planning & Analysis, 2.0 Software Design, 3.0 Implementation and 4.0 Testing & Delivery. Every use case (UC-01 to UC-13) is covered by a backend task and a web UI task in 3.0.
+The project is split into four work packages: 1.0 Planning & Analysis, 2.0 Software Design, 3.0 Implementation and 4.0 Testing & Delivery. Every use case (UC-01 to UC-15) is covered by a backend task and a web UI task in 3.0.
 
 ![WBS diagram](WBS_Diagram.png)
 

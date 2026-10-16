@@ -18,6 +18,19 @@ def test_student_creates_match_and_joins_it_as_organizer(app, email_sender):
     assert match in app.matches.search_matches(sport="football")
 
 
+def test_match_has_two_teams_by_default_and_a_custom_team_count(app, email_sender):
+    organizer = verified_user(app, email_sender, "mert@bilgiedu.net")
+    pitch = football_pitch(app, email_sender)
+
+    default = app.matches.create_match(organizer.id, "football", pitch.id, slot(), 10, SkillLevel.INTERMEDIATE)
+    three = app.matches.create_match(
+        organizer.id, "football", pitch.id, slot(day=3), 12, SkillLevel.INTERMEDIATE, team_count=3
+    )
+
+    assert default.team_count == 2
+    assert three.team_count == 3
+
+
 def test_match_with_invalid_capacity_is_rejected(app, email_sender):
     organizer = verified_user(app, email_sender, "mert@bilgiedu.net")
     pitch = football_pitch(app, email_sender)

@@ -21,7 +21,7 @@ The student opens **My Activities**.
 2. Each entry shows the sport, date, time and facility.
 
 ## Alternative Flows
-- **1a. The student has no completed matches:** the system shows an empty list. Upcoming matches are not shown in the history.
+- **1a. The student has no completed matches:** the system shows an empty list. Upcoming and cancelled matches (UC-15) are not shown in the history.
 
 ## Postconditions
 - None (read-only use case).

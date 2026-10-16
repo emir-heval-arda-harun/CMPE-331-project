@@ -1,5 +1,7 @@
 erDiagram
     USER ||--o{ VERIFICATION_CODE : receives
+    USER ||--o{ FACILITY : manages
+    USER ||--o{ FACILITY_BLOCK : "creates"
     USER ||--o{ PROFILE_SPORT : declares
     SPORT ||--o{ PROFILE_SPORT : "rated in"
     USER ||--o{ AVAILABILITY_SLOT : offers
@@ -15,7 +17,12 @@ erDiagram
     SPORT ||--o{ TOURNAMENT : "played in"
     TOURNAMENT ||--o{ TEAM : registers
     TOURNAMENT ||--o{ BRACKET_MATCH : contains
-    TEAM ||--o{ BRACKET_MATCH : plays
+    TEAM |o--o{ BRACKET_MATCH : "plays as team A"
+    TEAM |o--o{ BRACKET_MATCH : "plays as team B"
+    TEAM |o--o{ BRACKET_MATCH : "wins"
+    TEAM |o--o| TOURNAMENT : "is champion of"
+    BRACKET_MATCH |o--o| BRACKET_MATCH : "winner advances to"
+    FACILITY |o--o{ BRACKET_MATCH : "optionally hosts"
 
     USER {
         int id PK
@@ -40,6 +47,7 @@ erDiagram
         int user_id PK
         int sport_id PK
         int skill_level
+        float ai_rating
     }
     AVAILABILITY_SLOT {
         int id PK
@@ -49,6 +57,7 @@ erDiagram
     }
     FACILITY {
         int id PK
+        int manager_id FK
         string name UK
     }
     FACILITY_SPORT {
@@ -58,6 +67,7 @@ erDiagram
     FACILITY_BLOCK {
         int id PK
         int facility_id FK
+        int created_by FK
         datetime start_time
         datetime end_time
         string reason
@@ -70,6 +80,7 @@ erDiagram
         datetime start_time
         datetime end_time
         int capacity
+        int team_count
         int skill_level
         string status
     }
@@ -102,4 +113,7 @@ erDiagram
         int score_b
         int winner_team_id FK
         int next_match_id FK
+        int facility_id FK
+        datetime start_time
+        datetime end_time
     }

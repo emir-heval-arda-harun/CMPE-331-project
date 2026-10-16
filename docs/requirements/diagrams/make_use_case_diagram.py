@@ -7,7 +7,7 @@ chromium --headless --screenshot=use_case_diagram.png --window-size=1500,1000 us
 import math
 from pathlib import Path
 
-W, H = 1500, 1000
+W, H = 1500, 1150
 RX, RY = 150, 36
 
 NAMES = {
@@ -24,8 +24,10 @@ NAMES = {
     "UC-09": "Generate Bracket",
     "UC-10": "Record Score &amp; Advance",
     "UC-12": "Manage Facility Schedule",
+    "UC-14": "Leave Match",
+    "UC-15": "Cancel Match",
 }
-COLUMN_A = ["UC-01", "UC-02", "UC-03", "UC-13", "UC-05", "UC-06", "UC-04", "UC-11", "UC-07"]
+COLUMN_A = ["UC-01", "UC-02", "UC-03", "UC-13", "UC-05", "UC-06", "UC-04", "UC-11", "UC-07", "UC-14", "UC-15"]
 POS = {uc: (560, 120 + i * 97) for i, uc in enumerate(COLUMN_A)}
 POS.update({"UC-08": (930, 170), "UC-09": (930, 290), "UC-10": (930, 410), "UC-12": (930, 600)})
 
@@ -66,7 +68,7 @@ def build():
         '<rect width="100%" height="100%" fill="white"/>',
         '<defs><marker id="ar" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">'
         '<path d="M0,0 L10,4 L0,8" fill="none" stroke="#333"/></marker></defs>',
-        '<rect x="370" y="30" width="760" height="950" rx="8" fill="#f7f9fc" stroke="#333" stroke-width="2"/>',
+        '<rect x="370" y="30" width="760" height="1100" rx="8" fill="#f7f9fc" stroke="#333" stroke-width="2"/>',
         '<text x="750" y="60" text-anchor="middle" font-size="22" font-weight="bold">CampusEvent</text>',
     ]
     # Associations end at the ellipse's near edge so they never cross other use cases.

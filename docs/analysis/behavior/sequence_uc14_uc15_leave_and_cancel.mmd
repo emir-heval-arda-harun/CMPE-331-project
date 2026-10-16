@@ -1,0 +1,26 @@
+sequenceDiagram
+    actor P as Participant
+    actor O as Organizer
+    participant W as Web app
+    participant MS as Match service
+    participant D as Database
+
+    P->>W: Leave
+    W->>MS: leaveMatch(matchId, userId)
+    alt Not a participant, or user is the organizer
+        MS-->>W: Refused (organizer must cancel)
+    else Participant
+        MS->>D: Delete MATCH_PARTICIPANT row
+        opt Match was full
+            MS->>D: Set status open
+        end
+        MS-->>W: Left
+    end
+    O->>W: Cancel Match
+    W->>MS: cancelMatch(matchId, userId)
+    alt User is not the organizer, or match already completed or cancelled
+        MS-->>W: Refused
+    else Organizer
+        MS->>D: Set status cancelled (slot is free again)
+        MS-->>W: Cancelled, removed from list and history
+    end

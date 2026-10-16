@@ -12,7 +12,7 @@
 When enough players have joined, the system splits them into teams with similar overall skill so that matches are fair and enjoyable.
 
 ## Preconditions
-- The match has at least as many participants as teams × 2.
+- The match has at least as many participants as teams × 2 (the number of teams is set in UC-04, default 2).
 - Participants have profiles with skill levels (UC-03).
 
 ## Trigger
@@ -21,7 +21,7 @@ The organizer selects **Balance Teams**, or the match becomes full.
 ## Main Success Scenario
 1. The system collects the profiles of all participants.
 2. The system sends the profile data to the AI service.
-3. The AI service returns a numeric skill rating for every player.
+3. The AI service returns a numeric skill rating for every player; the system stores the rating in the player's profile for this sport.
 4. The system distributes players to teams so that total team ratings are as close as possible.
 5. The system shows the teams to all participants.
 

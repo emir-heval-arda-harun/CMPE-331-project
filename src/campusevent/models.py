@@ -49,6 +49,7 @@ class Profile:
     user_id: int
     sports: dict[str, SkillLevel] = field(default_factory=dict)
     availability: list[TimeSlot] = field(default_factory=list)
+    ai_ratings: dict[str, float] = field(default_factory=dict)  # last AI rating per sport (UC-07)
 
 
 @dataclass
@@ -76,6 +77,7 @@ class Match:
     slot: TimeSlot
     capacity: int
     skill_level: SkillLevel
+    team_count: int = 2
     participant_ids: list[int] = field(default_factory=list)
     status: MatchStatus = MatchStatus.OPEN
 

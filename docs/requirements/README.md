@@ -19,6 +19,8 @@ Requirements are written in **use case format**. Each use case has its own file 
 | [UC-11](UC-11_facility_availability.md) | View facility schedule and check conflicts | Student | High | [test](../../tests/test_uc11_facility_availability.py) |
 | [UC-12](UC-12_manage_facility_schedule.md) | Manage facility schedule | Facility Staff | Medium | [test](../../tests/test_uc12_manage_facility_schedule.py) |
 | [UC-13](UC-13_activity_history.md) | Track activity history | Student | Low | [test](../../tests/test_uc13_activity_history.py) |
+| [UC-14](UC-14_leave_match.md) | Leave match | Student | Medium | [test](../../tests/test_uc14_leave_match.py) |
+| [UC-15](UC-15_cancel_match.md) | Cancel match | Student (organizer) | Medium | [test](../../tests/test_uc15_cancel_match.py) |
 
 The diagram is generated from [`diagrams/make_use_case_diagram.py`](diagrams/make_use_case_diagram.py).
 

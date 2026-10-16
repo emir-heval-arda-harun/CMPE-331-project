@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2100" height="350" viewBox="0 0 2100 350" font-family="Helvetica, Arial, sans-serif">
+<rect width="100%" height="100%" fill="white"/>
+<defs><marker id="a" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto-start-reverse"><path d="M0,0 L9,3.5 L0,7 z" fill="#333"/></marker></defs>
+<text x="1050.0" y="28" text-anchor="middle" font-size="16" font-weight="bold">BPD 3: Running a tournament (UC-08, UC-09, UC-10)</text>
+<rect x="10" y="50" width="2080" height="140" fill="#f7f9fc" stroke="#888"/>
+<rect x="10" y="50" width="120" height="140" fill="#e8ecf4" stroke="#888"/>
+<text transform="translate(70.0,120.0) " text-anchor="middle" font-size="14" font-weight="bold"><tspan x="0" dy="-8.4">Club</tspan><tspan x="0" dy="16.8">representative</tspan></text>
+<rect x="10" y="190" width="2080" height="140" fill="#fffaf3" stroke="#888"/>
+<rect x="10" y="190" width="120" height="140" fill="#e8ecf4" stroke="#888"/>
+<text transform="translate(70.0,260.0) " text-anchor="middle" font-size="14" font-weight="bold"><tspan x="0" dy="-8.4">CampusEvent</tspan><tspan x="0" dy="16.8">system</tspan></text>
+<polyline points="241,120 310,120" fill="none" stroke="#333" stroke-width="1.6" marker-end="url(#a)"/>
+<polyline points="446,120 456,120 456,260 470,260" fill="none" stroke="#333" stroke-width="1.6" marker-end="url(#a)"/>
+<polyline points="538,222 538,190 378,190 378,150" fill="none" stroke="#333" stroke-width="1.6" marker-end="url(#a)"/>
+<text x="544" y="206" text-anchor="start" font-size="11" font-style="italic" fill="#a00" paint-order="stroke" stroke="white" stroke-width="3">No</text>
+<polyline points="606,260 630,260" fill="none" stroke="#333" stroke-width="1.6" marker-end="url(#a)"/>
+<text x="618" y="255" text-anchor="middle" font-size="11" font-style="italic" fill="#a00" paint-order="stroke" stroke="white" stroke-width="3">Yes</text>
+<polyline points="766,260 776,260 776,120 790,120" fill="none" stroke="#333" stroke-width="1.6" marker-end="url(#a)"/>
+<polyline points="926,120 936,120 936,260 950,260" fill="none" stroke="#333" stroke-width="1.6" marker-end="url(#a)"/>
+<polyline points="1086,260 1096,260 1096,120 1110,120" fill="none" stroke="#333" stroke-width="1.6" marker-end="url(#a)"/>
+<polyline points="1246,120 1256,120 1256,260 1270,260" fill="none" stroke="#333" stroke-width="1.6" marker-end="url(#a)"/>
+<polyline points="1338,222 1338,190 1178,190 1178,150" fill="none" stroke="#333" stroke-width="1.6" marker-end="url(#a)"/>
+<text x="1344" y="206" text-anchor="start" font-size="11" font-style="italic" fill="#a00" paint-order="stroke" stroke="white" stroke-width="3">No</text>
+<polyline points="1406,260 1430,260" fill="none" stroke="#333" stroke-width="1.6" marker-end="url(#a)"/>
+<text x="1418" y="255" text-anchor="middle" font-size="11" font-style="italic" fill="#a00" paint-order="stroke" stroke="white" stroke-width="3">Yes</text>
+<polyline points="1566,260 1590,260" fill="none" stroke="#333" stroke-width="1.6" marker-end="url(#a)"/>
+<polyline points="1658,222 1658,190 1178,190 1178,150" fill="none" stroke="#333" stroke-width="1.6" marker-end="url(#a)"/>
+<text x="1664" y="206" text-anchor="start" font-size="11" font-style="italic" fill="#a00" paint-order="stroke" stroke="white" stroke-width="3">No</text>
+<polyline points="1726,260 1750,260" fill="none" stroke="#333" stroke-width="1.6" marker-end="url(#a)"/>
+<text x="1738" y="255" text-anchor="middle" font-size="11" font-style="italic" fill="#a00" paint-order="stroke" stroke="white" stroke-width="3">Yes</text>
+<polyline points="1886,260 1941,260 1941,120 1955,120" fill="none" stroke="#333" stroke-width="1.6" marker-end="url(#a)"/>
+<circle cx="218.0" cy="120.0" r="22" fill="#e6f4ea" stroke="#2e7d32" stroke-width="2"/>
+<text x="218.0" y="160.0" text-anchor="middle" font-size="11">Wants a tournament</text>
+<rect x="310.0" y="90.0" width="136" height="60" rx="8" fill="#fff4e6" stroke="#c96a1b" stroke-width="2"/>
+<text x="378.0" y="120.0" text-anchor="middle" font-size="12"><tspan x="378.0" dy="-7.199999999999999">Enter name, sport,</tspan><tspan x="378.0" dy="14.399999999999999">team names</tspan></text>
+<polygon points="538.0,222.0 606.0,260.0 538.0,298.0 470.0,260.0" fill="#fff8e1" stroke="#b28704" stroke-width="2"/>
+<text x="538.0" y="260.0" text-anchor="middle" font-size="11"><tspan x="538.0" dy="-13.2">Role ok, 2+</tspan><tspan x="538.0" dy="13.2">teams, no</tspan><tspan x="538.0" dy="13.2">duplicates?</tspan></text>
+<rect x="630.0" y="230.0" width="136" height="60" rx="8" fill="#fff4e6" stroke="#c96a1b" stroke-width="2"/>
+<text x="698.0" y="260.0" text-anchor="middle" font-size="12"><tspan x="698.0" dy="0.0">Create tournament</tspan></text>
+<rect x="790.0" y="90.0" width="136" height="60" rx="8" fill="#fff4e6" stroke="#c96a1b" stroke-width="2"/>
+<text x="858.0" y="120.0" text-anchor="middle" font-size="12"><tspan x="858.0" dy="0.0">Generate bracket</tspan></text>
+<rect x="950.0" y="230.0" width="136" height="60" rx="8" fill="#fff4e6" stroke="#c96a1b" stroke-width="2"/>
+<text x="1018.0" y="260.0" text-anchor="middle" font-size="12"><tspan x="1018.0" dy="-14.399999999999999">Pair round 1, give</tspan><tspan x="1018.0" dy="14.399999999999999">byes, create later</tspan><tspan x="1018.0" dy="14.399999999999999">rounds</tspan></text>
+<rect x="1110.0" y="90.0" width="136" height="60" rx="8" fill="#fff4e6" stroke="#c96a1b" stroke-width="2"/>
+<text x="1178.0" y="120.0" text-anchor="middle" font-size="12"><tspan x="1178.0" dy="-7.199999999999999">Enter score of a</tspan><tspan x="1178.0" dy="14.399999999999999">played game</tspan></text>
+<polygon points="1338.0,222.0 1406.0,260.0 1338.0,298.0 1270.0,260.0" fill="#fff8e1" stroke="#b28704" stroke-width="2"/>
+<text x="1338.0" y="260.0" text-anchor="middle" font-size="11"><tspan x="1338.0" dy="-6.6">Scores</tspan><tspan x="1338.0" dy="13.2">different?</tspan></text>
+<rect x="1430.0" y="230.0" width="136" height="60" rx="8" fill="#fff4e6" stroke="#c96a1b" stroke-width="2"/>
+<text x="1498.0" y="260.0" text-anchor="middle" font-size="12"><tspan x="1498.0" dy="-7.199999999999999">Store result, move</tspan><tspan x="1498.0" dy="14.399999999999999">winner on</tspan></text>
+<polygon points="1658.0,222.0 1726.0,260.0 1658.0,298.0 1590.0,260.0" fill="#fff8e1" stroke="#b28704" stroke-width="2"/>
+<text x="1658.0" y="260.0" text-anchor="middle" font-size="11"><tspan x="1658.0" dy="-6.6">Was it the</tspan><tspan x="1658.0" dy="13.2">final?</tspan></text>
+<rect x="1750.0" y="230.0" width="136" height="60" rx="8" fill="#fff4e6" stroke="#c96a1b" stroke-width="2"/>
+<text x="1818.0" y="260.0" text-anchor="middle" font-size="12"><tspan x="1818.0" dy="0.0">Set champion</tspan></text>
+<circle cx="1978.0" cy="120.0" r="22" fill="#fdecea" stroke="#c62828" stroke-width="4"/>
+<text x="1978.0" y="160.0" text-anchor="middle" font-size="11">Champion known</text>
+</svg>

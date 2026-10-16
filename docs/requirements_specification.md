@@ -64,6 +64,8 @@ CampusEvent is a new, standalone, responsive web application. It uses Gemini Pro
 - Students have an active university e-mail address.
 - Facility staff keep facility schedules up to date.
 - The Gemini Pro API is reachable; if not, the system falls back to self-declared skill levels (UC-07).
+- A-04: The roles Club Representative and Facility Staff are assigned by an administrator or loaded as seed data for the demo; there is no self-service role request.
+- A-05: Tournament teams are plain team names without user accounts; a tournament game may optionally get a facility and time slot (UC-11).
 
 ---
 
@@ -119,6 +121,8 @@ The functional requirements are written in **use case format**. Each use case is
 | [UC-11](requirements/UC-11_facility_availability.md) | Facility schedule & conflicts | Student | High | Show busy slots; prevent overlapping bookings. |
 | [UC-12](requirements/UC-12_manage_facility_schedule.md) | Manage facility schedule | Facility Staff | Medium | Add facilities and blocked periods. |
 | [UC-13](requirements/UC-13_activity_history.md) | Track activity history | Student | Low | List completed matches the student played in. |
+| [UC-14](requirements/UC-14_leave_match.md) | Leave match | Student | Medium | A participant leaves; a full match becomes open again. |
+| [UC-15](requirements/UC-15_cancel_match.md) | Cancel match | Student (organizer) | Medium | The organizer cancels; the facility slot becomes free. |
 
 ---
 
@@ -150,7 +154,7 @@ pip install -r requirements-dev.txt
 python -m pytest
 ```
 
-**Current result:** 47 tests (36 use case tests + 11 non-functional tests), 47 failed (expected).
+**Current result:** 54 tests (43 use case tests + 11 non-functional tests), 54 failed (expected).
 
 ---
 
@@ -161,7 +165,7 @@ python -m pytest
 | UC-01 | [test_uc01_register_and_verify.py](../tests/test_uc01_register_and_verify.py) | 5 | [auth.py](../src/campusevent/auth.py) |
 | UC-02 | [test_uc02_login.py](../tests/test_uc02_login.py) | 3 | [auth.py](../src/campusevent/auth.py) |
 | UC-03 | [test_uc03_manage_profile.py](../tests/test_uc03_manage_profile.py) | 2 | [profiles.py](../src/campusevent/profiles.py) |
-| UC-04 | [test_uc04_create_match.py](../tests/test_uc04_create_match.py) | 3 | [matches.py](../src/campusevent/matches.py) |
+| UC-04 | [test_uc04_create_match.py](../tests/test_uc04_create_match.py) | 4 | [matches.py](../src/campusevent/matches.py) |
 | UC-05 | [test_uc05_browse_and_filter_matches.py](../tests/test_uc05_browse_and_filter_matches.py) | 3 | [matches.py](../src/campusevent/matches.py) |
 | UC-06 | [test_uc06_join_match.py](../tests/test_uc06_join_match.py) | 3 | [matches.py](../src/campusevent/matches.py) |
 | UC-07 | [test_uc07_ai_team_balancing.py](../tests/test_uc07_ai_team_balancing.py) | 2 | [matchmaking.py](../src/campusevent/matchmaking.py) |
@@ -171,6 +175,8 @@ python -m pytest
 | UC-11 | [test_uc11_facility_availability.py](../tests/test_uc11_facility_availability.py) | 2 | [facilities.py](../src/campusevent/facilities.py) |
 | UC-12 | [test_uc12_manage_facility_schedule.py](../tests/test_uc12_manage_facility_schedule.py) | 2 | [facilities.py](../src/campusevent/facilities.py) |
 | UC-13 | [test_uc13_activity_history.py](../tests/test_uc13_activity_history.py) | 2 | [matches.py](../src/campusevent/matches.py) |
+| UC-14 | [test_uc14_leave_match.py](../tests/test_uc14_leave_match.py) | 3 | [matches.py](../src/campusevent/matches.py) |
+| UC-15 | [test_uc15_cancel_match.py](../tests/test_uc15_cancel_match.py) | 3 | [matches.py](../src/campusevent/matches.py) |
 | NFR-02 ... NFR-07 | [test_nfr.py](../tests/test_nfr.py) | 11 | [matches.py](../src/campusevent/matches.py), [matchmaking.py](../src/campusevent/matchmaking.py), [auth.py](../src/campusevent/auth.py), [facilities.py](../src/campusevent/facilities.py), [tournaments.py](../src/campusevent/tournaments.py) |
 
 ---
@@ -180,8 +186,9 @@ python -m pytest
 | Artifact | Location |
 |---|---|
 | Project Charter | [`docs/CHARTER.MD`](CHARTER.MD) |
-| Plan documents (Gantt, PERT) | [`docs/plan/`](plan/README.md) |
+| Plan documents (Gantt, PERT) | [`docs/plan/`](plan/README.md) | 
 | Use cases and diagram | [`docs/requirements/`](requirements/README.md) |
+| Analysis models, BPD, DFD, UI mockups | [`docs/analysis/`](analysis/README.md) |
 | Requirement tests | [`tests/`](../tests) |
 | Boilerplate source code | [`src/campusevent/`](../src/campusevent) |
 | This report | [`docs/requirements_specification.md`](requirements_specification.md) |

@@ -1,0 +1,19 @@
+sequenceDiagram
+    actor C as Club representative
+    participant W as Web app
+    participant TS as Tournament service
+    participant D as Database
+
+    C->>W: Name, sport, team names
+    W->>TS: createTournament(userId, name, sport, teams)
+    TS->>TS: Check role is club representative
+    TS->>TS: Check at least 2 teams, no duplicate names
+    TS->>D: Insert TOURNAMENT and TEAM rows
+    TS-->>W: Tournament created
+    C->>W: Generate Bracket
+    W->>TS: generateBracket(tournamentId)
+    TS->>TS: rounds = log2 of next power of two
+    TS->>TS: Pair teams for round 1, byes advance to round 2
+    TS->>D: Insert BRACKET_MATCH rows with next_match_id links
+    TS-->>W: Bracket
+    W-->>C: Show bracket

@@ -1,4 +1,5 @@
-"""UC-04 Create match, UC-05 Browse & filter, UC-06 Join match, UC-13 Activity history."""
+"""UC-04 Create match, UC-05 Browse & filter, UC-06 Join match, UC-13 Activity history,
+UC-14 Leave match, UC-15 Cancel match."""
 
 from __future__ import annotations
 
@@ -22,6 +23,7 @@ class MatchService:
         slot: TimeSlot,
         capacity: int,
         skill_level: SkillLevel,
+        team_count: int = 2,
     ) -> Match:
         raise NotImplementedError
 
@@ -35,6 +37,12 @@ class MatchService:
         raise NotImplementedError
 
     def join_match(self, match_id: int, user_id: int) -> Match:
+        raise NotImplementedError
+
+    def leave_match(self, match_id: int, user_id: int) -> Match:
+        raise NotImplementedError
+
+    def cancel_match(self, match_id: int, user_id: int) -> Match:
         raise NotImplementedError
 
     def complete_match(self, match_id: int) -> Match:

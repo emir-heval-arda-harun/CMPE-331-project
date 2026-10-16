@@ -11,7 +11,7 @@
 Campus sports facility personnel define facilities and the times they are not available for student matches (classes, maintenance, official events).
 
 ## Preconditions
-- The user is logged in with the **Facility Staff** role.
+- The user is logged in with the **Facility Staff** role (roles are assigned by an administrator or loaded as seed data; see assumption A-04 in the Requirements Specification).
 
 ## Trigger
 The staff member opens **Facility Management**.

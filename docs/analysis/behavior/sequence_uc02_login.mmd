@@ -1,0 +1,21 @@
+sequenceDiagram
+    actor U as User
+    participant W as Web app
+    participant AS as Auth service
+    participant D as Database
+
+    U->>W: E-mail and password
+    W->>AS: login(email, password)
+    AS->>D: Read user by e-mail
+    D-->>AS: user with password hash
+    alt Wrong e-mail or password
+        AS-->>W: Invalid e-mail or password
+        W-->>U: Same message for both cases
+    else Credentials correct, account not verified
+        AS-->>W: Not verified
+        W-->>U: Offer to resend the code
+    else Credentials correct, account verified
+        AS->>D: Create session
+        AS-->>W: Session with user and role
+        W-->>U: Home page for the role
+    end
