@@ -28,3 +28,6 @@ The user selects **Log in**.
 
 ## Postconditions
 - The user has an active session; each later request is linked to this user and role.
+
+## Business Rules
+- BR-03: Only verified accounts can log in.

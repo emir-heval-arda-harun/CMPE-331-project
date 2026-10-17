@@ -1,0 +1,12 @@
+flowchart LR
+    stu[Student]:::ext
+    staff[Facility staff]:::ext
+    mail[E-mail service]:::ext
+    sys((0 CampusEvent system))
+    stu -- registration data, login, profile, event requests, join and leave requests --> sys
+    sys -- event lists, schedules, history --> stu
+    staff -- facilities with capacity, blocked periods --> sys
+    sys -- facility schedule --> staff
+    sys -- verification code request --> mail
+    mail -- delivery status --> sys
+    classDef ext fill:#fff4e6,stroke:#c96a1b

@@ -1,0 +1,21 @@
+sequenceDiagram
+    actor S as Student
+    participant W as Web app
+    participant PS as Profile service
+    participant D as Database
+
+    S->>W: Open My Profile
+    W->>PS: getProfile(userId)
+    PS->>D: Read profile interests and availability
+    D-->>PS: profile data
+    PS-->>W: Current profile
+    S->>W: Interests (free text), availability slots
+    W->>PS: updateProfile(userId, interests, availability)
+    alt No interest entered or slot end before start
+        PS-->>W: Validation error
+        W-->>S: Show message, nothing saved
+    else Valid
+        PS->>D: Replace PROFILE_INTEREST and AVAILABILITY_SLOT rows
+        PS-->>W: Saved
+        W-->>S: Show updated profile
+    end

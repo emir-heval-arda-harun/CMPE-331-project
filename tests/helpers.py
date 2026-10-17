@@ -3,7 +3,7 @@ a missing feature makes the test FAIL instead of ERROR."""
 
 from datetime import datetime, timedelta
 
-from campusevent.models import Role, SkillLevel, TimeSlot
+from campusevent.models import Role, TimeSlot
 
 PASSWORD = "S3cure-pass!"
 
@@ -18,11 +18,11 @@ def verified_user(app, email_sender, email: str, role: Role = Role.STUDENT):
     return app.auth.verify_email(email, email_sender.codes[email])
 
 
-def football_pitch(app, email_sender):
+def campus_hall(app, email_sender, capacity: int = 50):
     staff = verified_user(app, email_sender, "staff@bilgi.edu.tr", Role.FACILITY_STAFF)
-    return app.facilities.add_facility(staff.id, "Santral Football Pitch", ["football"])
+    return app.facilities.add_facility(staff.id, "Santral Event Hall", capacity)
 
 
-def open_match(app, email_sender, organizer, capacity=10, skill=SkillLevel.INTERMEDIATE, when=None):
-    pitch = football_pitch(app, email_sender)
-    return app.matches.create_match(organizer.id, "football", pitch.id, when or slot(), capacity, skill)
+def open_event(app, email_sender, organizer, capacity=10, when=None, category="board games", title="Game night"):
+    hall = campus_hall(app, email_sender)
+    return app.events.create_event(organizer.id, title, category, hall.id, when or slot(), capacity)

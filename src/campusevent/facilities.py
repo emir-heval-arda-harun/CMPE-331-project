@@ -1,4 +1,4 @@
-"""UC-11 View facility schedule & conflict check, UC-12 Manage facility schedule."""
+"""UC-07 View facility schedule & conflict check, UC-08 Manage facility schedule."""
 
 from __future__ import annotations
 
@@ -12,7 +12,7 @@ class FacilityService:
     def __init__(self, auth: AuthService) -> None:
         self.auth = auth
 
-    def add_facility(self, staff_id: int, name: str, sports: list[str]) -> Facility:
+    def add_facility(self, staff_id: int, name: str, capacity: int) -> Facility:
         raise NotImplementedError
 
     def add_block(self, staff_id: int, facility_id: int, slot: TimeSlot, reason: str) -> FacilityBlock:
@@ -20,7 +20,7 @@ class FacilityService:
         raise NotImplementedError
 
     def get_schedule(self, facility_id: int, day: date) -> list[TimeSlot]:
-        """Return every busy slot (blocks and matches) of the facility on that day."""
+        """Return every busy slot (blocks and events) of the facility on that day."""
         raise NotImplementedError
 
     def is_available(self, facility_id: int, slot: TimeSlot) -> bool:

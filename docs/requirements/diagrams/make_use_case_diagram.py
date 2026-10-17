@@ -7,43 +7,37 @@ chromium --headless --screenshot=use_case_diagram.png --window-size=1500,1000 us
 import math
 from pathlib import Path
 
-W, H = 1500, 1000
+W, H = 1500, 1150
 RX, RY = 150, 36
 
 NAMES = {
     "UC-01": "Register &amp; Verify E-mail",
     "UC-02": "Log In",
     "UC-03": "Manage Profile",
-    "UC-13": "Track Activity History",
-    "UC-05": "Browse &amp; Filter Matches",
-    "UC-06": "Join Match",
-    "UC-04": "Create Match",
-    "UC-11": "View Facility Schedule /\nCheck Conflicts",
-    "UC-07": "AI Team Balancing",
-    "UC-08": "Create Tournament",
-    "UC-09": "Generate Bracket",
-    "UC-10": "Record Score &amp; Advance",
-    "UC-12": "Manage Facility Schedule",
+    "UC-05": "Browse &amp; Filter Events",
+    "UC-06": "Join Event",
+    "UC-04": "Create Event",
+    "UC-07": "View Facility Schedule /\nCheck Conflicts",
+    "UC-09": "Track Activity History",
+    "UC-10": "Leave Event",
+    "UC-11": "Cancel Event",
+    "UC-08": "Manage Facility Schedule",
 }
-COLUMN_A = ["UC-01", "UC-02", "UC-03", "UC-13", "UC-05", "UC-06", "UC-04", "UC-11", "UC-07"]
-POS = {uc: (560, 120 + i * 97) for i, uc in enumerate(COLUMN_A)}
-POS.update({"UC-08": (930, 170), "UC-09": (930, 290), "UC-10": (930, 410), "UC-12": (930, 600)})
+COLUMN_A = ["UC-01", "UC-02", "UC-03", "UC-05", "UC-06", "UC-04", "UC-07", "UC-09", "UC-10", "UC-11"]
+POS = {uc: (560, 130 + i * 105) for i, uc in enumerate(COLUMN_A)}
+POS.update({"UC-08": (930, 760)})
 
 ACTORS = {
-    "Student": (150, 520),
+    "Student": (150, 560),
     "E-mail Service": (150, 150),
-    "Club\nRepresentative": (1350, 290),
-    "Facility Staff": (1350, 600),
-    "Gemini Pro\n(AI Service)": (1350, 880),
+    "Facility Staff": (1350, 760),
 }
 ASSOCIATIONS = {
     "Student": COLUMN_A,
     "E-mail Service": ["UC-01"],
-    "Club\nRepresentative": ["UC-08", "UC-09", "UC-10"],
-    "Facility Staff": ["UC-12"],
-    "Gemini Pro\n(AI Service)": ["UC-07"],
+    "Facility Staff": ["UC-08"],
 }
-DEPENDENCIES = [("UC-06", "UC-05", "«extend»"), ("UC-04", "UC-11", "«include»")]
+DEPENDENCIES = [("UC-06", "UC-05", "«extend»"), ("UC-04", "UC-07", "«include»")]
 
 
 def actor(x, y, label):
@@ -66,7 +60,7 @@ def build():
         '<rect width="100%" height="100%" fill="white"/>',
         '<defs><marker id="ar" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">'
         '<path d="M0,0 L10,4 L0,8" fill="none" stroke="#333"/></marker></defs>',
-        '<rect x="370" y="30" width="760" height="950" rx="8" fill="#f7f9fc" stroke="#333" stroke-width="2"/>',
+        '<rect x="370" y="30" width="760" height="1100" rx="8" fill="#f7f9fc" stroke="#333" stroke-width="2"/>',
         '<text x="750" y="60" text-anchor="middle" font-size="22" font-weight="bold">CampusEvent</text>',
     ]
     # Associations end at the ellipse's near edge so they never cross other use cases.
@@ -98,8 +92,7 @@ def build():
         out.append(f'<text x="{x + 8}" y="{(sy + ey) / 2 + 5:.0f}" font-size="13" font-style="italic">{label}</text>')
     for name, (x, y) in ACTORS.items():
         out += actor(x, y, name)
-    out.append('<text x="1350" y="395" text-anchor="middle" font-size="13" fill="#555">(a Student with club role)</text>')
-    out.append('<text x="930" y="760" text-anchor="middle" font-size="13" fill="#555">'
+    out.append('<text x="930" y="860" text-anchor="middle" font-size="13" fill="#555">'
                'All registered actors use UC-02 Log In.</text>')
     out.append("</svg>")
     return "\n".join(out)

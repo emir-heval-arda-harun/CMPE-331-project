@@ -1,0 +1,72 @@
+classDiagram
+    class User {
+        +int id
+        +string email
+        +string fullName
+        +Role role
+        +bool isVerified
+    }
+    class Profile {
+        +int userId
+        +list interests
+    }
+    class VerificationCode {
+        +string codeHash
+        +datetime expiresAt
+        +bool used
+    }
+    class Participation {
+        +datetime joinedAt
+    }
+    class TimeSlot {
+        +datetime start
+        +datetime end
+        +overlaps(other) bool
+    }
+    class Facility {
+        +int id
+        +string name
+        +int capacity
+    }
+    class FacilityBlock {
+        +string reason
+        +TimeSlot slot
+    }
+    class Event {
+        +int id
+        +string title
+        +string category
+        +string description
+        +int capacity
+        +EventStatus status
+        +TimeSlot slot
+    }
+    class ActivityRecord {
+        +int eventId
+        +string title
+        +string category
+    }
+    class Role {
+        <<enumeration>>
+        STUDENT
+        FACILITY_STAFF
+    }
+    class EventStatus {
+        <<enumeration>>
+        OPEN
+        FULL
+        COMPLETED
+        CANCELLED
+    }
+
+    User "1" --> "0..1" Profile : has
+    User --> Role
+    User "1" --> "*" VerificationCode : receives
+    Profile "1" o-- "*" TimeSlot : availability
+    User "1" --> "*" Event : organizes
+    Event "1" *-- "*" Participation : participants
+    Participation "*" --> "1" User
+    Event "*" --> "1" Facility : held at
+    Event --> EventStatus
+    Facility "1" o-- "*" FacilityBlock : blocked periods
+    User "1" --> "*" ActivityRecord : history

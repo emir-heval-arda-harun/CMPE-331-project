@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from campusevent.auth import AuthService
-from campusevent.models import Profile, SkillLevel, TimeSlot
+from campusevent.models import Profile, TimeSlot
 
 
 class ProfileService:
@@ -13,7 +13,7 @@ class ProfileService:
     def update_profile(
         self,
         user_id: int,
-        sports: dict[str, SkillLevel],
+        interests: list[str],
         availability: list[TimeSlot],
     ) -> Profile:
         raise NotImplementedError

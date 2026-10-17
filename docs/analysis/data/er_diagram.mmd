@@ -1,0 +1,68 @@
+erDiagram
+    USER ||--o{ VERIFICATION_CODE : receives
+    USER ||--o{ FACILITY : manages
+    USER ||--o{ FACILITY_BLOCK : "creates"
+    USER ||--o{ PROFILE_INTEREST : declares
+    USER ||--o{ AVAILABILITY_SLOT : offers
+    USER ||--o{ EVENT : organizes
+    USER ||--o{ EVENT_PARTICIPANT : joins
+    EVENT ||--o{ EVENT_PARTICIPANT : has
+    FACILITY ||--o{ EVENT : hosts
+    FACILITY ||--o{ FACILITY_BLOCK : "closed by"
+
+    USER {
+        int id PK
+        string email UK
+        string full_name
+        string password_hash
+        string role
+        bool is_verified
+    }
+    VERIFICATION_CODE {
+        int id PK
+        int user_id FK
+        string code_hash
+        datetime expires_at
+        bool used
+    }
+    PROFILE_INTEREST {
+        int user_id PK
+        string interest PK
+    }
+    AVAILABILITY_SLOT {
+        int id PK
+        int user_id FK
+        datetime start_time
+        datetime end_time
+    }
+    FACILITY {
+        int id PK
+        int manager_id FK
+        string name UK
+        int capacity
+    }
+    FACILITY_BLOCK {
+        int id PK
+        int facility_id FK
+        int created_by FK
+        datetime start_time
+        datetime end_time
+        string reason
+    }
+    EVENT {
+        int id PK
+        int organizer_id FK
+        int facility_id FK
+        string title
+        string category
+        string description
+        datetime start_time
+        datetime end_time
+        int capacity
+        string status
+    }
+    EVENT_PARTICIPANT {
+        int event_id PK
+        int user_id PK
+        datetime joined_at
+    }

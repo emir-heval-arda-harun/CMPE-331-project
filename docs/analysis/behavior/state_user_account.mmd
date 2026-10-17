@@ -1,0 +1,5 @@
+stateDiagram-v2
+    [*] --> Unverified : sign up
+    Unverified --> Unverified : wrong code or new code requested
+    Unverified --> Verified : correct code
+    Verified --> [*]

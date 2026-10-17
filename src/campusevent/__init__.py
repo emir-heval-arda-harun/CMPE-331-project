@@ -1,4 +1,4 @@
-"""CampusEvent: a social sports-matching platform for university students.
+"""CampusEvent: a platform for university students to organize, find and join campus events.
 
 This package currently contains only the skeleton (boilerplate) of the
 system. Every service method raises ``NotImplementedError`` so that the
