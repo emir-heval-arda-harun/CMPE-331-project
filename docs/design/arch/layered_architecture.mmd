@@ -1,0 +1,58 @@
+flowchart TB
+    subgraph Client["Client tier"]
+        B["Web browser<br/>(desktop and mobile, 360 px and wider)"]
+    end
+    subgraph Web["Presentation layer (Flask)"]
+        direction LR
+        AR["auth_routes<br/>sign up, verify, log in"]
+        PR["profile_routes<br/>my profile"]
+        ER["event_routes<br/>find, details, create, join, leave, cancel, history"]
+        FR["facility_routes<br/>facility management"]
+        TPL["Jinja2 templates + Bootstrap 5<br/>responsive pages"]
+        SEC["Security middleware<br/>session, CSRF, login_required, role_required"]
+    end
+    subgraph App["Application layer (services)"]
+        direction LR
+        AS["AuthService"]
+        PS["ProfileService"]
+        ES["EventService"]
+        FS["FacilityService"]
+    end
+    subgraph Domain["Domain layer"]
+        DM["User, Profile, Event, Facility,<br/>FacilityBlock, TimeSlot, ActivityRecord,<br/>Role, EventStatus, domain exceptions"]
+    end
+    subgraph Data["Data access layer (SQLAlchemy)"]
+        direction LR
+        UR["UserRepository"]
+        PRR["ProfileRepository"]
+        EVR["EventRepository"]
+        FAR["FacilityRepository"]
+    end
+    subgraph Infra["Infrastructure"]
+        direction LR
+        DB[("PostgreSQL 16")]
+        PH["PasswordHasher<br/>(argon2-cffi)"]
+        MAIL["EmailSender<br/>(SMTP)"]
+    end
+    EXT["External e-mail provider<br/>(SMTP, e.g. Brevo)"]
+
+    B -- "HTTPS (HTML forms, fetch)" --> SEC
+    SEC --> AR & PR & ER & FR
+    AR & PR & ER & FR --> TPL
+    AR --> AS
+    PR --> PS
+    ER --> ES
+    FR --> FS
+    ES --> FS
+    PS --> AS
+    ES --> AS
+    FS --> AS
+    AS & PS & ES & FS --> DM
+    AS --> UR
+    PS --> PRR
+    ES --> EVR
+    FS --> FAR
+    AS --> PH
+    AS --> MAIL
+    UR & PRR & EVR & FAR --> DB
+    MAIL --> EXT

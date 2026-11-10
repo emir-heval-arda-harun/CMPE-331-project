@@ -1,0 +1,37 @@
+sequenceDiagram
+    autonumber
+    actor S as Student
+    participant R as event_routes
+    participant E as EventService
+    participant ER as SqlEventRepository
+    participant DB as PostgreSQL
+
+    S->>R: GET /events?category=&date=&keyword=
+    R->>E: search_events(category, day, keyword, only_open=True)
+    E->>ER: search(normalized filters)
+    ER->>DB: SELECT ... WHERE status IN (open, full) AND lower(category) = ? AND start_time >= ? ORDER BY start_time
+    Note over ER,DB: index on (category, start_time) keeps NFR-02 under 2 s
+    ER-->>E: events
+    E-->>R: events
+    R-->>S: event list page (empty state links to Create Event)
+
+    S->>R: POST /events/{id}/join
+    R->>E: join_event(event_id, user_id)
+    E->>DB: BEGIN transaction
+    E->>ER: get_for_update(event_id)
+    ER->>DB: SELECT ... FOR UPDATE
+    alt user already a participant
+        E->>DB: ROLLBACK
+        E-->>R: AlreadyJoinedError
+        R-->>S: "You have already joined this event."
+    else event full or not open
+        E->>DB: ROLLBACK
+        E-->>R: EventFullError
+        R-->>S: "This event is full."
+    else free place
+        E->>E: append user_id, if participants == capacity then status = FULL
+        E->>ER: save(event)
+        E->>DB: COMMIT
+        E-->>R: event
+        R-->>S: event details with "Leave event"
+    end

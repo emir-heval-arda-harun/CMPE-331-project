@@ -1,0 +1,40 @@
+sequenceDiagram
+    autonumber
+    actor S as Student
+    participant R as auth_routes
+    participant A as AuthService
+    participant H as PasswordHasher
+    participant U as SqlUserRepository
+    participant M as SmtpEmailSender
+
+    S->>R: POST /signup (full_name, email, password)
+    R->>A: register(email, password, full_name)
+    A->>A: check e-mail domain in allowed_email_domains
+    alt domain not allowed
+        A-->>R: InvalidEmailDomainError
+        R-->>S: 400 form with "Please use your university e-mail address."
+    else domain allowed
+        A->>U: find_by_email(email)
+        alt e-mail already registered
+            A-->>R: DuplicateEmailError
+            R-->>S: form with error
+        else new e-mail
+            A->>H: hash(password)
+            H-->>A: argon2 hash
+            A->>U: add(user, password_hash) [is_verified = false]
+            A->>A: generate 6-digit code (secrets)
+            A->>U: save_code(user_id, hash(code), now + 15 min)
+            A->>M: send_verification_code(email, code)
+            R-->>S: 303 redirect to /verify
+        end
+    end
+    S->>R: POST /verify (email, code)
+    R->>A: verify_email(email, code)
+    A->>U: find_by_email(email) and latest code
+    alt code wrong, used or expired
+        A-->>R: InvalidVerificationCodeError
+        R-->>S: form with error and "Send a new code"
+    else code correct
+        A->>U: mark_verified(user_id), mark code used
+        R-->>S: 303 redirect to /login
+    end

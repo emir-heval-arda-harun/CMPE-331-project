@@ -1,0 +1,31 @@
+sequenceDiagram
+    autonumber
+    actor T as Facility Staff
+    participant R as facility_routes
+    participant SEC as role_required(FACILITY_STAFF)
+    participant F as FacilityService
+    participant A as AuthService
+    participant FR as SqlFacilityRepository
+
+    T->>R: POST /facilities (name, capacity)
+    R->>SEC: check session role
+    alt not facility staff
+        SEC-->>T: 403 Forbidden
+    else facility staff
+        R->>F: add_facility(staff_id, name, capacity)
+        F->>A: require_role(staff_id, FACILITY_STAFF)
+        F->>F: validate capacity >= 2, unique name
+        F->>FR: add(facility)
+        R-->>T: facility list
+    end
+    T->>R: POST /facilities/{id}/blocks (from, to, reason)
+    R->>F: add_block(staff_id, facility_id, slot, reason)
+    F->>A: require_role(staff_id, FACILITY_STAFF)
+    F->>FR: blocks_on(facility_id, day)
+    alt new block overlaps an existing block
+        F-->>R: ValidationError
+        R-->>T: form with error
+    else no overlap
+        F->>FR: add_block(block)
+        R-->>T: updated weekly schedule
+    end

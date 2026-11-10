@@ -1,0 +1,122 @@
+classDiagram
+    direction TB
+    class AuthService {
+        -tuple allowed_email_domains
+        -EmailSender email_sender
+        -PasswordHasher hasher
+        -UserRepository users
+        +register(email, password, full_name, role) User
+        +verify_email(email, code) User
+        +login(email, password) str
+        +get_user_by_token(token) User
+        +require_role(user_id, role) User
+    }
+    class ProfileService {
+        -AuthService auth
+        -ProfileRepository profiles
+        +update_profile(user_id, interests, availability) Profile
+        +get_profile(user_id) Profile
+    }
+    class FacilityService {
+        -AuthService auth
+        -FacilityRepository facilities
+        -EventRepository events
+        +add_facility(staff_id, name, capacity) Facility
+        +add_block(staff_id, facility_id, slot, reason) FacilityBlock
+        +get_schedule(facility_id, day) list~TimeSlot~
+        +is_available(facility_id, slot) bool
+    }
+    class EventService {
+        -AuthService auth
+        -FacilityService facilities
+        -EventRepository events
+        +create_event(organizer_id, title, category, facility_id, slot, capacity, description) Event
+        +search_events(category, day, keyword, only_open) list~Event~
+        +join_event(event_id, user_id) Event
+        +leave_event(event_id, user_id) Event
+        +cancel_event(event_id, user_id) Event
+        +complete_event(event_id) Event
+        +get_activity_history(user_id) list~ActivityRecord~
+    }
+    class UserRepository {
+        <<interface>>
+        +add(user, password_hash) User
+        +get(user_id) User
+        +find_by_email(email) User
+        +save_code(user_id, code_hash, expires_at)
+        +mark_verified(user_id)
+    }
+    class ProfileRepository {
+        <<interface>>
+        +get(user_id) Profile
+        +save(profile)
+    }
+    class FacilityRepository {
+        <<interface>>
+        +add(facility) Facility
+        +get(facility_id) Facility
+        +add_block(block) FacilityBlock
+        +blocks_on(facility_id, day) list~FacilityBlock~
+        +lock(facility_id)
+    }
+    class EventRepository {
+        <<interface>>
+        +add(event) Event
+        +get_for_update(event_id) Event
+        +save(event)
+        +search(filters) list~Event~
+        +active_on(facility_id, day) list~Event~
+        +completed_for(user_id) list~Event~
+    }
+    class SqlUserRepository
+    class SqlProfileRepository
+    class SqlFacilityRepository
+    class SqlEventRepository
+    class InMemoryRepositories {
+        used by the tests
+    }
+    class EmailSender {
+        <<interface>>
+        +send_verification_code(email, code)
+    }
+    class SmtpEmailSender
+    class InMemoryEmailSender
+    class PasswordHasher {
+        +hash(password) str
+        +verify(hash, password) bool
+    }
+    class CampusEventApp {
+        +AuthService auth
+        +ProfileService profiles
+        +FacilityService facilities
+        +EventService events
+    }
+    class FlaskWebApp {
+        +create_web_app(config) Flask
+        blueprints: auth, profile, events, facilities
+    }
+
+    FlaskWebApp --> CampusEventApp : uses
+    CampusEventApp *-- AuthService
+    CampusEventApp *-- ProfileService
+    CampusEventApp *-- FacilityService
+    CampusEventApp *-- EventService
+    ProfileService --> AuthService
+    FacilityService --> AuthService
+    EventService --> AuthService
+    EventService --> FacilityService : availability check
+    AuthService --> UserRepository
+    AuthService --> EmailSender
+    AuthService --> PasswordHasher
+    ProfileService --> ProfileRepository
+    FacilityService --> FacilityRepository
+    FacilityService --> EventRepository
+    EventService --> EventRepository
+    UserRepository <|.. SqlUserRepository
+    ProfileRepository <|.. SqlProfileRepository
+    FacilityRepository <|.. SqlFacilityRepository
+    EventRepository <|.. SqlEventRepository
+    UserRepository <|.. InMemoryRepositories
+    EventRepository <|.. InMemoryRepositories
+    EmailSender <|.. SmtpEmailSender
+    EmailSender <|.. InMemoryEmailSender

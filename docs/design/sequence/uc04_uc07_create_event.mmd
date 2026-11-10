@@ -1,0 +1,40 @@
+sequenceDiagram
+    autonumber
+    actor S as Student (organizer)
+    participant R as event_routes
+    participant E as EventService
+    participant F as FacilityService
+    participant FR as SqlFacilityRepository
+    participant ER as SqlEventRepository
+    participant DB as PostgreSQL
+
+    S->>R: POST /events (title, category, description, facility, date, start, end, capacity)
+    R->>E: create_event(organizer_id, title, category, facility_id, slot, capacity, description)
+    E->>E: validate title and category not empty, normalize category (trim, lower case)
+    E->>E: validate capacity >= 2 and slot.end > slot.start
+    E->>DB: BEGIN transaction
+    E->>FR: get(facility_id) and lock(facility_id)
+    FR->>DB: SELECT ... FROM facility WHERE id = ? FOR UPDATE
+    alt capacity > facility.capacity
+        E->>DB: ROLLBACK
+        E-->>R: ValidationError (facility capacity)
+        R-->>S: form with error
+    else capacity fits
+        E->>F: is_available(facility_id, slot)
+        F->>FR: blocks_on(facility_id, day)
+        F->>ER: active_on(facility_id, day)
+        F->>F: any slot.overlaps(busy)?
+        alt overlap found
+            F-->>E: false
+            E->>DB: ROLLBACK
+            E-->>R: FacilityConflictError
+            R->>F: get_schedule(facility_id, day)
+            R-->>S: "This slot is busy" + free slots of the day
+        else free
+            F-->>E: true
+            E->>ER: add(event with status OPEN, participants = [organizer])
+            E->>DB: COMMIT
+            E-->>R: event
+            R-->>S: 303 redirect to /events/{id}
+        end
+    end

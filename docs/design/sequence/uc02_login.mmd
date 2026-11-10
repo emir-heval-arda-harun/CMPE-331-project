@@ -1,0 +1,30 @@
+sequenceDiagram
+    autonumber
+    actor S as User
+    participant R as auth_routes
+    participant A as AuthService
+    participant U as SqlUserRepository
+    participant H as PasswordHasher
+
+    S->>R: POST /login (email, password)
+    R->>A: login(email, password)
+    A->>U: find_by_email(email)
+    alt user not found
+        A-->>R: AuthenticationError
+    else user found
+        A->>H: verify(password_hash, password)
+        alt wrong password
+            A-->>R: AuthenticationError
+        else password correct
+            alt account not verified
+                A-->>R: EmailNotVerifiedError
+                R-->>S: page with "Resend verification code"
+            else verified
+                A->>A: create signed session token
+                A-->>R: token
+                R->>R: store token in secure, HttpOnly session cookie
+                R-->>S: 303 redirect by role (Find Events or Facility Management)
+            end
+        end
+    end
+    Note over R,S: AuthenticationError always shows "Invalid e-mail or password"

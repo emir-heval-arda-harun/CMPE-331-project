@@ -1,0 +1,35 @@
+sequenceDiagram
+    autonumber
+    actor P as Participant
+    actor O as Organizer
+    participant R as event_routes
+    participant E as EventService
+    participant ER as SqlEventRepository
+
+    P->>R: POST /events/{id}/leave
+    R->>E: leave_event(event_id, user_id)
+    E->>ER: get_for_update(event_id)
+    alt user is the organizer
+        E-->>R: PermissionDeniedError
+        R-->>P: "Organizers cannot leave, cancel the event instead."
+    else user is not a participant
+        E-->>R: ValidationError
+    else participant of an open or full event
+        E->>E: remove user_id, if status == FULL then status = OPEN
+        E->>ER: save(event)
+        R-->>P: event details with "Join event"
+    end
+
+    O->>R: POST /events/{id}/cancel
+    R->>E: cancel_event(event_id, user_id)
+    E->>ER: get_for_update(event_id)
+    alt user is not the organizer
+        E-->>R: PermissionDeniedError
+        R-->>O: 403
+    else event already completed or cancelled
+        E-->>R: ValidationError
+    else open or full
+        E->>E: status = CANCELLED (slot no longer counted by is_available)
+        E->>ER: save(event)
+        R-->>O: 303 redirect to My Activities
+    end
