@@ -206,8 +206,8 @@ Services raise domain exceptions (`ValidationError`, `FacilityConflictError`, `E
 |---|---|
 | F-04 Free-text categories fragment the list | Categories are normalized (trim, lower case); the Create Event form suggests existing categories with an HTML `datalist` |
 | F-05 Password reset is missing | Out of scope for the codebase deadline; documented as a future use case |
-| F-06 Python and Java in the charter | Python only (section 2) |
-| F-07 Chat wording in the charter | Chat is out of scope |
+| F-06 Python and Java in the charter | Python only (section 2); the charter's technology stack was updated accordingly |
+| F-07 Chat wording in the charter | Chat is out of scope; the charter's out-of-scope list was corrected |
 | F-08 Public profile | Public profile shows name and interests only; availability stays private |
 | F-09 Upcoming events | My Activities page gets an "Upcoming" tab next to "History" (same service, filter by status) |
 
