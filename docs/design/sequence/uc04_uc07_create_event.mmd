@@ -1,40 +1,56 @@
 sequenceDiagram
     autonumber
     actor S as Student (organizer)
-    participant R as event_routes
-    participant E as EventService
-    participant F as FacilityService
-    participant FR as SqlFacilityRepository
-    participant ER as SqlEventRepository
-    participant DB as PostgreSQL
+    box rgb(232,240,254) Layer 1 Presentation
+        participant R as event_routes
+    end
+    box rgb(232,245,233) Layer 2 Application
+        participant E as EventService
+        participant F as FacilityService
+    end
+    box rgb(255,243,224) Layer 3 Data access and integration
+        participant W as UnitOfWork
+        participant FR as FacilityRepository
+        participant ER as EventRepository
+    end
+    box rgb(243,229,245) Layer 4 External systems
+        participant DB as PostgreSQL
+    end
 
     S->>R: POST /events (title, category, description, facility, date, start, end, capacity)
     R->>E: create_event(organizer_id, title, category, facility_id, slot, capacity, description)
-    E->>E: validate title and category not empty, normalize category (trim, lower case)
+    E->>E: validate title and category, normalize category (trim, lower case)
     E->>E: validate capacity >= 2 and slot.end > slot.start
-    E->>DB: BEGIN transaction
-    E->>FR: get(facility_id) and lock(facility_id)
-    FR->>DB: SELECT ... FROM facility WHERE id = ? FOR UPDATE
+    E->>W: begin()
+    W->>DB: BEGIN
+    E->>F: check_bookable(facility_id, slot, capacity)
+    F->>FR: get_for_update(facility_id)
+    FR->>DB: SELECT facility WHERE id = ? FOR UPDATE
     alt capacity > facility.capacity
-        E->>DB: ROLLBACK
-        E-->>R: ValidationError (facility capacity)
-        R-->>S: form with error
+        F-->>E: raise ValidationError
+        E->>W: rollback()
+        E-->>R: raise ValidationError
+        R-->>S: form with the facility capacity
     else capacity fits
-        E->>F: is_available(facility_id, slot)
         F->>FR: blocks_on(facility_id, day)
+        FR->>DB: SELECT facility_block
         F->>ER: active_on(facility_id, day)
-        F->>F: any slot.overlaps(busy)?
+        ER->>DB: SELECT event WHERE status IN (open, full)
+        F->>F: slot.overlaps(busy) for every busy slot
         alt overlap found
-            F-->>E: false
-            E->>DB: ROLLBACK
-            E-->>R: FacilityConflictError
+            F-->>E: raise FacilityConflictError
+            E->>W: rollback()
+            E-->>R: raise FacilityConflictError
             R->>F: get_schedule(facility_id, day)
             R-->>S: "This slot is busy" + free slots of the day
-        else free
-            F-->>E: true
+        else no overlap
+            F-->>E: facility
             E->>ER: add(event with status OPEN, participants = [organizer])
-            E->>DB: COMMIT
+            ER->>DB: INSERT event, INSERT event_participant
+            E->>W: commit()
+            W->>DB: COMMIT
             E-->>R: event
             R-->>S: 303 redirect to /events/{id}
         end
     end
+    Note over F,FR: The facility row stays locked until COMMIT or ROLLBACK, so two requests cannot book the same slot

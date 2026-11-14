@@ -25,6 +25,14 @@ classDiagram
         +Role role
         +bool is_verified
     }
+    class VerificationCode {
+        +int id
+        +int user_id
+        +str code_hash
+        +datetime expires_at
+        +bool used
+        +is_valid(now) bool
+    }
     class Profile {
         +int user_id
         +list~str~ interests
@@ -65,16 +73,21 @@ classDiagram
     class CampusEventError {
         <<exception>>
     }
+    class InvalidEmailDomainError
+    class DuplicateEmailError
+    class InvalidVerificationCodeError
+    class AuthenticationError
+    class EmailNotVerifiedError
     class ValidationError
     class PermissionDeniedError
+    class NotFoundError
     class FacilityConflictError
     class EventFullError
     class AlreadyJoinedError
-    class AuthenticationError
-    class EmailNotVerifiedError
 
     User --> Role
     User "1" -- "0..1" Profile
+    User "1" -- "*" VerificationCode
     Profile o-- "*" TimeSlot
     Facility "1" o-- "*" FacilityBlock
     FacilityBlock *-- TimeSlot
@@ -84,10 +97,14 @@ classDiagram
     Event "*" --> "1" User : organizer
     Event "*" --> "*" User : participants
     ActivityRecord ..> Event : built from
+    CampusEventError <|-- InvalidEmailDomainError
+    CampusEventError <|-- DuplicateEmailError
+    CampusEventError <|-- InvalidVerificationCodeError
+    CampusEventError <|-- AuthenticationError
+    CampusEventError <|-- EmailNotVerifiedError
     CampusEventError <|-- ValidationError
     CampusEventError <|-- PermissionDeniedError
+    CampusEventError <|-- NotFoundError
     CampusEventError <|-- FacilityConflictError
     CampusEventError <|-- EventFullError
     CampusEventError <|-- AlreadyJoinedError
-    CampusEventError <|-- AuthenticationError
-    CampusEventError <|-- EmailNotVerifiedError

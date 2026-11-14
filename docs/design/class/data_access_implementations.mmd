@@ -1,0 +1,76 @@
+classDiagram
+    direction TB
+    class UserRepository {
+        <<interface>>
+    }
+    class ProfileRepository {
+        <<interface>>
+    }
+    class FacilityRepository {
+        <<interface>>
+    }
+    class EventRepository {
+        <<interface>>
+    }
+    class UnitOfWork {
+        <<interface>>
+    }
+    class PasswordHasher {
+        <<interface>>
+    }
+    class EmailSender {
+        <<interface>>
+    }
+    class SqlUserRepository {
+        -Session session
+    }
+    class SqlProfileRepository {
+        -Session session
+    }
+    class SqlFacilityRepository {
+        -Session session
+    }
+    class SqlEventRepository {
+        -Session session
+    }
+    class SqlUnitOfWork {
+        -Session session
+    }
+    class InMemoryUserRepository
+    class InMemoryProfileRepository
+    class InMemoryFacilityRepository
+    class InMemoryEventRepository
+    class InMemoryUnitOfWork
+    class Argon2PasswordHasher {
+        -argon2.PasswordHasher ph
+    }
+    class SmtpEmailSender {
+        -str host
+        -int port
+        -str username
+    }
+    class InMemoryEmailSender {
+        +list sent_codes
+    }
+    class Session {
+        <<SQLAlchemy>>
+    }
+
+    UserRepository <|.. SqlUserRepository
+    ProfileRepository <|.. SqlProfileRepository
+    FacilityRepository <|.. SqlFacilityRepository
+    EventRepository <|.. SqlEventRepository
+    UnitOfWork <|.. SqlUnitOfWork
+    UserRepository <|.. InMemoryUserRepository
+    ProfileRepository <|.. InMemoryProfileRepository
+    FacilityRepository <|.. InMemoryFacilityRepository
+    EventRepository <|.. InMemoryEventRepository
+    UnitOfWork <|.. InMemoryUnitOfWork
+    PasswordHasher <|.. Argon2PasswordHasher
+    EmailSender <|.. SmtpEmailSender
+    EmailSender <|.. InMemoryEmailSender
+    SqlUserRepository --> Session
+    SqlProfileRepository --> Session
+    SqlFacilityRepository --> Session
+    SqlEventRepository --> Session
+    SqlUnitOfWork --> Session : shares one session per request

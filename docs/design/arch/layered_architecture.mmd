@@ -1,58 +1,56 @@
+---
+config:
+  layout: elk
+  elk:
+    nodePlacementStrategy: BRANDES_KOEPF
+---
 flowchart TB
-    subgraph Client["Client tier"]
+    subgraph CL["Client tier"]
         B["Web browser<br/>(desktop and mobile, 360 px and wider)"]
     end
-    subgraph Web["Presentation layer (Flask)"]
-        direction LR
-        AR["auth_routes<br/>sign up, verify, log in"]
-        PR["profile_routes<br/>my profile"]
-        ER["event_routes<br/>find, details, create, join, leave, cancel, history"]
-        FR["facility_routes<br/>facility management"]
-        TPL["Jinja2 templates + Bootstrap 5<br/>responsive pages"]
-        SEC["Security middleware<br/>session, CSRF, login_required, role_required"]
+
+    subgraph PL["Layer 1: Presentation (Flask)"]
+        SEC["Security middleware<br/>session cookie, CSRF check,<br/>login_required, role_required"]
+        BP["Blueprints<br/>auth_routes, profile_routes,<br/>event_routes, facility_routes"]
+        TPL["Jinja2 templates + Bootstrap 5"]
     end
-    subgraph App["Application layer (services)"]
-        direction LR
+
+    subgraph AL["Layer 2: Application (services)"]
         AS["AuthService"]
         PS["ProfileService"]
-        ES["EventService"]
         FS["FacilityService"]
+        ES["EventService"]
     end
-    subgraph Domain["Domain layer"]
-        DM["User, Profile, Event, Facility,<br/>FacilityBlock, TimeSlot, ActivityRecord,<br/>Role, EventStatus, domain exceptions"]
-    end
-    subgraph Data["Data access layer (SQLAlchemy)"]
-        direction LR
-        UR["UserRepository"]
-        PRR["ProfileRepository"]
-        EVR["EventRepository"]
-        FAR["FacilityRepository"]
-    end
-    subgraph Infra["Infrastructure"]
-        direction LR
-        DB[("PostgreSQL 16")]
-        PH["PasswordHasher<br/>(argon2-cffi)"]
-        MAIL["EmailSender<br/>(SMTP)"]
-    end
-    EXT["External e-mail provider<br/>(SMTP, e.g. Brevo)"]
 
-    B -- "HTTPS (HTML forms, fetch)" --> SEC
-    SEC --> AR & PR & ER & FR
-    AR & PR & ER & FR --> TPL
-    AR --> AS
-    PR --> PS
-    ER --> ES
-    FR --> FS
-    ES --> FS
-    PS --> AS
-    ES --> AS
-    FS --> AS
-    AS & PS & ES & FS --> DM
-    AS --> UR
-    PS --> PRR
-    ES --> EVR
-    FS --> FAR
-    AS --> PH
-    AS --> MAIL
-    UR & PRR & EVR & FAR --> DB
-    MAIL --> EXT
+    subgraph DL["Layer 3: Data access and integration"]
+        REPO["Repository interfaces<br/>UserRepository, ProfileRepository,<br/>FacilityRepository, EventRepository<br/>(SQLAlchemy implementations)"]
+        UOW["UnitOfWork<br/>(SqlUnitOfWork)"]
+        PH["PasswordHasher<br/>(Argon2PasswordHasher)"]
+        MAIL["EmailSender<br/>(SmtpEmailSender)"]
+    end
+
+    subgraph EXT["Layer 4: External systems"]
+        DB[("PostgreSQL 16")]
+        SMTP["SMTP e-mail provider"]
+    end
+
+    DOM[["Domain model (shared by layers 1 to 3)<br/>User, Profile, Event, Facility, FacilityBlock,<br/>VerificationCode, TimeSlot, ActivityRecord,<br/>Role, EventStatus, CampusEventError subclasses"]]
+
+    B -- "HTTPS: GET pages, POST forms with CSRF token, session cookie" --> SEC
+    SEC -- "authorized request + current user" --> BP
+    BP -- "render_template(page, view model)" --> TPL
+    BP -- "service API calls, e.g. EventService.join_event(event_id, user_id);<br/>returns domain objects or raises CampusEventError" --> AL
+    PS -- "require_role(), get_user()" --> AS
+    FS -- "require_role()" --> AS
+    ES -- "require_role()" --> AS
+    ES -- "check_bookable(), is_available()" --> FS
+    AL -- "add / get / get_for_update / search / save" --> REPO
+    AL -- "begin / commit / rollback" --> UOW
+    AS -- "hash / verify" --> PH
+    AS -- "send_verification_code(email, code)" --> MAIL
+    REPO -- "SQL through SQLAlchemy session (TLS)" --> DB
+    UOW -- "BEGIN / COMMIT / ROLLBACK" --> DB
+    MAIL -- "SMTP + STARTTLS" --> SMTP
+    PL -. "uses" .-> DOM
+    AL -. "uses" .-> DOM
+    DL -. "maps rows to" .-> DOM

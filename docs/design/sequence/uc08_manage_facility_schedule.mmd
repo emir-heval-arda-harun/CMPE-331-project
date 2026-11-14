@@ -1,31 +1,65 @@
 sequenceDiagram
     autonumber
     actor T as Facility Staff
-    participant R as facility_routes
-    participant SEC as role_required(FACILITY_STAFF)
-    participant F as FacilityService
-    participant A as AuthService
-    participant FR as SqlFacilityRepository
+    box rgb(232,240,254) Layer 1 Presentation
+        participant SEC as role_required middleware
+        participant R as facility_routes
+    end
+    box rgb(232,245,233) Layer 2 Application
+        participant F as FacilityService
+        participant A as AuthService
+    end
+    box rgb(255,243,224) Layer 3 Data access and integration
+        participant W as UnitOfWork
+        participant FR as FacilityRepository
+        participant U as UserRepository
+    end
+    box rgb(243,229,245) Layer 4 External systems
+        participant DB as PostgreSQL
+    end
 
-    T->>R: POST /facilities (name, capacity)
-    R->>SEC: check session role
-    alt not facility staff
+    T->>SEC: POST /facilities (name, capacity)
+    alt session role is not FACILITY_STAFF
         SEC-->>T: 403 Forbidden
     else facility staff
+        SEC->>R: forward request
         R->>F: add_facility(staff_id, name, capacity)
         F->>A: require_role(staff_id, FACILITY_STAFF)
-        F->>F: validate capacity >= 2, unique name
-        F->>FR: add(facility)
-        R-->>T: facility list
+        A->>U: get(staff_id)
+        U->>DB: SELECT user
+        F->>F: validate capacity >= 2
+        F->>W: begin()
+        F->>FR: find_by_name(name)
+        alt name already used
+            F->>W: rollback()
+            F-->>R: raise ValidationError
+            R-->>T: form with error
+        else new name
+            F->>FR: add(facility)
+            FR->>DB: INSERT facility
+            F->>W: commit()
+            F-->>R: facility
+            R-->>T: facility list
+        end
     end
-    T->>R: POST /facilities/{id}/blocks (from, to, reason)
+
+    T->>SEC: POST /facilities/{id}/blocks (from, to, reason)
+    SEC->>R: forward request (role checked as above)
     R->>F: add_block(staff_id, facility_id, slot, reason)
     F->>A: require_role(staff_id, FACILITY_STAFF)
+    F->>W: begin()
+    F->>FR: get_for_update(facility_id)
+    FR->>DB: SELECT facility FOR UPDATE
     F->>FR: blocks_on(facility_id, day)
+    FR->>DB: SELECT facility_block
     alt new block overlaps an existing block
-        F-->>R: ValidationError
+        F->>W: rollback()
+        F-->>R: raise ValidationError
         R-->>T: form with error
     else no overlap
         F->>FR: add_block(block)
+        FR->>DB: INSERT facility_block
+        F->>W: commit()
+        F-->>R: block
         R-->>T: updated weekly schedule
     end

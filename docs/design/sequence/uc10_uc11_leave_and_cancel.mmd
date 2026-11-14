@@ -2,34 +2,61 @@ sequenceDiagram
     autonumber
     actor P as Participant
     actor O as Organizer
-    participant R as event_routes
-    participant E as EventService
-    participant ER as SqlEventRepository
+    box rgb(232,240,254) Layer 1 Presentation
+        participant R as event_routes
+    end
+    box rgb(232,245,233) Layer 2 Application
+        participant E as EventService
+    end
+    box rgb(255,243,224) Layer 3 Data access and integration
+        participant W as UnitOfWork
+        participant ER as EventRepository
+    end
+    box rgb(243,229,245) Layer 4 External systems
+        participant DB as PostgreSQL
+    end
 
     P->>R: POST /events/{id}/leave
     R->>E: leave_event(event_id, user_id)
+    E->>W: begin()
     E->>ER: get_for_update(event_id)
+    ER->>DB: SELECT event FOR UPDATE
     alt user is the organizer
-        E-->>R: PermissionDeniedError
+        E->>W: rollback()
+        E-->>R: raise PermissionDeniedError
         R-->>P: "Organizers cannot leave, cancel the event instead."
-    else user is not a participant
-        E-->>R: ValidationError
+    else user is not a participant or event is not OPEN or FULL
+        E->>W: rollback()
+        E-->>R: raise ValidationError
+        R-->>P: event details with error
     else participant of an open or full event
         E->>E: remove user_id, if status == FULL then status = OPEN
         E->>ER: save(event)
+        ER->>DB: DELETE event_participant, UPDATE event
+        E->>W: commit()
+        E-->>R: event
         R-->>P: event details with "Join event"
     end
 
     O->>R: POST /events/{id}/cancel
     R->>E: cancel_event(event_id, user_id)
+    E->>W: begin()
     E->>ER: get_for_update(event_id)
-    alt user is not the organizer
-        E-->>R: PermissionDeniedError
-        R-->>O: 403
-    else event already completed or cancelled
-        E-->>R: ValidationError
-    else open or full
-        E->>E: status = CANCELLED (slot no longer counted by is_available)
+    ER->>DB: SELECT event FOR UPDATE
+    alt user is not event.organizer_id
+        E->>W: rollback()
+        E-->>R: raise PermissionDeniedError
+        R-->>O: 403 page
+    else status is COMPLETED or CANCELLED
+        E->>W: rollback()
+        E-->>R: raise ValidationError
+        R-->>O: event details with error
+    else status is OPEN or FULL
+        E->>E: status = CANCELLED
         E->>ER: save(event)
+        ER->>DB: UPDATE event SET status = cancelled
+        E->>W: commit()
+        E-->>R: event
         R-->>O: 303 redirect to My Activities
     end
+    Note over E,ER: active_on() ignores cancelled events, so the facility slot is free again (UC-07)
