@@ -39,27 +39,32 @@ This project operates at the intersection of university campus life and event ma
 * Financial Transactions & Payment Gateway Integration (No credit card or paid field booking features)
 * Real-time GPS Tracking of Participants (Only predefined campus facility locations will be used)
 * Direct University SIS/Banner Database Integration (Authentication relies on email domain verification rather than internal school APIs)
-* Live Audio/Video Streaming or In-App Calling (Communication is restricted to text-based chat)
+* Live Audio/Video Streaming, In-App Calling and In-App Chat (Students see event details and participant lists; there is no messaging feature)
 * Native Mobile App Development for iOS/Android (The application will be developed as a responsive web platform; standalone app stores deployment is out-of-scope)
 
 
 ## 4. Technology Stack
 ### Backend Stack
-* Python
-* Java
+* Python 3.12 with the Flask web framework
+* PostgreSQL database (SQLAlchemy ORM, Alembic migrations)
+* pytest for automated tests
 
 ### Frontend Stack
-* HTML
-* CSS
+* HTML (Jinja2 templates)
+* CSS (Bootstrap 5 for the responsive layout)
 * JavaScript
 
+### DevOps Stack
+* GitHub (repository, pull requests, code review)
+* GitHub Actions (continuous integration: linting and tests on every pull request)
+* Render (cloud hosting with HTTPS and a managed PostgreSQL database)
+
 ### AI Stack & Usage Strategy
-* **GeminiPRO (Feature Integration):** 
-  * *Application:* Integrated into the system to process user data and power the core matchmaking algorithm, ensuring balanced skill levels among players.
 * **ChatGPT (Research & Planning):** 
   * *Application:* Utilized as a supplementary research assistant during the requirements phase to explore database schema best practices and conceptualize user workflows.
-* **Claude (Troubleshooting & Optimization):** 
-  * *Application:* Used strictly as an analytical tool to troubleshoot complex backend bugs and review the time complexity of the tournament bracket generation algorithms.
+* **Claude (Documentation, Troubleshooting & Optimization):** 
+  * *Application:* Used as an assistant for preparing documentation and diagrams, troubleshooting complex backend bugs, and reviewing the performance of the event search and facility conflict checks.
+* AI tools are used only as development assistants; the CampusEvent application itself does not use an AI service.
 
 
 ## 5. Project Milestones

@@ -1,0 +1,110 @@
+classDiagram
+    direction LR
+    class Role {
+        <<enumeration>>
+        STUDENT
+        FACILITY_STAFF
+    }
+    class EventStatus {
+        <<enumeration>>
+        OPEN
+        FULL
+        COMPLETED
+        CANCELLED
+    }
+    class TimeSlot {
+        <<value object>>
+        +datetime start
+        +datetime end
+        +overlaps(other: TimeSlot) bool
+    }
+    class User {
+        +int id
+        +str email
+        +str full_name
+        +Role role
+        +bool is_verified
+    }
+    class VerificationCode {
+        +int id
+        +int user_id
+        +str code_hash
+        +datetime expires_at
+        +bool used
+        +is_valid(now) bool
+    }
+    class Profile {
+        +int user_id
+        +list~str~ interests
+        +list~TimeSlot~ availability
+    }
+    class Facility {
+        +int id
+        +str name
+        +int capacity
+    }
+    class FacilityBlock {
+        +int facility_id
+        +TimeSlot slot
+        +str reason
+    }
+    class Event {
+        +int id
+        +int organizer_id
+        +str title
+        +str category
+        +int facility_id
+        +TimeSlot slot
+        +int capacity
+        +str description
+        +list~int~ participant_ids
+        +EventStatus status
+        +free_places() int
+        +is_active() bool
+    }
+    class ActivityRecord {
+        <<read model>>
+        +int event_id
+        +str title
+        +str category
+        +TimeSlot slot
+        +int facility_id
+    }
+    class CampusEventError {
+        <<exception>>
+    }
+    class InvalidEmailDomainError
+    class DuplicateEmailError
+    class InvalidVerificationCodeError
+    class AuthenticationError
+    class EmailNotVerifiedError
+    class ValidationError
+    class PermissionDeniedError
+    class NotFoundError
+    class FacilityConflictError
+    class EventFullError
+    class AlreadyJoinedError
+
+    User --> Role
+    User "1" -- "0..1" Profile
+    User "1" -- "*" VerificationCode
+    Profile o-- "*" TimeSlot
+    Facility "1" o-- "*" FacilityBlock
+    FacilityBlock *-- TimeSlot
+    Event *-- TimeSlot
+    Event --> EventStatus
+    Event "*" --> "1" Facility : held at
+    Event "*" --> "1" User : organizer
+    Event "*" --> "*" User : participants
+    ActivityRecord ..> Event : built from
+    CampusEventError <|-- InvalidEmailDomainError
+    CampusEventError <|-- DuplicateEmailError
+    CampusEventError <|-- InvalidVerificationCodeError
+    CampusEventError <|-- AuthenticationError
+    CampusEventError <|-- EmailNotVerifiedError
+    CampusEventError <|-- ValidationError
+    CampusEventError <|-- PermissionDeniedError
+    CampusEventError <|-- NotFoundError
+    CampusEventError <|-- FacilityConflictError
+    CampusEventError <|-- EventFullError
+    CampusEventError <|-- AlreadyJoinedError

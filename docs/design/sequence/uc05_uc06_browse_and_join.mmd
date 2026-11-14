@@ -1,0 +1,54 @@
+sequenceDiagram
+    autonumber
+    actor S as Student
+    box rgb(232,240,254) Layer 1 Presentation
+        participant R as event_routes
+    end
+    box rgb(232,245,233) Layer 2 Application
+        participant E as EventService
+    end
+    box rgb(255,243,224) Layer 3 Data access and integration
+        participant W as UnitOfWork
+        participant ER as EventRepository
+    end
+    box rgb(243,229,245) Layer 4 External systems
+        participant DB as PostgreSQL
+    end
+
+    S->>R: GET /events?category=...&date=...&keyword=...
+    R->>E: search_events(category, day, keyword, only_open=True)
+    E->>E: normalize category and keyword
+    E->>ER: search(category, day, keyword, only_open)
+    ER->>DB: SELECT event WHERE status = open AND category = ? AND day = ? AND title ILIKE ? ORDER BY start_time LIMIT 20
+    Note over ER,DB: index on (category, start_time) keeps the search under 2 s (NFR-02)
+    ER-->>E: events
+    E-->>R: events
+    R-->>S: event list (empty list links to Create Event)
+
+    S->>R: POST /events/{id}/join
+    R->>E: join_event(event_id, user_id)
+    E->>W: begin()
+    W->>DB: BEGIN
+    E->>ER: get_for_update(event_id)
+    ER->>DB: SELECT event WHERE id = ? FOR UPDATE
+    alt event does not exist
+        E->>W: rollback()
+        E-->>R: raise NotFoundError
+        R-->>S: 404 page
+    else user already a participant
+        E->>W: rollback()
+        E-->>R: raise AlreadyJoinedError
+        R-->>S: "You have already joined this event."
+    else status is not OPEN or free_places() == 0
+        E->>W: rollback()
+        E-->>R: raise EventFullError
+        R-->>S: "This event is full."
+    else free place
+        E->>E: add user_id, if free_places() == 0 then status = FULL
+        E->>ER: save(event)
+        ER->>DB: INSERT event_participant, UPDATE event
+        E->>W: commit()
+        W->>DB: COMMIT
+        E-->>R: event
+        R-->>S: event details with "Leave event"
+    end

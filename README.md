@@ -7,6 +7,7 @@ A campus event platform for university students to organize, join and track even
 - [Project plan (WBS, Gantt & PERT)](docs/plan/README.md)
 - [Use cases](docs/requirements/README.md)
 - [Requirements Specification Report](docs/requirements_specification.md)
+- [Software Design Report](docs/software_design_report.md) and [design models](docs/design/README.md)
 - [Requirement Analysis Report](docs/requirement_analysis_report.md), [analysis models, BPD, DFD](docs/analysis/README.md) and [UI mockups](docs/analysis/ui/README.md)
 
 ## Running the requirement tests
