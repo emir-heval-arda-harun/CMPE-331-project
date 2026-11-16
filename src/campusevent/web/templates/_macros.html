@@ -1,0 +1,5 @@
+{% macro csrf() %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% endmacro %}
+
+{% macro status_tag(event) %}
+<span class="badge {{ 'text-bg-success' if event.status == 'open' else 'text-bg-warning' if event.status == 'full' else 'text-bg-secondary' }}">{{ event.status_label }}</span>
+{% endmacro %}

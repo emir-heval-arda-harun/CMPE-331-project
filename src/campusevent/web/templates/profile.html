@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf %}
+{% block title %}My Profile{% endblock %}
+{% block content %}
+<h1 class="h4 mb-3">My Profile</h1>
+{% if error %}<div class="alert alert-danger" role="alert">{{ error }}</div>{% endif %}
+<form method="post" action="{{ url_for('profile.my_profile') }}" novalidate>
+  {{ csrf() }}
+  <div class="row g-3">
+    <div class="col-12 col-lg-5">
+      <div class="card p-3 h-100">
+        <h2 class="h6">Interests</h2>
+        <label class="form-label small text-muted" for="interests">One interest per line, for example "football" or "board games". At least one is required.</label>
+        <textarea class="form-control" id="interests" name="interests" rows="6">{{ interests }}</textarea>
+      </div>
+    </div>
+    <div class="col-12 col-lg-7">
+      <div class="card p-3 h-100">
+        <h2 class="h6">Availability</h2>
+        <p class="small text-muted">Add the dates and times when you can take part. Leave a row empty to remove it.</p>
+        <div id="slots">
+          {% for row in rows %}
+          <div class="row g-2 mb-2 slot-row">
+            <div class="col-12 col-sm-5"><input class="form-control" type="date" name="slot_date" value="{{ row.date }}" aria-label="Date"></div>
+            <div class="col-6 col-sm-3"><input class="form-control" type="time" name="slot_start" value="{{ row.start }}" aria-label="From"></div>
+            <div class="col-6 col-sm-4"><input class="form-control" type="time" name="slot_end" value="{{ row.end }}" aria-label="To"></div>
+          </div>
+          {% endfor %}
+          <div class="row g-2 mb-2 slot-row">
+            <div class="col-12 col-sm-5"><input class="form-control" type="date" name="slot_date" aria-label="Date"></div>
+            <div class="col-6 col-sm-3"><input class="form-control" type="time" name="slot_start" aria-label="From"></div>
+            <div class="col-6 col-sm-4"><input class="form-control" type="time" name="slot_end" aria-label="To"></div>
+          </div>
+        </div>
+        <button class="btn btn-outline-secondary btn-sm align-self-start" type="button" id="add-slot">Add time slot</button>
+      </div>
+    </div>
+  </div>
+  <button class="btn btn-primary mt-3" type="submit">Save profile</button>
+</form>
+<script>
+  document.getElementById('add-slot').addEventListener('click', function () {
+    var rows = document.querySelectorAll('.slot-row');
+    var copy = rows[rows.length - 1].cloneNode(true);
+    copy.querySelectorAll('input').forEach(function (input) { input.value = ''; });
+    document.getElementById('slots').appendChild(copy);
+  });
+</script>
+{% endblock %}

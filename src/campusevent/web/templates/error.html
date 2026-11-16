@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Error{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-12 col-md-8">
+    <div class="alert alert-danger" role="alert">
+      <h1 class="h5">{{ message }}</h1>
+      <p class="mb-0 small">Error {{ status }}</p>
+    </div>
+    <a class="btn btn-outline-primary" href="{{ url_for('index') }}">Back to start</a>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}My Activities{% endblock %}
+{% block content %}
+<h1 class="h4 mb-3">My Activities</h1>
+{% if rows %}
+<div class="card p-0 table-responsive">
+  <table class="table table-hover mb-0 align-middle">
+    <thead><tr><th>Date</th><th>Time</th><th>Event</th><th>Category</th><th>Facility</th></tr></thead>
+    <tbody>
+    {% for row in rows %}
+      <tr>
+        <td>{{ row.start.strftime('%d %b %Y') }}</td>
+        <td>{{ row.start.strftime('%H:%M') }} – {{ row.end.strftime('%H:%M') }}</td>
+        <td><a href="{{ url_for('events.event_details', event_id=row.event_id) }}">{{ row.title }}</a></td>
+        <td>{{ row.category }}</td>
+        <td>{{ row.facility }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="card p-4 text-center">No completed events yet.</div>
+{% endif %}
+<a class="d-inline-block mt-3" href="{{ url_for('events.find_events') }}">&larr; Back to Find Events</a>
+{% endblock %}

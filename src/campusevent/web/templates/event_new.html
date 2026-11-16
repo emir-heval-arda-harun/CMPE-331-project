@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf %}
+{% block title %}Create Event{% endblock %}
+{% block content %}
+<h1 class="h4 mb-3">Create Event</h1>
+{% if error %}<div class="alert alert-danger" role="alert">{{ error }}</div>{% endif %}
+<div class="row g-3">
+  <div class="col-12 col-lg-7">
+    <form class="card p-3" method="post" action="{{ url_for('events.create_event') }}" novalidate>
+      {{ csrf() }}
+      <div class="mb-3">
+        <label class="form-label" for="title">Title</label>
+        <input class="form-control" id="title" name="title" value="{{ form.get('title', '') }}" required>
+      </div>
+      <div class="mb-3">
+        <label class="form-label" for="category">Category</label>
+        <input class="form-control" id="category" name="category" value="{{ form.get('category', '') }}" placeholder="for example football, study group" required>
+      </div>
+      <div class="mb-3">
+        <label class="form-label" for="description">Description</label>
+        <textarea class="form-control" id="description" name="description" rows="3">{{ form.get('description', '') }}</textarea>
+      </div>
+      <div class="mb-3">
+        <label class="form-label" for="facility_id">Facility</label>
+        <select class="form-select" id="facility_id" name="facility_id" required>
+          <option value="">Choose a facility</option>
+          {% for facility in facilities %}
+          <option value="{{ facility.id }}" {{ 'selected' if form.get('facility_id') == facility.id|string }}>{{ facility.name }} (capacity {{ facility.capacity }})</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="row g-2 mb-3">
+        <div class="col-12 col-sm-4">
+          <label class="form-label" for="date">Date</label>
+          <input class="form-control" id="date" name="date" type="date" value="{{ form.get('date', '') }}" required>
+        </div>
+        <div class="col-6 col-sm-4">
+          <label class="form-label" for="start">Start time</label>
+          <input class="form-control" id="start" name="start" type="time" value="{{ form.get('start', '') }}" required>
+        </div>
+        <div class="col-6 col-sm-4">
+          <label class="form-label" for="end">End time</label>
+          <input class="form-control" id="end" name="end" type="time" value="{{ form.get('end', '') }}" required>
+        </div>
+      </div>
+      <div class="mb-3">
+        <label class="form-label" for="capacity">Participants (capacity, at least 2)</label>
+        <input class="form-control" id="capacity" name="capacity" type="number" min="2" value="{{ form.get('capacity', '') }}" required>
+      </div>
+      <button class="btn btn-primary" type="submit">Create event</button>
+    </form>
+  </div>
+  <div class="col-12 col-lg-5">
+    <div class="card p-3">
+      <h2 class="h6">Facility schedule</h2>
+      <form method="get" action="{{ url_for('events.create_event') }}" class="row g-2 mb-2">
+        <div class="col-12 col-sm-6">
+          <select class="form-select form-select-sm" name="facility_id" aria-label="Facility">
+            <option value="">Facility</option>
+            {% for facility in facilities %}
+            <option value="{{ facility.id }}" {{ 'selected' if form.get('facility_id') == facility.id|string }}>{{ facility.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-8 col-sm-4"><input class="form-control form-control-sm" type="date" name="date" value="{{ form.get('date', '') }}" aria-label="Date"></div>
+        <div class="col-4 col-sm-2"><button class="btn btn-sm btn-outline-primary w-100" type="submit">Show</button></div>
+      </form>
+      {% if schedule is none %}
+      <p class="small text-muted mb-0">Choose a facility and a date to see which times are already busy.</p>
+      {% elif schedule %}
+      <ul class="list-group list-group-flush small">
+        {% for busy in schedule %}
+        <li class="list-group-item px-0">Busy: {{ busy.start.strftime('%H:%M') }} – {{ busy.end.strftime('%H:%M') }}</li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p class="small text-success mb-0">The facility is free all day.</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

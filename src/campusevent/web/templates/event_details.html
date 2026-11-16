@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, status_tag %}
+{% block title %}{{ event.title }}{% endblock %}
+{% block content %}
+<a class="small" href="{{ url_for('events.find_events') }}">&larr; Back to Find Events</a>
+<div class="row g-3 mt-1">
+  <div class="col-12 col-lg-8">
+    <div class="card p-3">
+      <h1 class="h4">{{ event.title }}</h1>
+      <div class="mb-2">
+        <span class="badge text-bg-light border">{{ event.category }}</span>
+        {{ status_tag(event) }}
+      </div>
+      <dl class="row mb-0 small">
+        <dt class="col-4 col-sm-3">Date</dt><dd class="col-8 col-sm-9">{{ event.start.strftime('%d %b %Y') }}</dd>
+        <dt class="col-4 col-sm-3">Time</dt><dd class="col-8 col-sm-9">{{ event.start.strftime('%H:%M') }} – {{ event.end.strftime('%H:%M') }}</dd>
+        <dt class="col-4 col-sm-3">Facility</dt><dd class="col-8 col-sm-9">{{ event.facility }}</dd>
+        <dt class="col-4 col-sm-3">Organizer</dt><dd class="col-8 col-sm-9">{{ event.organizer }}</dd>
+        <dt class="col-4 col-sm-3">Participants</dt><dd class="col-8 col-sm-9">{{ event.count }} / {{ event.capacity }}</dd>
+      </dl>
+      {% if event.description %}<hr><p class="mb-0">{{ event.description }}</p>{% endif %}
+    </div>
+    <div class="card p-3 mt-3">
+      <h2 class="h6">Participants</h2>
+      <table class="table table-sm mb-0">
+        <thead><tr><th>Name</th><th>Role</th></tr></thead>
+        <tbody>
+        {% for person in event.participants %}
+          <tr><td>{{ person.name }}</td><td>{{ person.role }}</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="col-12 col-lg-4">
+    <div class="card p-3">
+      <h2 class="h6">Actions</h2>
+      <div class="d-grid gap-2">
+        {% if event.can_join %}
+        <form method="post" action="{{ url_for('events.join_event', event_id=event.id) }}">
+          {{ csrf() }}<button class="btn btn-primary w-100" type="submit">Join event</button>
+        </form>
+        {% endif %}
+        {% if event.can_leave %}
+        <form method="post" action="{{ url_for('events.leave_event', event_id=event.id) }}">
+          {{ csrf() }}<button class="btn btn-outline-secondary w-100" type="submit">Leave event</button>
+        </form>
+        {% endif %}
+        {% if event.can_cancel %}
+        <form method="post" action="{{ url_for('events.cancel_event', event_id=event.id) }}"
+              onsubmit="return confirm('Cancel this event? Participants will no longer be able to join and the facility slot is freed.');">
+          {{ csrf() }}<button class="btn btn-outline-danger w-100" type="submit">Cancel event</button>
+        </form>
+        <p class="small text-muted mb-0">As the organizer you cannot leave the event; cancel it instead.</p>
+        {% endif %}
+        {% if not (event.can_join or event.can_leave or event.can_cancel) %}
+        <p class="small text-muted mb-0">No actions available for this event.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
