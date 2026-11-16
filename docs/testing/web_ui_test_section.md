@@ -41,8 +41,8 @@ Every use case of this section has at least one test of the main flow. UC-01 to 
 ## 4. Non-functional requirements checked on the UI
 | NFR | What was checked | How | Result |
 |---|---|---|---|
-| NFR-01 Usability | Layout at phone width | Manual: Event Details page at 375 px in the built-in browser: no horizontal scrolling, one column | Passed for this page only |
-| NFR-01 Usability | Other pages at 360 px | – | **Not checked yet** |
+| NFR-01 Usability | Layout at phone width | Manual, 360 px wide in the built-in browser (Chromium), with demo data: Log in, Sign up (first step), Find Events, Create Event, My Profile, My Activities, Event Details. The page width was measured with `scrollWidth` and no element reached beyond the screen edge; the Create Event form was also looked at. | Passed for these 7 pages |
+| NFR-01 Usability | Sign-up code step, error pages, long titles and many participants at 360 px | – | **Not checked yet** |
 | NFR-03 Security | CSRF token on forms | `test_forms_are_protected_by_csrf_tokens` | Passed |
 | NFR-03 Security | Session cookie flags (`Secure`, `HttpOnly`, `SameSite=Lax`) | `test_session_cookie_is_secure_by_default` | Passed |
 | NFR-03 Security | HTTPS on the deployed site | – | **Not checked** (deployment is task 4.4) |
@@ -57,5 +57,5 @@ Every use case of this section has at least one test of the main flow. UC-01 to 
 | 1 | Run the UI against the real services as soon as they exist and fix differences (integration test, task 4.2) | All |
 | 2 | The UI needs three service methods that are not in the design report: `EventService.get_event`, `FacilityService.list_facilities`, `AuthService.get_user` raising `NotFoundError` ([details](../../src/campusevent/web/README.md)) | Backend owners (Heval, E. Arda, Harun) |
 | 3 | Missing features because the service interface cannot do them: resend verification code (UC-01), time range filter (UC-05), "Upcoming" tab on My Activities (F-09), suggestion of free slots (UC-04/UC-07) | Team decision |
-| 4 | Check all pages at 360 px and in Firefox, Safari and Edge (NFR-01, NFR-07) | Web UI owner |
+| 4 | Check the pages in Firefox, Safari and Edge (NFR-07) and the remaining 360 px cases of NFR-01 | Web UI owner |
 | 5 | Add a GitHub Actions run for `tests/web` (CI, task 3.7) | Onur |
