@@ -1,25 +1,34 @@
 {% extends "base.html" %}
-{% from "_macros.html" import csrf %}
+{% from "_macros.html" import csrf, icon %}
 {% block title %}Create Event{% endblock %}
 {% block content %}
-<h1 class="h4 mb-3">Create Event</h1>
-{% if error %}<div class="alert alert-danger" role="alert">{{ error }}</div>{% endif %}
+<div class="page-head mb-3">
+  <h1 class="h3 mb-1">Create Event</h1>
+  <p class="text-muted mb-0">Organize something on campus. Check the facility schedule first to pick a free time.</p>
+</div>
+{% if error %}<div class="alert alert-danger d-flex align-items-start gap-2" role="alert">{{ icon('alert', 20) }}<div>{{ error }}</div></div>{% endif %}
 <div class="row g-3">
   <div class="col-12 col-lg-7">
-    <form class="card p-3" method="post" action="{{ url_for('events.create_event') }}" novalidate>
+    <form class="card-soft p-4" method="post" action="{{ url_for('events.create_event') }}" novalidate>
       {{ csrf() }}
+      <h2 class="section-title mb-3">What</h2>
       <div class="mb-3">
         <label class="form-label" for="title">Title</label>
-        <input class="form-control" id="title" name="title" value="{{ form.get('title', '') }}" required>
+        <input class="form-control" id="title" name="title" value="{{ form.get('title', '') }}" required placeholder="for example Friday football match">
       </div>
       <div class="mb-3">
         <label class="form-label" for="category">Category</label>
-        <input class="form-control" id="category" name="category" value="{{ form.get('category', '') }}" placeholder="for example football, study group" required>
+        <div class="input-group">
+          <span class="input-group-text bg-white text-muted">{{ icon('tag', 18) }}</span>
+          <input class="form-control border-start-0" id="category" name="category" value="{{ form.get('category', '') }}" placeholder="for example football, study group" required>
+        </div>
       </div>
-      <div class="mb-3">
-        <label class="form-label" for="description">Description</label>
+      <div class="mb-4">
+        <label class="form-label" for="description">Description <span class="text-muted fw-normal">(optional)</span></label>
         <textarea class="form-control" id="description" name="description" rows="3">{{ form.get('description', '') }}</textarea>
       </div>
+
+      <h2 class="section-title mb-3">Where and when</h2>
       <div class="mb-3">
         <label class="form-label" for="facility_id">Facility</label>
         <select class="form-select" id="facility_id" name="facility_id" required>
@@ -43,38 +52,41 @@
           <input class="form-control" id="end" name="end" type="time" value="{{ form.get('end', '') }}" required>
         </div>
       </div>
-      <div class="mb-3">
-        <label class="form-label" for="capacity">Participants (capacity, at least 2)</label>
-        <input class="form-control" id="capacity" name="capacity" type="number" min="2" value="{{ form.get('capacity', '') }}" required>
+      <div class="mb-4">
+        <label class="form-label" for="capacity">Participants <span class="text-muted fw-normal">(capacity, at least 2)</span></label>
+        <div class="input-group">
+          <span class="input-group-text bg-white text-muted">{{ icon('users', 18) }}</span>
+          <input class="form-control border-start-0" id="capacity" name="capacity" type="number" min="2" value="{{ form.get('capacity', '') }}" required>
+        </div>
       </div>
-      <button class="btn btn-primary" type="submit">Create event</button>
+      <button class="btn btn-primary btn-lg px-4" type="submit">Create event</button>
     </form>
   </div>
   <div class="col-12 col-lg-5">
-    <div class="card p-3">
-      <h2 class="h6">Facility schedule</h2>
-      <form method="get" action="{{ url_for('events.create_event') }}" class="row g-2 mb-2">
-        <div class="col-12 col-sm-6">
-          <select class="form-select form-select-sm" name="facility_id" aria-label="Facility">
+    <div class="card-soft p-4">
+      <h2 class="section-title mb-3">Facility schedule</h2>
+      <form method="get" action="{{ url_for('events.create_event') }}" class="row g-2 mb-3">
+        <div class="col-12">
+          <select class="form-select" name="facility_id" aria-label="Facility">
             <option value="">Facility</option>
             {% for facility in facilities %}
             <option value="{{ facility.id }}" {{ 'selected' if form.get('facility_id') == facility.id|string }}>{{ facility.name }}</option>
             {% endfor %}
           </select>
         </div>
-        <div class="col-8 col-sm-4"><input class="form-control form-control-sm" type="date" name="date" value="{{ form.get('date', '') }}" aria-label="Date"></div>
-        <div class="col-4 col-sm-2"><button class="btn btn-sm btn-outline-primary w-100" type="submit">Show</button></div>
+        <div class="col-8"><input class="form-control" type="date" name="date" value="{{ form.get('date', '') }}" aria-label="Date"></div>
+        <div class="col-4"><button class="btn btn-outline-primary w-100" type="submit">Show</button></div>
       </form>
       {% if schedule is none %}
-      <p class="small text-muted mb-0">Choose a facility and a date to see which times are already busy.</p>
+      <p class="small text-muted mb-0 d-flex align-items-start gap-2">{{ icon('info', 18) }}<span>Choose a facility and a date to see which times are already busy.</span></p>
       {% elif schedule %}
-      <ul class="list-group list-group-flush small">
+      <div class="d-grid gap-2">
         {% for busy in schedule %}
-        <li class="list-group-item px-0">Busy: {{ busy.start.strftime('%H:%M') }} – {{ busy.end.strftime('%H:%M') }}</li>
+        <div class="busy-row">{{ icon('clock', 18) }}<span>Busy: {{ busy.start.strftime('%H:%M') }} – {{ busy.end.strftime('%H:%M') }}</span></div>
         {% endfor %}
-      </ul>
+      </div>
       {% else %}
-      <p class="small text-success mb-0">The facility is free all day.</p>
+      <p class="small text-success mb-0 d-flex align-items-center gap-2">{{ icon('check', 18) }}<span>The facility is free all day.</span></p>
       {% endif %}
     </div>
   </div>

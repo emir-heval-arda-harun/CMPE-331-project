@@ -1,13 +1,15 @@
 {% extends "base.html" %}
+{% from "_macros.html" import icon %}
 {% block title %}Error{% endblock %}
 {% block content %}
 <div class="row justify-content-center">
-  <div class="col-12 col-md-8">
-    <div class="alert alert-danger" role="alert">
-      <h1 class="h5">{{ message }}</h1>
-      <p class="mb-0 small">Error {{ status }}</p>
+  <div class="col-12 col-md-8 col-lg-6">
+    <div class="card-soft empty-state" role="alert">
+      <span class="empty-icon" style="background: #fdecec; color: #b42318;">{{ icon('alert', 28) }}</span>
+      <h1 class="h4 text-dark mb-2">{{ message }}</h1>
+      <p class="small mb-4">Error {{ status }}</p>
+      <a class="btn btn-primary" href="{{ url_for('index') }}">Back to start</a>
     </div>
-    <a class="btn btn-outline-primary" href="{{ url_for('index') }}">Back to start</a>
   </div>
 </div>
 {% endblock %}

@@ -1,44 +1,52 @@
 {% extends "base.html" %}
-{% from "_macros.html" import csrf, status_tag %}
+{% from "_macros.html" import csrf, status_tag, icon, avatar, fill %}
 {% block title %}{{ event.title }}{% endblock %}
 {% block content %}
-<a class="small" href="{{ url_for('events.find_events') }}">&larr; Back to Find Events</a>
-<div class="row g-3 mt-1">
+<a class="small text-decoration-none d-inline-flex align-items-center gap-1 mb-3" href="{{ url_for('events.find_events') }}">&larr; Back to Find Events</a>
+<div class="row g-3">
   <div class="col-12 col-lg-8">
-    <div class="card p-3">
-      <h1 class="h4">{{ event.title }}</h1>
-      <div class="mb-2">
-        <span class="badge text-bg-light border">{{ event.category }}</span>
+    <div class="card-soft p-4">
+      <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+        <span class="pill">{{ event.category }}</span>
         {{ status_tag(event) }}
       </div>
-      <dl class="row mb-0 small">
-        <dt class="col-4 col-sm-3">Date</dt><dd class="col-8 col-sm-9">{{ event.start.strftime('%d %b %Y') }}</dd>
-        <dt class="col-4 col-sm-3">Time</dt><dd class="col-8 col-sm-9">{{ event.start.strftime('%H:%M') }} – {{ event.end.strftime('%H:%M') }}</dd>
-        <dt class="col-4 col-sm-3">Facility</dt><dd class="col-8 col-sm-9">{{ event.facility }}</dd>
-        <dt class="col-4 col-sm-3">Organizer</dt><dd class="col-8 col-sm-9">{{ event.organizer }}</dd>
-        <dt class="col-4 col-sm-3">Participants</dt><dd class="col-8 col-sm-9">{{ event.count }} / {{ event.capacity }}</dd>
-      </dl>
-      {% if event.description %}<hr><p class="mb-0">{{ event.description }}</p>{% endif %}
+      <h1 class="h3 mb-3" style="font-weight: 700; letter-spacing: -.02em;">{{ event.title }}</h1>
+      <div class="row g-2">
+        <div class="col-12 col-sm-6"><div class="info-tile">{{ icon('calendar', 22) }}<div><div class="label">Date</div><div class="value">{{ event.start.strftime('%d %b %Y') }}</div></div></div></div>
+        <div class="col-12 col-sm-6"><div class="info-tile">{{ icon('clock', 22) }}<div><div class="label">Time</div><div class="value">{{ event.start.strftime('%H:%M') }} – {{ event.end.strftime('%H:%M') }}</div></div></div></div>
+        <div class="col-12 col-sm-6"><div class="info-tile">{{ icon('pin', 22) }}<div><div class="label">Facility</div><div class="value">{{ event.facility }}</div></div></div></div>
+        <div class="col-12 col-sm-6"><div class="info-tile">{{ icon('user', 22) }}<div><div class="label">Organizer</div><div class="value">{{ event.organizer }}</div></div></div></div>
+      </div>
+      {% if event.description %}
+      <h2 class="section-title mt-4 mb-2">About this event</h2>
+      <p class="mb-0">{{ event.description }}</p>
+      {% endif %}
     </div>
-    <div class="card p-3 mt-3">
-      <h2 class="h6">Participants</h2>
-      <table class="table table-sm mb-0">
-        <thead><tr><th>Name</th><th>Role</th></tr></thead>
-        <tbody>
+
+    <div class="card-soft p-4 mt-3">
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <h2 class="section-title mb-0">Participants</h2>
+        {{ fill(event.count, event.capacity) }}
+      </div>
+      <ul class="list-unstyled mb-0 d-grid gap-2">
         {% for person in event.participants %}
-          <tr><td>{{ person.name }}</td><td>{{ person.role }}</td></tr>
+        <li class="d-flex align-items-center gap-3">
+          {{ avatar(person.name) }}
+          <span class="fw-medium">{{ person.name }}</span>
+          <span class="small text-muted ms-auto">{{ person.role }}</span>
+        </li>
         {% endfor %}
-        </tbody>
-      </table>
+      </ul>
     </div>
   </div>
+
   <div class="col-12 col-lg-4">
-    <div class="card p-3">
-      <h2 class="h6">Actions</h2>
+    <div class="card-soft p-4">
+      <h2 class="section-title mb-3">Actions</h2>
       <div class="d-grid gap-2">
         {% if event.can_join %}
         <form method="post" action="{{ url_for('events.join_event', event_id=event.id) }}">
-          {{ csrf() }}<button class="btn btn-primary w-100" type="submit">Join event</button>
+          {{ csrf() }}<button class="btn btn-primary btn-lg w-100" type="submit">Join event</button>
         </form>
         {% endif %}
         {% if event.can_leave %}

@@ -41,7 +41,7 @@ Every use case of this section has at least one test of the main flow. UC-01 to 
 ## 4. Non-functional requirements checked on the UI
 | NFR | What was checked | How | Result |
 |---|---|---|---|
-| NFR-01 Usability | Layout at phone width | Manual, 360 px wide in the built-in browser (Chromium), with demo data: Log in, Sign up (first step), Find Events, Create Event, My Profile, My Activities, Event Details. The page width was measured with `scrollWidth` and no element reached beyond the screen edge; the Create Event form was also looked at. | Passed for these 7 pages |
+| NFR-01 Usability | Layout at phone width | Manual, 360 px wide in the built-in browser (Chromium), with demo data: Log in, Sign up (first step), Find Events, Create Event, My Profile, My Activities, Event Details. The page width was measured with `scrollWidth` and no element reached beyond the screen edge; the Create Event form was also looked at. | Passed for these 7 pages and the error page (404); measured again after the visual redesign of the pages on 17.11.2026 |
 | NFR-01 Usability | Sign-up code step, error pages, long titles and many participants at 360 px | – | **Not checked yet** |
 | NFR-03 Security | CSRF token on forms | `test_forms_are_protected_by_csrf_tokens` | Passed |
 | NFR-03 Security | Session cookie flags (`Secure`, `HttpOnly`, `SameSite=Lax`) | `test_session_cookie_is_secure_by_default` | Passed |

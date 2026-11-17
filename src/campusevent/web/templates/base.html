@@ -24,6 +24,47 @@
       border-radius: .7rem; background: var(--ce-blue); color: #fff; }
     .brand-mark-light { background: rgba(255, 255, 255, .16); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .28); }
 
+    /* pages after login */
+    .navbar-campus .nav-link { border-radius: .5rem; padding: .45rem .8rem; margin: 0 .1rem; }
+    .navbar-campus .nav-link:hover { background: rgba(255, 255, 255, .10); }
+    .navbar-campus .nav-link.active { background: rgba(255, 255, 255, .18); color: #fff; font-weight: 600; }
+    .page-head h1 { font-weight: 700; letter-spacing: -.02em; }
+    .section-title { font-size: .8rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #64748b; }
+    .card-soft { background: #fff; border: 1px solid #e3e8f2; border-radius: 1rem;
+      box-shadow: 0 1px 2px rgba(20, 48, 94, .04), 0 4px 14px rgba(20, 48, 94, .04); }
+    .event-card { transition: box-shadow .15s ease, transform .15s ease; }
+    .event-card:hover { box-shadow: 0 6px 20px rgba(20, 48, 94, .10); transform: translateY(-1px); }
+    .event-title { font-size: 1.1rem; font-weight: 650; color: var(--ce-navy); text-decoration: none; }
+    .event-title:hover { color: var(--ce-blue); text-decoration: underline; }
+    .event-meta { display: flex; flex-wrap: wrap; gap: .35rem 1.1rem; color: #475569; font-size: .9rem; }
+    .event-meta span { display: inline-flex; align-items: center; gap: .35rem; }
+    .event-meta svg, .info-tile svg { color: var(--ce-blue); flex: none; }
+    .pill { display: inline-block; padding: .15rem .65rem; border-radius: 999px; background: #e8efff; color: #1e40af;
+      font-size: .78rem; font-weight: 600; }
+    .date-badge { flex: none; width: 3.6rem; text-align: center; border-radius: .8rem; overflow: hidden;
+      border: 1px solid #dbe4f5; background: #fff; }
+    .date-badge .d-mon { display: block; background: var(--ce-blue); color: #fff; font-size: .7rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .06em; padding: .1rem 0; order: -1; }
+    .date-badge { display: flex; flex-direction: column; }
+    .date-badge .d-day { font-size: 1.5rem; font-weight: 700; line-height: 1.5; color: var(--ce-navy); }
+    .join-col { flex: 0 0 100%; }
+    @media (min-width: 768px) { .join-col { flex: 0 0 auto; margin-left: auto; } }
+    .fill-wrap { display: inline-flex; align-items: center; gap: .6rem; }
+    .fill-bar { display: inline-block; width: 5.5rem; height: .4rem; border-radius: 99px; background: #e5eaf4; overflow: hidden; }
+    .fill-bar > span { display: block; height: 100%; background: var(--ce-sky); border-radius: 99px; }
+    .avatar { display: inline-flex; align-items: center; justify-content: center; width: 2.2rem; height: 2.2rem; flex: none;
+      border-radius: 50%; font-size: .78rem; font-weight: 700; color: #fff; }
+    .avatar-0 { background: #2563eb; } .avatar-1 { background: #0891b2; } .avatar-2 { background: #7c3aed; }
+    .avatar-3 { background: #db2777; } .avatar-4 { background: #ea580c; }
+    .info-tile { display: flex; gap: .75rem; align-items: flex-start; padding: .85rem 1rem; border-radius: .8rem; background: #f6f8fd; }
+    .info-tile .label { font-size: .75rem; color: #64748b; text-transform: uppercase; letter-spacing: .05em; font-weight: 600; }
+    .info-tile .value { font-weight: 600; color: #0f172a; }
+    .empty-state { text-align: center; padding: 3rem 1rem; color: #64748b; }
+    .empty-state .empty-icon { display: inline-flex; width: 3.6rem; height: 3.6rem; align-items: center; justify-content: center;
+      border-radius: 50%; background: #e8efff; color: var(--ce-blue); margin-bottom: 1rem; }
+    .form-label { font-weight: 500; }
+    .busy-row { display: flex; align-items: center; gap: .6rem; padding: .55rem .8rem; border-radius: .6rem; background: #fff5f5; color: #9b1c1c; }
+
     /* sign up and log in */
     .auth-wrap { min-height: 100vh; display: flex; }
     .auth-side { flex: 1 1 46%; flex-direction: column; justify-content: center; padding: 4rem; color: #fff;
@@ -66,9 +107,9 @@
     <div class="collapse navbar-collapse" id="nav">
       <ul class="navbar-nav me-auto">
         {% if current_user.role.value == 'student' %}
-        <li class="nav-item"><a class="nav-link" href="{{ url_for('events.find_events') }}">Find Events</a></li>
-        <li class="nav-item"><a class="nav-link" href="{{ url_for('events.create_event') }}">Create Event</a></li>
-        <li class="nav-item"><a class="nav-link" href="{{ url_for('events.my_activities') }}">My Activities</a></li>
+        <li class="nav-item"><a class="nav-link {{ 'active' if request.endpoint in ('events.find_events', 'events.event_details') }}" href="{{ url_for('events.find_events') }}">Find Events</a></li>
+        <li class="nav-item"><a class="nav-link {{ 'active' if request.endpoint == 'events.create_event' }}" href="{{ url_for('events.create_event') }}">Create Event</a></li>
+        <li class="nav-item"><a class="nav-link {{ 'active' if request.endpoint == 'events.my_activities' }}" href="{{ url_for('events.my_activities') }}">My Activities</a></li>
         {% else %}
         <li class="nav-item"><a class="nav-link" href="/facilities">Facilities</a></li>
         {% endif %}
