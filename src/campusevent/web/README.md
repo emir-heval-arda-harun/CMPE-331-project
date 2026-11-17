@@ -41,4 +41,17 @@ Planned in the design report (class diagram 4.2) and used as they are:
 - "Send a new code" (UC-01): needs `AuthService.resend_code(email)`. The sign-up page has no resend button yet.
 - Time range filter (UC-05): `search_events` has no time parameter, so Find Events filters by keyword, category and date only.
 - "Upcoming" tab on My Activities (finding F-09 of the design report): needs a service method for events the user has joined that are still open.
-- "Suggest free slots of the day" (UC-04, UC-07): the Create Event page shows the busy times of the chosen facility and day, it does not suggest free ones.
+
+## Helper features of the pages
+| Page | Feature | Note |
+|---|---|---|
+| Create Event | Schedule of the chosen facility and day reloads by itself (`/events/schedule`) | UC-07 |
+| Create Event | Free times of the day as one-click suggestions, also after a "slot is busy" error | UC-04 4a. **Assumption:** opening hours 08:00–22:00 and gaps of at least one hour (`DAY_OPENS`, `DAY_CLOSES` in `common.py`), because the requirements do not define opening hours |
+| Create Event | Warning while typing if the time overlaps a busy slot or ends before it starts; capacity limit of the facility | The server checks everything again |
+| Find Events | One-click category filters, 20 events per page, "In 3 days" labels | Pagination as in the design report (NFR-02) |
+| Event Details | "Add to calendar" (`/events/<id>/calendar.ics`), "Copy link", confirmation window before cancelling | |
+| My Profile | Interests as tags with suggestions; remove button for availability rows | |
+| Sign up | Password strength guide | Only advice; the rules are checked by the server |
+| All pages | A form is sent only once; success messages fade out; footer | |
+
+Every page still works without JavaScript; the scripts only add comfort.

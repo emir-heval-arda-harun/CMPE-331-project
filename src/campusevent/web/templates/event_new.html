@@ -4,12 +4,12 @@
 {% block content %}
 <div class="page-head mb-3">
   <h1 class="h3 mb-1">Create Event</h1>
-  <p class="text-muted mb-0">Organize something on campus. Check the facility schedule first to pick a free time.</p>
+  <p class="text-muted mb-0">Organize something on campus. Pick a facility and a date: its free times appear on the right.</p>
 </div>
 {% if error %}<div class="alert alert-danger d-flex align-items-start gap-2" role="alert">{{ icon('alert', 20) }}<div>{{ error }}</div></div>{% endif %}
 <div class="row g-3">
   <div class="col-12 col-lg-7">
-    <form class="card-soft p-4" method="post" action="{{ url_for('events.create_event') }}" novalidate>
+    <form class="card-soft p-4" method="post" action="{{ url_for('events.create_event') }}" novalidate id="create-form">
       {{ csrf() }}
       <h2 class="section-title mb-3">Event details</h2>
       <div class="mb-3">
@@ -34,7 +34,8 @@
       </div>
       <div class="mb-4">
         <label class="form-label" for="description">Description <span class="text-muted fw-normal">(optional)</span></label>
-        <textarea class="form-control" id="description" name="description" rows="3">{{ form.get('description', '') }}</textarea>
+        <textarea class="form-control" id="description" name="description" rows="3" maxlength="1000">{{ form.get('description', '') }}</textarea>
+        <div class="form-text text-end" id="description-count" aria-live="polite"></div>
       </div>
 
       <h2 class="section-title mb-3">Place and time</h2>
@@ -43,11 +44,11 @@
         <select class="form-select" id="facility_id" name="facility_id" required>
           <option value="">Choose a facility</option>
           {% for facility in facilities %}
-          <option value="{{ facility.id }}" {{ 'selected' if form.get('facility_id') == facility.id|string }}>{{ facility.name }} (capacity {{ facility.capacity }})</option>
+          <option value="{{ facility.id }}" data-capacity="{{ facility.capacity }}" {{ 'selected' if form.get('facility_id') == facility.id|string }}>{{ facility.name }} (capacity {{ facility.capacity }})</option>
           {% endfor %}
         </select>
       </div>
-      <div class="row g-2 mb-3">
+      <div class="row g-2 mb-2">
         <div class="col-12 col-sm-4">
           <label class="form-label" for="date">Date</label>
           <input class="form-control" id="date" name="date" type="date" value="{{ form.get('date', '') }}" required>
@@ -61,20 +62,25 @@
           <input class="form-control" id="end" name="end" type="time" value="{{ form.get('end', '') }}" required>
         </div>
       </div>
-      <div class="mb-4">
+      <div class="alert alert-warning small py-2 px-3 d-flex align-items-center gap-2 mb-3" id="time-warning" role="status" hidden>
+        {{ icon('alert', 18) }}<span></span>
+      </div>
+      <div class="mb-4 mt-3">
         <label class="form-label" for="capacity">Participants <span class="text-muted fw-normal">(capacity, at least 2)</span></label>
         <div class="input-group">
           <span class="input-group-text bg-white text-muted">{{ icon('users', 18) }}</span>
           <input class="form-control border-start-0" id="capacity" name="capacity" type="number" min="2" value="{{ form.get('capacity', '') }}" required>
         </div>
+        <div class="form-text" id="capacity-hint" aria-live="polite"></div>
       </div>
       <button class="btn btn-primary btn-lg px-4" type="submit">Create event</button>
     </form>
   </div>
   <div class="col-12 col-lg-5">
-    <div class="card-soft p-4">
+    <div class="card-soft p-4 sticky-lg-top" style="top: 1rem;">
       <h2 class="section-title mb-3">Facility schedule</h2>
-      <form method="get" action="{{ url_for('events.create_event') }}" class="row g-2 mb-3">
+      {# Without JavaScript this small form loads the schedule; with JavaScript the main form updates it. #}
+      <form method="get" action="{{ url_for('events.create_event') }}" class="row g-2 mb-3" id="schedule-form">
         <div class="col-12">
           <select class="form-select" name="facility_id" aria-label="Facility">
             <option value="">Facility</option>
@@ -86,17 +92,7 @@
         <div class="col-8"><input class="form-control" type="date" name="date" value="{{ form.get('date', '') }}" aria-label="Date"></div>
         <div class="col-4"><button class="btn btn-outline-primary w-100" type="submit">Show</button></div>
       </form>
-      {% if schedule is none %}
-      <p class="small text-muted mb-0 d-flex align-items-start gap-2">{{ icon('info', 18) }}<span>Choose a facility and a date to see which times are already busy.</span></p>
-      {% elif schedule %}
-      <div class="d-grid gap-2">
-        {% for busy in schedule %}
-        <div class="busy-row">{{ icon('clock', 18) }}<span>Busy: {{ busy.start.strftime('%H:%M') }} – {{ busy.end.strftime('%H:%M') }}</span></div>
-        {% endfor %}
-      </div>
-      {% else %}
-      <p class="small text-success mb-0 d-flex align-items-center gap-2">{{ icon('check', 18) }}<span>The facility is free all day.</span></p>
-      {% endif %}
+      <div id="schedule-body" aria-live="polite">{% include "_schedule.html" %}</div>
     </div>
   </div>
 </div>
@@ -126,6 +122,77 @@
       if (choice.value === '__other__') { field.value = ''; showText(true); field.focus(); }
       else { field.value = choice.value; showText(false); }
     });
+  })();
+
+  // Facility schedule, free time suggestions, overlap warning and capacity limit.
+  (function () {
+    var facility = document.getElementById('facility_id');
+    var date = document.getElementById('date');
+    var start = document.getElementById('start');
+    var end = document.getElementById('end');
+    var capacity = document.getElementById('capacity');
+    var capacityHint = document.getElementById('capacity-hint');
+    var warning = document.getElementById('time-warning');
+    var body = document.getElementById('schedule-body');
+    var description = document.getElementById('description');
+    var counter = document.getElementById('description-count');
+    document.getElementById('schedule-form').hidden = true;
+
+    function minutes(text) { var p = (text || '').split(':'); return p.length === 2 ? (+p[0]) * 60 + (+p[1]) : null; }
+
+    function checkTimes() {
+      var s = minutes(start.value), e = minutes(end.value), message = '';
+      if (s !== null && e !== null) {
+        if (e <= s) {
+          message = 'The end time must be after the start time.';
+        } else {
+          body.querySelectorAll('[data-busy-start]').forEach(function (row) {
+            var bs = minutes(row.dataset.busyStart), be = minutes(row.dataset.busyEnd);
+            if (!message && s < be && bs < e) { message = 'This time overlaps a busy slot (' + row.dataset.busyStart + '–' + row.dataset.busyEnd + '). Choose a free time on the right.'; }
+          });
+        }
+      }
+      warning.querySelector('span').textContent = message;
+      warning.hidden = !message;
+    }
+
+    function updateCapacity() {
+      var option = facility.options[facility.selectedIndex];
+      var max = option && option.dataset.capacity;
+      if (max) { capacity.max = max; capacityHint.textContent = 'Between 2 and ' + max + ' for this facility.'; }
+      else { capacity.removeAttribute('max'); capacityHint.textContent = ''; }
+    }
+
+    function loadSchedule() {
+      if (!facility.value || !date.value) { checkTimes(); return; }
+      var url = '{{ url_for("events.facility_schedule") }}?facility_id=' + encodeURIComponent(facility.value) + '&date=' + encodeURIComponent(date.value);
+      body.style.opacity = '.5';
+      fetch(url, { credentials: 'same-origin' })
+        .then(function (response) { return response.ok ? response.text() : Promise.reject(response.status); })
+        .then(function (html) { body.innerHTML = html; })
+        .catch(function () { /* keep the old box; the server checks the slot again on submit */ })
+        .then(function () { body.style.opacity = ''; checkTimes(); });
+    }
+
+    body.addEventListener('click', function (event) {
+      var button = event.target.closest('.free-slot');
+      if (!button) { return; }
+      start.value = button.dataset.start;
+      end.value = button.dataset.end;
+      checkTimes();
+      end.focus();
+    });
+
+    function countCharacters() { counter.textContent = description.value.length + ' / ' + description.maxLength; }
+
+    facility.addEventListener('change', function () { updateCapacity(); loadSchedule(); });
+    date.addEventListener('change', loadSchedule);
+    start.addEventListener('change', checkTimes);
+    end.addEventListener('change', checkTimes);
+    description.addEventListener('input', countCharacters);
+    updateCapacity();
+    checkTimes();
+    countCharacters();
   })();
 </script>
 {% endblock %}

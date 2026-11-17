@@ -29,6 +29,11 @@
       <input class="form-control" id="password" name="password" type="password" required autocomplete="new-password">
       <button class="btn pw-toggle" type="button" data-toggle-password="#password" aria-label="Show password">{{ icon('eye') }}</button>
     </div>
+    {# Only a guide for the student; the rules that are enforced are checked by the server. #}
+    <div class="pw-meter mt-2" id="pw-meter" hidden>
+      <div class="pw-meter-bar"><span></span></div>
+      <small class="text-muted" id="pw-meter-text" aria-live="polite"></small>
+    </div>
   </div>
   <button class="btn btn-primary btn-lg w-100" type="submit">Sign up</button>
 </form>

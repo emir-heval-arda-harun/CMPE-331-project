@@ -6,7 +6,9 @@ The templates only get view models (plain dicts) with names, never e-mail addres
 
 from __future__ import annotations
 
-from flask import Blueprint, flash, redirect, render_template, request, url_for
+import math
+
+from flask import Blueprint, Response, flash, redirect, render_template, request, url_for
 
 from campusevent import exceptions as exc
 from campusevent.models import Event, EventStatus
@@ -21,13 +23,9 @@ STATUS_LABELS = {
     EventStatus.CANCELLED: "Cancelled",
 }
 
-
-# Suggestions for the category field. The category itself stays free text (charter, BR-14);
-# "Other" lets a student type any category that is not in this list.
-EVENT_CATEGORIES = [
-    "Football", "Basketball", "Volleyball", "Billiards", "Tennis", "Table tennis", "Badminton",
-    "Swimming", "Running", "Chess", "Board games", "Video games", "Study group", "Workshop", "Club meeting",
-]
+EVENT_CATEGORIES = common.EVENT_CATEGORIES
+CATEGORY_SHORTCUTS = 8  # how many categories are shown as one-click filters on Find Events
+PAGE_SIZE = 20  # events per page on Find Events (design report, NFR-02)
 
 
 class _Names:
@@ -76,8 +74,13 @@ def _event_view(event: Event, names: _Names, viewer_id: int) -> dict:
         "can_join": event.status == EventStatus.OPEN and not joined,
         "can_leave": active and joined and not is_organizer,
         "can_cancel": active and is_organizer,
+        "active": active,
         "joined": joined,
     }
+
+
+def _page_number(text: str) -> int:
+    return int(text) if text.isdigit() and int(text) > 0 else 1
 
 
 @bp.get("/events")
@@ -96,13 +99,22 @@ def find_events(user):
     except exc.ValidationError as error_:
         error = common.message_for(error_)
 
+    events = sorted(events, key=lambda e: e.slot.start)
+    pages = max(1, math.ceil(len(events) / PAGE_SIZE))
+    page = min(_page_number(request.args.get("page", "1")), pages)
     names = _Names()
-    views = [_event_view(e, names, user.id) for e in sorted(events, key=lambda e: e.slot.start)]
+    views = [_event_view(e, names, user.id) for e in events[(page - 1) * PAGE_SIZE : page * PAGE_SIZE]]
+    filters = {"keyword": keyword, "category": category, "date": day_text}
     return render_template(
         "events.html",
         events=views,
-        filters={"keyword": keyword, "category": category, "date": day_text},
+        total=len(events),
+        page=page,
+        pages=pages,
+        filters=filters,
+        active_filters={key: value for key, value in filters.items() if value},
         categories=EVENT_CATEGORIES,
+        shortcuts=EVENT_CATEGORIES[:CATEGORY_SHORTCUTS],
         error=error,
     ), (400 if error else 200)
 
@@ -114,27 +126,60 @@ def event_details(user, event_id: int):
     return render_template("event_details.html", event=_event_view(event, _Names(), user.id))
 
 
+@bp.get("/events/<int:event_id>/calendar.ics")
+@common.student_required
+def event_calendar(user, event_id: int):
+    """'Add to calendar': the event as an iCalendar file for Google Calendar, Outlook or Apple Calendar."""
+    event = common.services().events.get_event(event_id)
+    body = common.ics_for(
+        event.id, event.title, _Names().facility(event.facility_id), event.slot.start, event.slot.end, event.description
+    )
+    return Response(
+        body,
+        mimetype="text/calendar",
+        headers={"Content-Disposition": f'attachment; filename="campusevent-{event.id}.ics"'},
+    )
+
+
+def _schedule_context(facility_text: str, date_text: str) -> dict:
+    """Busy slots of a facility on a day and the free gaps between them (UC-07, UC-04 4a)."""
+    try:
+        day = common.parse_date(date_text)
+        if facility_text and day:
+            busy = sorted(common.services().facilities.get_schedule(int(facility_text), day), key=lambda s: s.start)
+            return {"schedule": busy, "free": common.free_slots(busy, day)}
+    except (exc.CampusEventError, ValueError):
+        pass  # an invalid date or facility is reported when the form is submitted
+    return {"schedule": None, "free": []}
+
+
 def _render_create_form(user, form: dict, error: str | None = None, status: int = 200):
     """The create form with the facility list and, once a facility and a date are chosen, its schedule."""
     names = _Names()
-    schedule = None
-    facility_id = form.get("facility_id", "")
-    try:
-        day = common.parse_date(form.get("date", ""))
-        if facility_id and day:
-            schedule = sorted(common.services().facilities.get_schedule(int(facility_id), day), key=lambda s: s.start)
-    except (exc.CampusEventError, ValueError):
-        schedule = None  # an invalid date or facility is reported when the form is submitted
     return (
         render_template(
             "event_new.html",
             facilities=list(names.facilities.values()),
             form=form,
-            schedule=schedule,
             categories=EVENT_CATEGORIES,
             error=error,
+            opens=common.DAY_OPENS,
+            closes=common.DAY_CLOSES,
+            **_schedule_context(form.get("facility_id", ""), form.get("date", "")),
         ),
         status,
+    )
+
+
+@bp.get("/events/schedule")
+@common.student_required
+def facility_schedule(user):
+    """Only the schedule box of the Create Event page; the page reloads it when the facility or date changes."""
+    return render_template(
+        "_schedule.html",
+        opens=common.DAY_OPENS,
+        closes=common.DAY_CLOSES,
+        **_schedule_context(request.args.get("facility_id", ""), request.args.get("date", "")),
     )
 
 

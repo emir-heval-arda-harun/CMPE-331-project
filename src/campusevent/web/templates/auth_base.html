@@ -2,6 +2,7 @@
 {% from "_macros.html" import flashes, brand, icon %}
 {# Layout of the sign up and log in pages: a brand panel on wide screens, only the form card on phones. #}
 {% block nav %}{% endblock %}
+{% block footer %}{% endblock %}
 {% block main %}
 <main class="auth-wrap">
   <section class="auth-side d-none d-lg-flex" aria-label="About CampusEvent"
@@ -55,5 +56,33 @@
       button.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
     });
   });
+
+  // Password strength guide on the sign up page.
+  (function () {
+    var meter = document.getElementById('pw-meter');
+    var field = document.getElementById('password');
+    if (!meter || !field) { return; }
+    var bar = meter.querySelector('.pw-meter-bar span');
+    var text = document.getElementById('pw-meter-text');
+    var levels = [
+      ['Too short. Use at least 8 characters.', '#dc2626', 10],
+      ['Weak. Add numbers or symbols.', '#ea580c', 30],
+      ['Fair. Mix upper and lower case letters.', '#ca8a04', 55],
+      ['Good password.', '#16a34a', 80],
+      ['Strong password.', '#15803d', 100]
+    ];
+    field.addEventListener('input', function () {
+      var value = field.value, score = 0;
+      meter.hidden = !value;
+      if (value.length >= 8) { score = 1; }
+      if (score && /\d/.test(value)) { score++; }
+      if (score && /[a-z]/.test(value) && /[A-Z]/.test(value)) { score++; }
+      if (score && (/[^A-Za-z0-9]/.test(value) || value.length >= 14)) { score++; }
+      var level = levels[Math.min(score, 4)];
+      text.textContent = level[0];
+      bar.style.background = level[1];
+      bar.style.width = level[2] + '%';
+    });
+  })();
 </script>
 {% endblock %}

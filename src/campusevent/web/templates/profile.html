@@ -13,8 +13,22 @@
     <div class="col-12 col-lg-5">
       <div class="card-soft p-4 h-100">
         <h2 class="section-title mb-2">Interests</h2>
-        <label class="form-label small text-muted" for="interests">One interest per line, for example "football" or "board games". At least one is required.</label>
-        <textarea class="form-control" id="interests" name="interests" rows="7">{{ interests }}</textarea>
+        {# With JavaScript the interests are shown as removable tags; the hidden text field below is what is sent. #}
+        <div id="interest-editor" hidden>
+          <div class="d-flex flex-wrap gap-2 mb-3" id="interest-tags" aria-live="polite"></div>
+          <div class="input-group mb-3">
+            <input class="form-control" id="interest-input" placeholder="Add an interest, then press Enter" aria-label="New interest" maxlength="60">
+            <button class="btn btn-outline-primary" type="button" id="interest-add">Add</button>
+          </div>
+          <p class="small text-muted mb-2">Suggestions</p>
+          <div class="d-flex flex-wrap gap-2" id="interest-suggestions">
+            {% for name in categories %}<button type="button" class="chip chip-suggest" data-value="{{ name }}">{{ icon('plus', 12) }} {{ name }}</button>{% endfor %}
+          </div>
+        </div>
+        <div id="interest-plain">
+          <label class="form-label small text-muted" for="interests">One interest per line, for example "football" or "board games". At least one is required.</label>
+          <textarea class="form-control" id="interests" name="interests" rows="7">{{ interests }}</textarea>
+        </div>
       </div>
     </div>
     <div class="col-12 col-lg-7">
@@ -23,16 +37,18 @@
         <p class="small text-muted">Add the dates and times when you can take part. Leave a row empty to remove it.</p>
         <div id="slots">
           {% for row in rows %}
-          <div class="row g-2 mb-2 slot-row">
+          <div class="row g-2 mb-2 slot-row align-items-center">
             <div class="col-12 col-sm-5"><input class="form-control" type="date" name="slot_date" value="{{ row.date }}" aria-label="Date"></div>
-            <div class="col-6 col-sm-3"><input class="form-control" type="time" name="slot_start" value="{{ row.start }}" aria-label="From"></div>
-            <div class="col-6 col-sm-4"><input class="form-control" type="time" name="slot_end" value="{{ row.end }}" aria-label="To"></div>
+            <div class="col-5 col-sm-3"><input class="form-control" type="time" name="slot_start" value="{{ row.start }}" aria-label="From"></div>
+            <div class="col-5 col-sm-3"><input class="form-control" type="time" name="slot_end" value="{{ row.end }}" aria-label="To"></div>
+            <div class="col-2 col-sm-1 text-end"><button class="btn btn-sm btn-link text-muted slot-remove p-1" type="button" aria-label="Remove this time slot" hidden>{{ icon('x', 18) }}</button></div>
           </div>
           {% endfor %}
-          <div class="row g-2 mb-2 slot-row">
+          <div class="row g-2 mb-2 slot-row align-items-center">
             <div class="col-12 col-sm-5"><input class="form-control" type="date" name="slot_date" aria-label="Date"></div>
-            <div class="col-6 col-sm-3"><input class="form-control" type="time" name="slot_start" aria-label="From"></div>
-            <div class="col-6 col-sm-4"><input class="form-control" type="time" name="slot_end" aria-label="To"></div>
+            <div class="col-5 col-sm-3"><input class="form-control" type="time" name="slot_start" aria-label="From"></div>
+            <div class="col-5 col-sm-3"><input class="form-control" type="time" name="slot_end" aria-label="To"></div>
+            <div class="col-2 col-sm-1 text-end"><button class="btn btn-sm btn-link text-muted slot-remove p-1" type="button" aria-label="Remove this time slot" hidden>{{ icon('x', 18) }}</button></div>
           </div>
         </div>
         <button class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-1" type="button" id="add-slot">{{ icon('plus', 16) }} Add time slot</button>
@@ -44,11 +60,83 @@
 {% endblock %}
 {% block scripts %}
 <script>
-  document.getElementById('add-slot').addEventListener('click', function () {
-    var rows = document.querySelectorAll('.slot-row');
-    var copy = rows[rows.length - 1].cloneNode(true);
-    copy.querySelectorAll('input').forEach(function (input) { input.value = ''; });
-    document.getElementById('slots').appendChild(copy);
-  });
+  // Interests as tags. The list is kept in the hidden text field (one per line), which the form sends.
+  (function () {
+    var field = document.getElementById('interests');
+    var tags = document.getElementById('interest-tags');
+    var input = document.getElementById('interest-input');
+    var suggestions = document.getElementById('interest-suggestions');
+    document.getElementById('interest-editor').hidden = false;
+    document.getElementById('interest-plain').hidden = true;
+
+    function list() { return field.value.split('\n').map(function (v) { return v.trim(); }).filter(Boolean); }
+    function has(value) { return list().some(function (v) { return v.toLowerCase() === value.toLowerCase(); }); }
+    function save(values) { field.value = values.join('\n'); render(); }
+
+    function render() {
+      tags.innerHTML = '';
+      var values = list();
+      if (!values.length) {
+        var empty = document.createElement('span');
+        empty.className = 'small text-muted';
+        empty.textContent = 'No interests yet. Add at least one.';
+        tags.appendChild(empty);
+      }
+      values.forEach(function (value) {
+        var tag = document.createElement('span');
+        tag.className = 'chip chip-active';
+        tag.textContent = value + ' ';
+        var remove = document.createElement('button');
+        remove.type = 'button';
+        remove.className = 'chip-remove';
+        remove.setAttribute('aria-label', 'Remove ' + value);
+        remove.textContent = '×';
+        remove.addEventListener('click', function () {
+          save(list().filter(function (v) { return v.toLowerCase() !== value.toLowerCase(); }));
+        });
+        tag.appendChild(remove);
+        tags.appendChild(tag);
+      });
+      suggestions.querySelectorAll('[data-value]').forEach(function (button) { button.hidden = has(button.dataset.value); });
+    }
+
+    function add(value) {
+      value = (value || '').trim();
+      if (value && !has(value)) { save(list().concat([value])); }
+      input.value = '';
+    }
+
+    document.getElementById('interest-add').addEventListener('click', function () { add(input.value); input.focus(); });
+    input.addEventListener('keydown', function (event) {
+      if (event.key === 'Enter') { event.preventDefault(); add(input.value); }
+    });
+    suggestions.addEventListener('click', function (event) {
+      var button = event.target.closest('[data-value]');
+      if (button) { add(button.dataset.value); }
+    });
+    render();
+  })();
+
+  // Availability rows: add a row, remove a row.
+  (function () {
+    var slots = document.getElementById('slots');
+    function wire(row) {
+      var remove = row.querySelector('.slot-remove');
+      remove.hidden = false;
+      remove.addEventListener('click', function () {
+        if (slots.querySelectorAll('.slot-row').length > 1) { row.remove(); }
+        else { row.querySelectorAll('input').forEach(function (input) { input.value = ''; }); }
+      });
+    }
+    slots.querySelectorAll('.slot-row').forEach(wire);
+    document.getElementById('add-slot').addEventListener('click', function () {
+      var rows = slots.querySelectorAll('.slot-row');
+      var copy = rows[rows.length - 1].cloneNode(true);
+      copy.querySelectorAll('input').forEach(function (input) { input.value = ''; });
+      slots.appendChild(copy);
+      wire(copy);
+      copy.querySelector('input').focus();
+    });
+  })();
 </script>
 {% endblock %}

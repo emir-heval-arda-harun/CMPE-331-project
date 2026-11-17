@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import date, datetime
+from datetime import date, datetime, time, timedelta, timezone
 from functools import wraps
 
 from flask import current_app, redirect, session, url_for
@@ -81,6 +81,70 @@ def parse_int(value: str, label: str) -> int:
         return int((value or "").strip())
     except ValueError:
         raise exc.ValidationError(f"{label} must be a whole number.") from None
+
+
+# Suggestions for categories (Create Event, Find Events, My Profile). The category itself stays free text
+# (charter, BR-14); "Other" lets a student type any category that is not in this list.
+EVENT_CATEGORIES = [
+    "Football", "Basketball", "Volleyball", "Billiards", "Tennis", "Table tennis", "Badminton",
+    "Swimming", "Running", "Chess", "Board games", "Video games", "Study group", "Workshop", "Club meeting",
+]
+
+# Time window used to suggest free slots on the Create Event page (UC-04 4a). The requirements do not
+# define opening hours, so this is an assumption of the UI; see web/README.md.
+DAY_OPENS = time(8, 0)
+DAY_CLOSES = time(22, 0)
+
+
+def free_slots(busy: list[TimeSlot], day: date, min_minutes: int = 60) -> list[TimeSlot]:
+    """The gaps of at least ``min_minutes`` between the busy slots of a facility on one day."""
+    opens, closes = datetime.combine(day, DAY_OPENS), datetime.combine(day, DAY_CLOSES)
+    shortest = timedelta(minutes=min_minutes)
+    cursor, gaps = opens, []
+    for slot in sorted(busy, key=lambda s: s.start):
+        if slot.end <= cursor:
+            continue
+        gap_end = min(slot.start, closes)
+        if gap_end - cursor >= shortest:
+            gaps.append(TimeSlot(cursor, gap_end))
+        cursor = max(cursor, slot.end)
+        if cursor >= closes:
+            return gaps
+    if closes - cursor >= shortest:
+        gaps.append(TimeSlot(cursor, closes))
+    return gaps
+
+
+def relative_day(value: datetime, today: date | None = None) -> str:
+    """'Today', 'Tomorrow', 'In 3 days', '2 days ago' ... used as a small label next to dates."""
+    days = (value.date() - (today or date.today())).days
+    if days == 0:
+        return "Today"
+    if days == 1:
+        return "Tomorrow"
+    if days == -1:
+        return "Yesterday"
+    return f"In {days} days" if days > 1 else f"{-days} days ago"
+
+
+def _ics_text(value: str) -> str:
+    return value.replace("\\", "\\\\").replace(";", "\\;").replace(",", "\\,").replace("\r\n", "\\n").replace("\n", "\\n")
+
+
+def ics_for(uid: int, title: str, location: str, start: datetime, end: datetime, description: str = "") -> str:
+    """A one-event iCalendar file (RFC 5545) that Google Calendar, Outlook and Apple Calendar can import.
+    Times are written as local times without a time zone, the same way the pages show them."""
+    stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    lines = [
+        "BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//CampusEvent//CMPE 331//EN", "BEGIN:VEVENT",
+        f"UID:event-{uid}@campusevent", f"DTSTAMP:{stamp}",
+        f"DTSTART:{start.strftime('%Y%m%dT%H%M%S')}", f"DTEND:{end.strftime('%Y%m%dT%H%M%S')}",
+        f"SUMMARY:{_ics_text(title)}", f"LOCATION:{_ics_text(location)}",
+    ]
+    if description:
+        lines.append(f"DESCRIPTION:{_ics_text(description)}")
+    lines += ["END:VEVENT", "END:VCALENDAR"]
+    return "\r\n".join(lines) + "\r\n"
 
 
 _MESSAGES = {

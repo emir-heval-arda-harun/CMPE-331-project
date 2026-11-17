@@ -18,7 +18,7 @@ The web UI (`src/campusevent/web/`, layer 1 of the [Software Design Report](../s
 ## 2. Result (at the time of writing)
 | Suite | Tests | Passed | Failed |
 |---|---|---|---|
-| `tests/web` (this section) | 47 | 47 | 0 |
+| `tests/web` (this section) | 66 | 66 | 0 |
 | Requirement tests of the team (`tests/test_*.py`) | 39 | 0 | 39 (expected: the services are skeletons) |
 
 ## 3. Traceability: use case to UI test
@@ -35,6 +35,8 @@ All tests are in [`tests/web/test_web_accounts.py`](../../tests/web/test_web_acc
 | UC-09 Activity history | `/activities` | `test_activities_empty_state`, `test_activities_list_completed_events_newest_first` |
 | UC-10 Leave event | `/events/<id>/leave` | `test_join_then_leave`, `test_organizer_sees_cancel_but_not_leave_and_can_cancel` |
 | UC-11 Cancel event | `/events/<id>/cancel` | `test_organizer_sees_cancel_but_not_leave_and_can_cancel`, `test_only_the_organizer_can_cancel` |
+
+The helper features (free time suggestions for UC-04 4a, the facility schedule box, "Add to calendar", pagination, category shortcuts, interest tags, the password guide) are tested in [`tests/web/test_web_extras.py`](../../tests/web/test_web_extras.py). Their scripts (schedule reload, overlap warning, cancel confirmation window, interest tags) were also tried by hand in the built-in browser on 17.11.2026.
 
 Every use case of this section has at least one test of the main flow. UC-01 to UC-06, UC-10 and UC-11 also have tests of error or alternative flows. UC-09 has a test for the empty list but no error flow.
 
@@ -56,6 +58,6 @@ Every use case of this section has at least one test of the main flow. UC-01 to 
 |---|---|---|
 | 1 | Run the UI against the real services as soon as they exist and fix differences (integration test, task 4.2) | All |
 | 2 | The UI needs three service methods that are not in the design report: `EventService.get_event`, `FacilityService.list_facilities`, `AuthService.get_user` raising `NotFoundError` ([details](../../src/campusevent/web/README.md)) | Backend owners (Heval, E. Arda, Harun) |
-| 3 | Missing features because the service interface cannot do them: resend verification code (UC-01), time range filter (UC-05), "Upcoming" tab on My Activities (F-09), suggestion of free slots (UC-04/UC-07) | Team decision |
+| 3 | Missing features because the service interface cannot do them: resend verification code (UC-01), time range filter (UC-05), "Upcoming" tab on My Activities (F-09). Free slot suggestions (UC-04 4a) are now done in the UI, with assumed opening hours 08:00–22:00 | Team decision |
 | 4 | Check the pages in Firefox, Safari and Edge (NFR-07) and the remaining 360 px cases of NFR-01 | Web UI owner |
 | 5 | Add a GitHub Actions run for `tests/web` (CI, task 3.7) | Onur |

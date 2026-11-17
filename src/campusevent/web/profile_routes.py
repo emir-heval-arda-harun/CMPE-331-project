@@ -40,7 +40,9 @@ def my_profile(user):
             {"date": s.start.strftime("%Y-%m-%d"), "start": s.start.strftime("%H:%M"), "end": s.end.strftime("%H:%M")}
             for s in profile.availability
         ]
-        return render_template("profile.html", interests="\n".join(profile.interests), rows=rows)
+        return render_template(
+            "profile.html", interests="\n".join(profile.interests), rows=rows, categories=common.EVENT_CATEGORIES
+        )
 
     interests = _interests_from_form()
     rows = _slot_rows_from_form()
@@ -49,7 +51,8 @@ def my_profile(user):
         profiles.update_profile(user.id, interests, slots)
     except exc.CampusEventError as error:
         return render_template(
-            "profile.html", interests="\n".join(interests), rows=rows, error=common.message_for(error)
+            "profile.html", interests="\n".join(interests), rows=rows, error=common.message_for(error),
+            categories=common.EVENT_CATEGORIES,
         ), common.status_for(error)
     flash("Your profile is saved.", "success")
     return redirect(url_for("profile.my_profile"))

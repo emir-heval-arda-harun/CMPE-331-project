@@ -1,0 +1,28 @@
+{% from "_macros.html" import icon %}
+{# Schedule box of the Create Event page: busy slots and free gaps of one facility on one day.
+   Rendered inside the page and also alone by /events/schedule, which the page calls when the
+   facility or the date changes. #}
+{% if schedule is none %}
+<p class="small text-muted mb-0 d-flex align-items-start gap-2">{{ icon('info', 18) }}<span>Choose a facility and a date to see which times are already busy.</span></p>
+{% else %}
+  {% if schedule %}
+  <div class="d-grid gap-2">
+    {% for busy in schedule %}
+    <div class="busy-row" data-busy-start="{{ busy.start.strftime('%H:%M') }}" data-busy-end="{{ busy.end.strftime('%H:%M') }}">{{ icon('clock', 18) }}<span>Busy: {{ busy.start.strftime('%H:%M') }} – {{ busy.end.strftime('%H:%M') }}</span></div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="small text-success mb-0 d-flex align-items-center gap-2">{{ icon('check', 18) }}<span>The facility is free all day.</span></p>
+  {% endif %}
+  {% if free %}
+  <h3 class="section-title mt-4 mb-1">Free times ({{ opens.strftime('%H:%M') }}–{{ closes.strftime('%H:%M') }})</h3>
+  <p class="small text-muted mb-2">Select one to fill in the start and end time.</p>
+  <div class="d-flex flex-wrap gap-2">
+    {% for slot in free %}
+    <button type="button" class="btn btn-sm free-slot" data-start="{{ slot.start.strftime('%H:%M') }}" data-end="{{ slot.end.strftime('%H:%M') }}">{{ icon('check', 14) }} {{ slot.start.strftime('%H:%M') }} – {{ slot.end.strftime('%H:%M') }}</button>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="small text-muted mt-3 mb-0">No free time of at least one hour is left between {{ opens.strftime('%H:%M') }} and {{ closes.strftime('%H:%M') }} on this day.</p>
+  {% endif %}
+{% endif %}

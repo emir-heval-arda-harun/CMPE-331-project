@@ -11,7 +11,7 @@
 </div>
 {% if error %}<div class="alert alert-danger" role="alert">{{ error }}</div>{% endif %}
 
-<form class="card-soft p-3 mb-4" method="get" action="{{ url_for('events.find_events') }}">
+<form class="card-soft p-3 mb-3" method="get" action="{{ url_for('events.find_events') }}">
   <div class="row g-2 align-items-end">
     <div class="col-12 col-md-4">
       <label class="form-label small mb-1" for="keyword">Keyword</label>
@@ -38,14 +38,30 @@
   </div>
 </form>
 
-{% if events %}
-<p class="section-title mb-2">{{ events|length }} {{ 'event' if events|length == 1 else 'events' }}</p>
+{# One-click category filters; the other filters are kept. #}
+<nav class="d-flex flex-wrap gap-2 mb-4" aria-label="Quick category filters">
+  {% set others = active_filters.copy() %}{% set _ = others.pop('category', None) %}
+  <a class="chip {{ 'chip-active' if not filters.category }}" href="{{ url_for('events.find_events', **others) }}">All</a>
+  {% for name in shortcuts %}
+  {% set selected = filters.category|lower == name|lower %}
+  <a class="chip {{ 'chip-active' if selected }}" {{ 'aria-current="true"'|safe if selected }} href="{{ url_for('events.find_events', category=name, **others) }}">{{ name }}</a>
+  {% endfor %}
+  {% if active_filters %}
+  <a class="chip chip-clear" href="{{ url_for('events.find_events') }}">Clear all filters</a>
+  {% endif %}
+</nav>
+
+{% if total %}
+<p class="section-title mb-2">{{ total }} {{ 'event' if total == 1 else 'events' }}{% if pages > 1 %} · page {{ page }} of {{ pages }}{% endif %}</p>
 {% endif %}
 
 {% for event in events %}
 <article class="card-soft event-card mb-3">
   <div class="p-3 d-flex flex-wrap gap-3 align-items-start">
-    {{ date_badge(event.start) }}
+    <div class="text-center">
+      {{ date_badge(event.start) }}
+      <div class="when-label mt-1">{{ event.start|when }}</div>
+    </div>
     <div class="flex-grow-1" style="min-width: 0;">
       <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
         <a class="event-title" href="{{ url_for('events.event_details', event_id=event.id) }}">{{ event.title }}</a>
@@ -81,4 +97,16 @@
   <a class="btn btn-primary" href="{{ url_for('events.create_event') }}">Create an event</a>
 </div>
 {% endfor %}
+
+{% if pages > 1 %}
+<nav aria-label="Pages of events" class="mt-4">
+  <ul class="pagination justify-content-center flex-wrap">
+    <li class="page-item {{ 'disabled' if page == 1 }}"><a class="page-link" href="{{ url_for('events.find_events', page=page - 1, **active_filters) }}">Previous</a></li>
+    {% for number in range(1, pages + 1) %}
+    <li class="page-item {{ 'active' if number == page }}" {{ 'aria-current="page"'|safe if number == page }}><a class="page-link" href="{{ url_for('events.find_events', page=number, **active_filters) }}">{{ number }}</a></li>
+    {% endfor %}
+    <li class="page-item {{ 'disabled' if page == pages }}"><a class="page-link" href="{{ url_for('events.find_events', page=page + 1, **active_filters) }}">Next</a></li>
+  </ul>
+</nav>
+{% endif %}
 {% endblock %}
