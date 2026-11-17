@@ -22,20 +22,23 @@ NAMES = {
     "UC-10": "Leave Event",
     "UC-11": "Cancel Event",
     "UC-08": "Manage Facility Schedule",
+    "UC-12": "Review Event Requests\n(Approve / Reject)",
 }
 COLUMN_A = ["UC-01", "UC-02", "UC-03", "UC-05", "UC-06", "UC-04", "UC-07", "UC-09", "UC-10", "UC-11"]
 POS = {uc: (560, 130 + i * 105) for i, uc in enumerate(COLUMN_A)}
-POS.update({"UC-08": (930, 760)})
+POS.update({"UC-08": (930, 760), "UC-12": (930, 420)})
 
 ACTORS = {
     "Student": (150, 560),
-    "E-mail Service": (150, 150),
+    "E-mail Service": (1350, 170),
     "Facility Staff": (1350, 760),
+    "Admin": (1350, 470),
 }
 ASSOCIATIONS = {
     "Student": COLUMN_A,
-    "E-mail Service": ["UC-01"],
+    "E-mail Service": ["UC-01", "UC-12"],
     "Facility Staff": ["UC-08"],
+    "Admin": ["UC-12"],
 }
 DEPENDENCIES = [("UC-06", "UC-05", "«extend»"), ("UC-04", "UC-07", "«include»")]
 

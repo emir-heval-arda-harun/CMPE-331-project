@@ -7,15 +7,23 @@ from campusevent.models import EventStatus
 from tests.helpers import campus_hall, slot, verified_user
 
 
-def test_student_creates_event_and_joins_it_as_organizer(app, email_sender):
+def test_student_creates_event_request_and_joins_it_as_organizer(app, email_sender):
     organizer = verified_user(app, email_sender, "mert@bilgiedu.net")
     hall = campus_hall(app, email_sender)
 
     event = app.events.create_event(organizer.id, "Algorithms study group", "study group", hall.id, slot(), 8)
 
-    assert event.status is EventStatus.OPEN
+    assert event.status is EventStatus.PENDING
     assert event.participant_ids == [organizer.id]
-    assert event in app.events.search_events(category="study group")
+
+
+def test_pending_request_is_not_listed_until_approved(app, email_sender):
+    organizer = verified_user(app, email_sender, "mert@bilgiedu.net")
+    hall = campus_hall(app, email_sender)
+
+    app.events.create_event(organizer.id, "Algorithms study group", "study group", hall.id, slot(), 8)
+
+    assert app.events.search_events(category="study group") == []
 
 
 def test_any_free_text_category_is_accepted(app, email_sender):

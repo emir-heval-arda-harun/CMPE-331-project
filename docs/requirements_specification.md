@@ -4,7 +4,7 @@
 **Group:** 14
 **Team:** Heval Hüseyin Demir, Emre Arda Kum, Emir Gül, Harun Gündaş, Onur Alioğlu
 **Repository:** https://github.com/emir-heval-arda-harun/CMPE-331-project
-**Date:** 07.10.2026 (updated 16.10.2026: scope generalized to all event types)
+**Date:** 07.10.2026 (updated 16.10.2026: scope generalized to all event types; updated 17.11.2026: admin approval of event requests, [CR-01](change_requests/CR-01_admin_event_approval.md))
 
 ---
 
@@ -16,7 +16,7 @@ This document defines the requirements of **CampusEvent**, a campus event platfo
 ### 1.2 Scope
 CampusEvent lets students organize, find and join events at campus facilities, and prevents facility booking conflicts. An event has a free-text category, so any kind of event is possible.
 
-**In scope:** user authentication and profiles, event creation, joining, leaving and cancelling, filtering by category/date/keyword, facility schedules and capacities, activity history.
+**In scope:** user authentication and profiles, event requests with admin approval, joining, leaving and cancelling, filtering by category/date/keyword, facility schedules and capacities, activity history.
 
 **Out of scope** (from the [Project Charter](CHARTER.MD)): payments, real-time GPS tracking, SIS/Banner integration, live audio/video and in-app chat, native mobile apps.
 
@@ -26,6 +26,7 @@ CampusEvent lets students organize, find and join events at campus facilities, a
 | Event | An activity of any kind (sport, study group, game night, club meeting ...) held at a campus facility and created by a student |
 | Category | A free-text label of an event, e.g. "football" or "study group" |
 | Organizer | The student who created an event |
+| Event request | A newly created event with status Pending; it becomes a listed event only after an admin approves it |
 | Capacity | The maximum number of participants of an event; it cannot exceed the capacity of the facility |
 | Facility block | A period when a facility is closed to student events |
 
@@ -46,7 +47,8 @@ CampusEvent is a new, standalone, responsive web application. It uses an e-mail 
 |---|---|
 | **Student** | Main user. Creates, finds and joins events, manages a profile. |
 | **Facility Staff** | Campus personnel. Define facilities (with capacity) and block unavailable times. |
-| **E-mail Service (external)** | Sends verification codes. |
+| **Admin** | Campus personnel (e.g. student affairs). Approve or reject event requests before they are published. |
+| **E-mail Service (external)** | Sends verification codes and review decisions. |
 
 ### 2.3 Operating Environment
 - Modern desktop and mobile web browsers (responsive web, no native app).
@@ -60,7 +62,7 @@ CampusEvent is a new, standalone, responsive web application. It uses an e-mail 
 ### 2.5 Assumptions and Dependencies
 - Students have an active university e-mail address.
 - Facility staff keep facility schedules up to date.
-- A-04: The role Facility Staff is assigned by an administrator or loaded as seed data for the demo; there is no self-service role request.
+- A-04: The roles Facility Staff and Admin are assigned by an administrator or loaded as seed data for the demo; there is no self-service role request.
 - A-05: Event categories are free text; the system does not keep a fixed category list.
 
 ---
@@ -107,14 +109,15 @@ The functional requirements are written in **use case format**. Each use case is
 | [UC-01](requirements/UC-01_register_and_verify.md) | Register & verify e-mail | Student | High | Sign up with a university e-mail; account activated with an e-mailed code. |
 | [UC-02](requirements/UC-02_login.md) | Log in | All users | High | Verified users log in with e-mail and password. |
 | [UC-03](requirements/UC-03_manage_profile.md) | Manage profile | Student | High | Interests (free-text categories) and availability. |
-| [UC-04](requirements/UC-04_create_event.md) | Create event | Student | High | Title, category, facility, time, capacity; facility must be free and large enough. |
+| [UC-04](requirements/UC-04_create_event.md) | Create event | Student | High | Title, category, facility, time, capacity; facility must be free and large enough. The event starts as a pending request. |
 | [UC-05](requirements/UC-05_browse_and_filter_events.md) | Browse & filter events | Student | High | Filter by category, date, time, keyword. |
 | [UC-06](requirements/UC-06_join_event.md) | Join event | Student | High | Join if free places exist; event becomes Full at capacity. |
 | [UC-07](requirements/UC-07_facility_availability.md) | Facility schedule & conflicts | Student | High | Show busy slots; prevent overlapping bookings. |
 | [UC-08](requirements/UC-08_manage_facility_schedule.md) | Manage facility schedule | Facility Staff | Medium | Add facilities with capacity and blocked periods. |
 | [UC-09](requirements/UC-09_activity_history.md) | Track activity history | Student | Low | List completed events the student took part in. |
 | [UC-10](requirements/UC-10_leave_event.md) | Leave event | Student | Medium | A participant leaves; a full event becomes open again. |
-| [UC-11](requirements/UC-11_cancel_event.md) | Cancel event | Student (organizer) | Medium | The organizer cancels; the facility slot becomes free. |
+| [UC-11](requirements/UC-11_cancel_event.md) | Cancel event | Student (organizer) | Medium | The organizer cancels an event or withdraws a pending request; the facility slot becomes free. |
+| [UC-12](requirements/UC-12_review_event_requests.md) | Review event requests | Admin | High | Approve a pending request (it becomes Open and listed) or reject it with a reason (slot freed); unreviewed requests expire at their start time. |
 
 ---
 
@@ -125,7 +128,7 @@ The functional requirements are written in **use case format**. Each use case is
 | NFR-01 | Usability | The web interface is responsive and usable on screens from 360 px (phone) to desktop width. |
 | NFR-02 | Performance | Event search (UC-05) returns results in under 2 seconds for up to 1,000 open events. |
 | NFR-03 | Security | Passwords are stored only as salted hashes; all traffic uses HTTPS. |
-| NFR-04 | Security | Role-based access: only facility staff manage facilities; only the organizer cancels an event. |
+| NFR-04 | Security | Role-based access: only facility staff manage facilities; only admins approve or reject event requests; only the organizer cancels an event. |
 | NFR-05 | Privacy | Other students see only the data needed for an event (name, category, time, participants); e-mail addresses are never shown. Personal data is processed in line with KVKK. |
 | NFR-06 | Maintainability | Each use case has automated tests; the test suite runs with a single command (`python -m pytest`). |
 | NFR-07 | Portability | The system runs on current versions of Chrome, Firefox, Safari and Edge. |
@@ -144,7 +147,7 @@ pip install -r requirements-dev.txt
 python -m pytest
 ```
 
-**Current result:** 39 tests (33 use case tests + 6 non-functional tests), 39 failed (expected).
+**Current result:** 51 tests (44 use case tests + 7 non-functional tests), 51 failed (expected).
 
 ---
 
@@ -155,15 +158,16 @@ python -m pytest
 | UC-01 | [test_uc01_register_and_verify.py](../tests/test_uc01_register_and_verify.py) | 5 | [auth.py](../src/campusevent/auth.py) |
 | UC-02 | [test_uc02_login.py](../tests/test_uc02_login.py) | 3 | [auth.py](../src/campusevent/auth.py) |
 | UC-03 | [test_uc03_manage_profile.py](../tests/test_uc03_manage_profile.py) | 2 | [profiles.py](../src/campusevent/profiles.py) |
-| UC-04 | [test_uc04_create_event.py](../tests/test_uc04_create_event.py) | 4 | [events.py](../src/campusevent/events.py) |
+| UC-04 | [test_uc04_create_event.py](../tests/test_uc04_create_event.py) | 5 | [events.py](../src/campusevent/events.py) |
 | UC-05 | [test_uc05_browse_and_filter_events.py](../tests/test_uc05_browse_and_filter_events.py) | 4 | [events.py](../src/campusevent/events.py) |
 | UC-06 | [test_uc06_join_event.py](../tests/test_uc06_join_event.py) | 3 | [events.py](../src/campusevent/events.py) |
 | UC-07 | [test_uc07_facility_availability.py](../tests/test_uc07_facility_availability.py) | 2 | [facilities.py](../src/campusevent/facilities.py) |
 | UC-08 | [test_uc08_manage_facility_schedule.py](../tests/test_uc08_manage_facility_schedule.py) | 2 | [facilities.py](../src/campusevent/facilities.py) |
 | UC-09 | [test_uc09_activity_history.py](../tests/test_uc09_activity_history.py) | 2 | [events.py](../src/campusevent/events.py) |
 | UC-10 | [test_uc10_leave_event.py](../tests/test_uc10_leave_event.py) | 3 | [events.py](../src/campusevent/events.py) |
-| UC-11 | [test_uc11_cancel_event.py](../tests/test_uc11_cancel_event.py) | 3 | [events.py](../src/campusevent/events.py) |
-| NFR-02 ... NFR-04 | [test_nfr.py](../tests/test_nfr.py) | 6 | [events.py](../src/campusevent/events.py), [auth.py](../src/campusevent/auth.py), [facilities.py](../src/campusevent/facilities.py) |
+| UC-11 | [test_uc11_cancel_event.py](../tests/test_uc11_cancel_event.py) | 4 | [events.py](../src/campusevent/events.py) |
+| UC-12 | [test_uc12_review_event_requests.py](../tests/test_uc12_review_event_requests.py) | 9 | [events.py](../src/campusevent/events.py), [notifications.py](../src/campusevent/notifications.py) |
+| NFR-02 ... NFR-04 | [test_nfr.py](../tests/test_nfr.py) | 7 | [events.py](../src/campusevent/events.py), [auth.py](../src/campusevent/auth.py), [facilities.py](../src/campusevent/facilities.py) |
 
 ---
 

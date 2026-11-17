@@ -42,12 +42,13 @@ flowchart TB
     BP -- "service API calls, e.g. EventService.join_event(event_id, user_id);<br/>returns domain objects or raises CampusEventError" --> AL
     PS -- "require_role(), get_user()" --> AS
     FS -- "require_role()" --> AS
-    ES -- "require_role()" --> AS
+    ES -- "require_role(), get_user()" --> AS
     ES -- "check_bookable(), is_available()" --> FS
     AL -- "add / get / get_for_update / search / save" --> REPO
     AL -- "begin / commit / rollback" --> UOW
     AS -- "hash / verify" --> PH
     AS -- "send_verification_code(email, code)" --> MAIL
+    ES -- "send_event_decision(email, title, approved, reason)" --> MAIL
     REPO -- "SQL through SQLAlchemy session (TLS)" --> DB
     UOW -- "BEGIN / COMMIT / ROLLBACK" --> DB
     MAIL -- "SMTP + STARTTLS" --> SMTP

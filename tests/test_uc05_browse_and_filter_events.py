@@ -1,6 +1,6 @@
 """UC-05 Browse and filter events by category, date and keyword."""
 
-from tests.helpers import campus_hall, slot, verified_user
+from tests.helpers import approved, campus_hall, slot, verified_user
 
 
 def _create_sample_events(app, email_sender):
@@ -8,7 +8,7 @@ def _create_sample_events(app, email_sender):
     hall = campus_hall(app, email_sender)
     study = app.events.create_event(organizer.id, "Calculus revision", "study group", hall.id, slot(day=2), 10)
     football = app.events.create_event(organizer.id, "Friday football", "football", hall.id, slot(day=4), 10)
-    return study, football
+    return approved(app, email_sender, study), approved(app, email_sender, football)
 
 
 def test_filter_by_category(app, email_sender):

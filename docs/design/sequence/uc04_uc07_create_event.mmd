@@ -35,7 +35,7 @@ sequenceDiagram
         F->>FR: blocks_on(facility_id, day)
         FR->>DB: SELECT facility_block
         F->>ER: active_on(facility_id, day)
-        ER->>DB: SELECT event WHERE status IN (open, full)
+        ER->>DB: SELECT event WHERE status IN (pending, open, full)
         F->>F: slot.overlaps(busy) for every busy slot
         alt overlap found
             F-->>E: raise FacilityConflictError
@@ -45,12 +45,12 @@ sequenceDiagram
             R-->>S: "This slot is busy" + free slots of the day
         else no overlap
             F-->>E: facility
-            E->>ER: add(event with status OPEN, participants = [organizer])
+            E->>ER: add(event with status PENDING, participants = [organizer])
             ER->>DB: INSERT event, INSERT event_participant
             E->>W: commit()
             W->>DB: COMMIT
             E-->>R: event
-            R-->>S: 303 redirect to /events/{id}
+            R-->>S: 303 redirect to /events/{id} ("waiting for admin approval", UC-12)
         end
     end
     Note over F,FR: The facility row stays locked until COMMIT or ROLLBACK, so two requests cannot book the same slot

@@ -4,7 +4,7 @@ import pytest
 
 from campusevent.exceptions import PermissionDeniedError
 from campusevent.models import EventStatus
-from tests.helpers import open_event, verified_user
+from tests.helpers import campus_hall, open_event, slot, verified_user
 
 
 def test_organizer_cancels_event(app, email_sender):
@@ -34,4 +34,15 @@ def test_cancelled_event_frees_the_facility_slot(app, email_sender):
 
     again = app.events.create_event(organizer.id, "Retry", event.category, event.facility_id, event.slot, 4)
 
-    assert again.status is EventStatus.OPEN
+    assert again.status is EventStatus.PENDING
+
+
+def test_organizer_withdraws_pending_request_and_frees_the_slot(app, email_sender):
+    organizer = verified_user(app, email_sender, "ali@bilgiedu.net")
+    hall = campus_hall(app, email_sender)
+    request = app.events.create_event(organizer.id, "Game night", "board games", hall.id, slot(), 4)
+
+    withdrawn = app.events.cancel_event(request.id, organizer.id)
+
+    assert withdrawn.status is EventStatus.CANCELLED
+    assert app.facilities.is_available(hall.id, slot()) is True

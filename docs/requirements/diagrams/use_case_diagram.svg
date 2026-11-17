@@ -13,8 +13,10 @@
 <line x1="175" y1="545" x2="410" y2="865" stroke="#555" stroke-width="1.5"/>
 <line x1="175" y1="545" x2="410" y2="970" stroke="#555" stroke-width="1.5"/>
 <line x1="175" y1="545" x2="410" y2="1075" stroke="#555" stroke-width="1.5"/>
-<line x1="175" y1="135" x2="410" y2="130" stroke="#555" stroke-width="1.5"/>
+<line x1="1325" y1="155" x2="710" y2="130" stroke="#555" stroke-width="1.5"/>
+<line x1="1325" y1="155" x2="1080" y2="420" stroke="#555" stroke-width="1.5"/>
 <line x1="1325" y1="745" x2="1080" y2="760" stroke="#555" stroke-width="1.5"/>
+<line x1="1325" y1="455" x2="1080" y2="420" stroke="#555" stroke-width="1.5"/>
 <ellipse cx="560" cy="130" rx="150" ry="36" fill="#fff4e6" stroke="#c96a1b" stroke-width="2"/>
 <text x="560" y="124" text-anchor="middle" font-size="14" font-weight="bold">UC-01</text>
 <text x="560" y="142" text-anchor="middle" font-size="15">Register &amp; Verify E-mail</text>
@@ -49,6 +51,10 @@
 <ellipse cx="930" cy="760" rx="150" ry="36" fill="#fff4e6" stroke="#c96a1b" stroke-width="2"/>
 <text x="930" y="754" text-anchor="middle" font-size="14" font-weight="bold">UC-08</text>
 <text x="930" y="772" text-anchor="middle" font-size="15">Manage Facility Schedule</text>
+<ellipse cx="930" cy="420" rx="150" ry="36" fill="#fff4e6" stroke="#c96a1b" stroke-width="2"/>
+<text x="930" y="406" text-anchor="middle" font-size="14" font-weight="bold">UC-12</text>
+<text x="930" y="424" text-anchor="middle" font-size="15">Review Event Requests</text>
+<text x="930" y="440" text-anchor="middle" font-size="15">(Approve / Reject)</text>
 <line x1="655" y1="522" x2="655" y2="473" stroke="#333" stroke-width="1.5" stroke-dasharray="6,4" marker-end="url(#ar)"/>
 <text x="663" y="502" font-size="13" font-style="italic">«extend»</text>
 <line x1="655" y1="683" x2="655" y2="732" stroke="#333" stroke-width="1.5" stroke-dasharray="6,4" marker-end="url(#ar)"/>
@@ -59,17 +65,23 @@
 <line x1="150" y1="565" x2="134" y2="595" stroke="#333" stroke-width="2"/>
 <line x1="150" y1="565" x2="166" y2="595" stroke="#333" stroke-width="2"/>
 <text x="150" y="618" text-anchor="middle" font-size="17">Student</text>
-<circle cx="150" cy="105" r="14" fill="white" stroke="#333" stroke-width="2"/>
-<line x1="150" y1="119" x2="150" y2="155" stroke="#333" stroke-width="2"/>
-<line x1="128" y1="132" x2="172" y2="132" stroke="#333" stroke-width="2"/>
-<line x1="150" y1="155" x2="134" y2="185" stroke="#333" stroke-width="2"/>
-<line x1="150" y1="155" x2="166" y2="185" stroke="#333" stroke-width="2"/>
-<text x="150" y="208" text-anchor="middle" font-size="17">E-mail Service</text>
+<circle cx="1350" cy="125" r="14" fill="white" stroke="#333" stroke-width="2"/>
+<line x1="1350" y1="139" x2="1350" y2="175" stroke="#333" stroke-width="2"/>
+<line x1="1328" y1="152" x2="1372" y2="152" stroke="#333" stroke-width="2"/>
+<line x1="1350" y1="175" x2="1334" y2="205" stroke="#333" stroke-width="2"/>
+<line x1="1350" y1="175" x2="1366" y2="205" stroke="#333" stroke-width="2"/>
+<text x="1350" y="228" text-anchor="middle" font-size="17">E-mail Service</text>
 <circle cx="1350" cy="715" r="14" fill="white" stroke="#333" stroke-width="2"/>
 <line x1="1350" y1="729" x2="1350" y2="765" stroke="#333" stroke-width="2"/>
 <line x1="1328" y1="742" x2="1372" y2="742" stroke="#333" stroke-width="2"/>
 <line x1="1350" y1="765" x2="1334" y2="795" stroke="#333" stroke-width="2"/>
 <line x1="1350" y1="765" x2="1366" y2="795" stroke="#333" stroke-width="2"/>
 <text x="1350" y="818" text-anchor="middle" font-size="17">Facility Staff</text>
+<circle cx="1350" cy="425" r="14" fill="white" stroke="#333" stroke-width="2"/>
+<line x1="1350" y1="439" x2="1350" y2="475" stroke="#333" stroke-width="2"/>
+<line x1="1328" y1="452" x2="1372" y2="452" stroke="#333" stroke-width="2"/>
+<line x1="1350" y1="475" x2="1334" y2="505" stroke="#333" stroke-width="2"/>
+<line x1="1350" y1="475" x2="1366" y2="505" stroke="#333" stroke-width="2"/>
+<text x="1350" y="528" text-anchor="middle" font-size="17">Admin</text>
 <text x="930" y="860" text-anchor="middle" font-size="13" fill="#555">All registered actors use UC-02 Log In.</text>
 </svg>

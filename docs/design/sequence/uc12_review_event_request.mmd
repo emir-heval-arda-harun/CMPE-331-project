@@ -1,0 +1,70 @@
+sequenceDiagram
+    autonumber
+    actor A as Admin
+    box rgb(232,240,254) Layer 1 Presentation
+        participant R as event_routes
+    end
+    box rgb(232,245,233) Layer 2 Application
+        participant E as EventService
+        participant AU as AuthService
+    end
+    box rgb(255,243,224) Layer 3 Data access and integration
+        participant W as UnitOfWork
+        participant ER as EventRepository
+        participant M as EmailSender
+    end
+    box rgb(243,229,245) Layer 4 External systems
+        participant DB as PostgreSQL
+        participant SMTP as SMTP provider
+    end
+
+    A->>R: GET /admin/requests
+    R->>E: list_pending_events(admin_id)
+    E->>AU: require_role(admin_id, ADMIN)
+    E->>ER: pending(before = None)
+    ER->>DB: SELECT event WHERE status = pending ORDER BY start_time
+    E-->>R: pending requests
+    R-->>A: request list
+
+    A->>R: POST /admin/requests/{id} (decision, reason)
+    alt decision = approve
+        R->>E: approve_event(event_id, admin_id)
+    else decision = reject
+        R->>E: reject_event(event_id, admin_id, reason)
+    end
+    E->>AU: require_role(admin_id, ADMIN)
+    alt user is not an admin
+        AU-->>E: raise PermissionDeniedError
+        E-->>R: raise PermissionDeniedError
+        R-->>A: 403 page
+    else admin
+        E->>W: begin()
+        E->>ER: get_for_update(event_id)
+        ER->>DB: SELECT event FOR UPDATE
+        alt status is not PENDING, or reject with empty reason
+            E->>W: rollback()
+            E-->>R: raise ValidationError
+            R-->>A: request list with error
+        else approve
+            E->>E: status = OPEN, reviewed_by, reviewed_at
+            E->>ER: save(event)
+            ER->>DB: UPDATE event
+            E->>W: commit()
+            E->>AU: get_user(organizer_id)
+            E->>M: send_event_decision(email, title, approved = true)
+            M->>SMTP: decision e-mail
+            E-->>R: event
+            R-->>A: 303 redirect to /admin/requests
+        else reject
+            E->>E: status = REJECTED, reviewed_by, reviewed_at, rejection_reason
+            E->>ER: save(event)
+            ER->>DB: UPDATE event
+            E->>W: commit()
+            E->>AU: get_user(organizer_id)
+            E->>M: send_event_decision(email, title, approved = false, reason)
+            M->>SMTP: decision e-mail
+            E-->>R: event
+            R-->>A: 303 redirect to /admin/requests
+        end
+    end
+    Note over E,ER: active_on() ignores rejected events, so a rejected request frees its facility slot (UC-07). A scheduled job calls expire_pending_requests(now), which uses pending(before = now) and rejects them without a reviewer.

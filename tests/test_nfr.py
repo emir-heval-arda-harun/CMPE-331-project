@@ -14,7 +14,7 @@ import pytest
 
 from campusevent.exceptions import PermissionDeniedError
 from campusevent.models import Role
-from tests.helpers import PASSWORD, campus_hall, slot, verified_user
+from tests.helpers import PASSWORD, admin_user, campus_hall, slot, verified_user
 
 
 # --------------------------------------------------------------------------- #
@@ -57,13 +57,15 @@ def _long_values(app, email_sender):
 # --------------------------------------------------------------------------- #
 def test_nfr02_search_is_fast_with_1000_open_events(app, email_sender):
     staff = verified_user(app, email_sender, "staff@bilgi.edu.tr", Role.FACILITY_STAFF)
+    admin = admin_user(app, email_sender)
     for f in range(10):
         hall = app.facilities.add_facility(staff.id, f"Hall {f}", 500)
         organizer = verified_user(app, email_sender, f"organizer{f}@bilgiedu.net")
         for i in range(100):
-            app.events.create_event(
+            event = app.events.create_event(
                 organizer.id, f"Event {f}-{i}", "social", hall.id, slot(day=1 + i // 24, hour=i % 24), 10
             )
+            app.events.approve_event(event.id, admin.id)
 
     started = time.perf_counter()
     result = app.events.search_events(category="social")
@@ -119,3 +121,16 @@ def test_nfr04_only_the_organizer_can_cancel_an_event(app, email_sender):
 
     with pytest.raises(PermissionDeniedError):
         app.events.cancel_event(event.id, other.id)
+
+
+def test_nfr04_only_an_admin_can_approve_or_reject_event_requests(app, email_sender):
+    organizer = verified_user(app, email_sender, "ali@bilgiedu.net")
+    staff = verified_user(app, email_sender, "staff@bilgi.edu.tr", Role.FACILITY_STAFF)
+    hall = app.facilities.add_facility(staff.id, "Santral Event Hall", 50)
+    event = app.events.create_event(organizer.id, "Game night", "board games", hall.id, slot(), 6)
+
+    for user in (organizer, staff):
+        with pytest.raises(PermissionDeniedError):
+            app.events.approve_event(event.id, user.id)
+        with pytest.raises(PermissionDeniedError):
+            app.events.reject_event(event.id, user.id, "no")

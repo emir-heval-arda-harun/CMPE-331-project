@@ -17,7 +17,7 @@ A student looks for events to join, using filters for category, date, time and a
 The student opens **Find an Event**.
 
 ## Main Success Scenario
-1. The system lists upcoming open events, ordered by start time.
+1. The system lists upcoming open events, ordered by start time. Pending, rejected and cancelled events are never listed (BR-15).
 2. The student applies one or more filters: category, date, time range, keyword.
 3. The system shows only the events that satisfy **all** selected filters.
 4. The student opens an event to see its details (title, description, facility, time, participants, free places).

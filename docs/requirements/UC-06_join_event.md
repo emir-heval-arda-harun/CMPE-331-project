@@ -13,7 +13,7 @@ A student joins an open event that has free places.
 
 ## Preconditions
 - The student is logged in.
-- The event is open.
+- The event is open (approved by an admin, UC-12).
 
 ## Trigger
 The student selects **Join** on the event details page.
@@ -26,7 +26,8 @@ The student selects **Join** on the event details page.
 5. The system confirms the join to the student.
 
 ## Alternative Flows
-- **1a. Event is full:** the system refuses and shows "This event is full."
+- **1a. Event is pending or rejected:** the system refuses the request.
+- **1b. Event is full:** the system refuses and shows "This event is full."
 - **2a. Student already joined:** the system refuses and shows "You have already joined this event."
 
 ## Postconditions
