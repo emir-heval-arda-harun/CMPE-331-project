@@ -45,6 +45,25 @@ def test_create_form_lists_facilities_with_capacity(client, student, hall):
     assert b"Santral Event Hall (capacity 50)" in response.data
 
 
+def test_create_form_offers_ready_made_categories_and_an_other_option(client, student, hall):
+    page = client.get("/events/new").data
+    for name in (b"Football", b"Basketball", b"Volleyball", b"Billiards", b"Study group"):
+        assert b'<option value="' + name + b'">' in page, name
+    assert b'<option value="__other__">' in page
+    assert b'name="category"' in page  # the text field is what the form sends, so a free text still works
+
+
+def test_a_category_that_is_not_in_the_list_is_accepted(client, student, hall, services):
+    create(client, hall, category="Frisbee")
+    assert services.events.get_event(1).category == "frisbee"
+
+
+def test_find_events_suggests_categories_in_the_filter(client, student):
+    page = client.get("/events").data
+    assert b'<datalist id="category-list">' in page
+    assert b'<option value="Football">' in page
+
+
 def test_create_event_on_busy_slot_shows_message_and_the_busy_times(client, student, hall, services):
     other = make_user(services, "organizer@bilgiedu.net")
     organized_event(services, hall, other)

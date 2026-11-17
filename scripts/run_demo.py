@@ -39,6 +39,8 @@ def build_services():
     organizer = services.auth.users[2]
     hall = services.facilities.add_facility(staff.id, "Santral Event Hall", 50)
     court = services.facilities.add_facility(staff.id, "Main Court", 20)
+    services.facilities.add_facility(staff.id, "Indoor Sports Hall", 30)
+    services.facilities.add_facility(staff.id, "Study Room A", 8)
     services.events.create_event(
         organizer.id, "Board game night", "board games", hall.id, slot(day=20, hour=18), 8, "Bring your own games."
     )

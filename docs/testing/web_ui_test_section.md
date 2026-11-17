@@ -18,7 +18,7 @@ The web UI (`src/campusevent/web/`, layer 1 of the [Software Design Report](../s
 ## 2. Result (at the time of writing)
 | Suite | Tests | Passed | Failed |
 |---|---|---|---|
-| `tests/web` (this section) | 41 | 41 | 0 |
+| `tests/web` (this section) | 44 | 44 | 0 |
 | Requirement tests of the team (`tests/test_*.py`) | 39 | 0 | 39 (expected: the services are skeletons) |
 
 ## 3. Traceability: use case to UI test
@@ -29,8 +29,8 @@ All tests are in [`tests/web/test_web_accounts.py`](../../tests/web/test_web_acc
 | UC-01 Register and verify | `/signup`, `/verify` | `test_signup_shows_code_box_after_registration`, `test_signup_rejects_non_university_email`, `test_signup_rejects_duplicate_email`, `test_verify_with_correct_code_goes_to_login`, `test_verify_with_wrong_code_shows_error_and_keeps_form` |
 | UC-02 Log in | `/login`, `/logout` | `test_student_logs_in_and_lands_on_find_events`, `test_facility_staff_lands_on_facility_management`, `test_wrong_credentials_do_not_say_which_part_is_wrong`, `test_unverified_account_cannot_log_in_and_is_offered_the_code_page`, `test_pages_redirect_to_login_when_logged_out`, `test_logout_ends_the_session`, `test_login_and_signup_pages_have_a_show_password_button_and_no_main_navigation` |
 | UC-03 Manage profile | `/profile` | `test_profile_saves_interests_and_availability`, `test_profile_requires_one_interest`, `test_profile_rejects_slot_that_ends_before_it_starts` |
-| UC-04 Create event | `/events/new` | `test_create_event_redirects_to_its_details_and_adds_the_organizer`, `test_create_form_lists_facilities_with_capacity`, `test_create_event_on_busy_slot_shows_message_and_the_busy_times`, `test_create_event_rejects_capacity_below_two_and_above_the_facility`, `test_create_event_rejects_bad_times_and_numbers`, `test_schedule_card_shows_free_facility` |
-| UC-05 Browse and filter | `/events` | `test_find_events_lists_open_events_soonest_first`, `test_find_events_filters_by_keyword_category_and_date`, `test_find_events_empty_result_offers_create_event`, `test_find_events_rejects_invalid_date`, `test_full_event_is_not_in_the_open_list` |
+| UC-04 Create event | `/events/new` | `test_create_event_redirects_to_its_details_and_adds_the_organizer`, `test_create_form_lists_facilities_with_capacity`, `test_create_form_offers_ready_made_categories_and_an_other_option`, `test_a_category_that_is_not_in_the_list_is_accepted`, `test_create_event_on_busy_slot_shows_message_and_the_busy_times`, `test_create_event_rejects_capacity_below_two_and_above_the_facility`, `test_create_event_rejects_bad_times_and_numbers`, `test_schedule_card_shows_free_facility` |
+| UC-05 Browse and filter | `/events` | `test_find_events_lists_open_events_soonest_first`, `test_find_events_suggests_categories_in_the_filter`, `test_find_events_filters_by_keyword_category_and_date`, `test_find_events_empty_result_offers_create_event`, `test_find_events_rejects_invalid_date`, `test_full_event_is_not_in_the_open_list` |
 | UC-06 Join event | `/events/<id>/join` | `test_join_then_leave`, `test_join_twice_shows_clear_message`, `test_join_full_event_shows_message`, `test_join_buttons_in_list_follow_the_rules` |
 | UC-09 Activity history | `/activities` | `test_activities_empty_state`, `test_activities_list_completed_events_newest_first` |
 | UC-10 Leave event | `/events/<id>/leave` | `test_join_then_leave`, `test_organizer_sees_cancel_but_not_leave_and_can_cancel` |

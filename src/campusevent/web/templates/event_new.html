@@ -17,10 +17,19 @@
         <input class="form-control" id="title" name="title" value="{{ form.get('title', '') }}" required placeholder="for example Friday football match">
       </div>
       <div class="mb-3">
-        <label class="form-label" for="category">Category</label>
-        <div class="input-group">
+        <label class="form-label" for="category_choice">Category</label>
+        {# The list is shown by the script below. Without JavaScript only the text field is visible, and it works alone. #}
+        <div class="input-group" id="category-choice-group" hidden>
           <span class="input-group-text bg-white text-muted">{{ icon('tag', 18) }}</span>
-          <input class="form-control border-start-0" id="category" name="category" value="{{ form.get('category', '') }}" placeholder="for example football, study group" required>
+          <select class="form-select border-start-0" id="category_choice">
+            <option value="">Choose a category</option>
+            {% for name in categories %}<option value="{{ name }}">{{ name }}</option>{% endfor %}
+            <option value="__other__">Other…</option>
+          </select>
+        </div>
+        <div class="input-group mt-2" id="category-text-group">
+          <span class="input-group-text bg-white text-muted">{{ icon('tag', 18) }}</span>
+          <input class="form-control border-start-0" id="category" name="category" value="{{ form.get('category', '') }}" placeholder="Type a category, for example football" required>
         </div>
       </div>
       <div class="mb-4">
@@ -91,4 +100,32 @@
     </div>
   </div>
 </div>
+{% endblock %}
+{% block scripts %}
+<script>
+  // Category: pick from the list, or choose "Other" and type your own. The form always sends the
+  // text field named "category", so the page also works without JavaScript.
+  (function () {
+    var choiceGroup = document.getElementById('category-choice-group');
+    var choice = document.getElementById('category_choice');
+    var textGroup = document.getElementById('category-text-group');
+    var field = document.getElementById('category');
+    choiceGroup.hidden = false;
+    function showText(show) { textGroup.hidden = !show; }
+    var current = field.value.trim().toLowerCase();
+    if (!current) {
+      choice.value = '';
+      showText(false);
+    } else {
+      var match = Array.prototype.find.call(choice.options, function (option) {
+        return option.value && option.value !== '__other__' && option.value.toLowerCase() === current;
+      });
+      if (match) { choice.value = match.value; showText(false); } else { choice.value = '__other__'; showText(true); }
+    }
+    choice.addEventListener('change', function () {
+      if (choice.value === '__other__') { field.value = ''; showText(true); field.focus(); }
+      else { field.value = choice.value; showText(false); }
+    });
+  })();
+</script>
 {% endblock %}

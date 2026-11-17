@@ -24,7 +24,8 @@
       <label class="form-label small mb-1" for="category">Category</label>
       <div class="input-group">
         <span class="input-group-text bg-white text-muted">{{ icon('tag', 18) }}</span>
-        <input class="form-control border-start-0" id="category" name="category" value="{{ filters.category }}" placeholder="for example football">
+        <input class="form-control border-start-0" id="category" name="category" value="{{ filters.category }}" placeholder="for example football" list="category-list" autocomplete="off">
+        <datalist id="category-list">{% for name in categories %}<option value="{{ name }}">{% endfor %}</datalist>
       </div>
     </div>
     <div class="col-12 col-md-3">

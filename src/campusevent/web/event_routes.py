@@ -22,6 +22,14 @@ STATUS_LABELS = {
 }
 
 
+# Suggestions for the category field. The category itself stays free text (charter, BR-14);
+# "Other" lets a student type any category that is not in this list.
+EVENT_CATEGORIES = [
+    "Football", "Basketball", "Volleyball", "Billiards", "Tennis", "Table tennis", "Badminton",
+    "Swimming", "Running", "Chess", "Board games", "Video games", "Study group", "Workshop", "Club meeting",
+]
+
+
 class _Names:
     """Looks up facility and user names once per request."""
 
@@ -94,6 +102,7 @@ def find_events(user):
         "events.html",
         events=views,
         filters={"keyword": keyword, "category": category, "date": day_text},
+        categories=EVENT_CATEGORIES,
         error=error,
     ), (400 if error else 200)
 
@@ -122,6 +131,7 @@ def _render_create_form(user, form: dict, error: str | None = None, status: int 
             facilities=list(names.facilities.values()),
             form=form,
             schedule=schedule,
+            categories=EVENT_CATEGORIES,
             error=error,
         ),
         status,
