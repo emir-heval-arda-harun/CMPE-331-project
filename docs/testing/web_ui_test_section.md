@@ -18,7 +18,7 @@ The web UI (`src/campusevent/web/`, layer 1 of the [Software Design Report](../s
 ## 2. Result (at the time of writing)
 | Suite | Tests | Passed | Failed |
 |---|---|---|---|
-| `tests/web` (this section) | 67 | 67 | 0 |
+| `tests/web` (this section) | 68 | 68 | 0 |
 | Requirement tests of the team (`tests/test_*.py`) | 39 | 0 | 39 (expected: the services are skeletons) |
 
 ## 3. Traceability: use case to UI test

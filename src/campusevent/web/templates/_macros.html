@@ -1,7 +1,8 @@
 {% macro csrf() %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% endmacro %}
 
 {% macro status_tag(event) %}
-<span class="badge rounded-pill {{ 'text-bg-success' if event.status == 'open' else 'text-bg-warning' if event.status == 'full' else 'text-bg-secondary' }}">{{ event.status_label }}</span>
+{% set colours = {'open': 'text-bg-success', 'full': 'text-bg-warning', 'pending': 'text-bg-info', 'rejected': 'text-bg-danger'} %}
+<span class="badge rounded-pill {{ colours.get(event.status, 'text-bg-secondary') }}">{{ event.status_label }}</span>
 {% endmacro %}
 
 {% macro flashes() %}

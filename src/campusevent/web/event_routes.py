@@ -23,6 +23,13 @@ STATUS_LABELS = {
     EventStatus.CANCELLED: "Cancelled",
 }
 
+
+def _status_label(status) -> str:
+    """Label of an event status. A status this page does not know yet (for example "pending" or "rejected"
+    from change request CR-01, PR #8) is shown with its own name instead of breaking the page."""
+    return STATUS_LABELS.get(status) or str(getattr(status, "value", status)).replace("_", " ").capitalize()
+
+
 EVENT_CATEGORIES = common.EVENT_CATEGORIES
 CATEGORY_SHORTCUTS = 8  # how many categories are shown as one-click filters on Find Events
 PAGE_SIZE = 20  # events per page on Find Events (design report, NFR-02)
@@ -59,8 +66,8 @@ def _event_view(event: Event, names: _Names, viewer_id: int) -> dict:
         "title": event.title,
         "category": event.category,
         "description": event.description,
-        "status": event.status.value,
-        "status_label": STATUS_LABELS[event.status],
+        "status": str(getattr(event.status, "value", event.status)),
+        "status_label": _status_label(event.status),
         "start": event.slot.start,
         "end": event.slot.end,
         "facility": names.facility(event.facility_id),
