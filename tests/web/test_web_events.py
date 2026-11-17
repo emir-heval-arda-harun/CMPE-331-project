@@ -1,7 +1,7 @@
 """Web UI tests for UC-04 to UC-06 and UC-09 to UC-11."""
 
 from campusevent.models import EventStatus
-from tests.web.conftest import log_in, make_user
+from tests.web.conftest import make_user
 from tests.web.fakes import slot
 
 CREATE_FORM = {
