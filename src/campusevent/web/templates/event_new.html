@@ -11,7 +11,7 @@
   <div class="col-12 col-lg-7">
     <form class="card-soft p-4" method="post" action="{{ url_for('events.create_event') }}" novalidate>
       {{ csrf() }}
-      <h2 class="section-title mb-3">What</h2>
+      <h2 class="section-title mb-3">Event details</h2>
       <div class="mb-3">
         <label class="form-label" for="title">Title</label>
         <input class="form-control" id="title" name="title" value="{{ form.get('title', '') }}" required placeholder="for example Friday football match">
@@ -37,7 +37,7 @@
         <textarea class="form-control" id="description" name="description" rows="3">{{ form.get('description', '') }}</textarea>
       </div>
 
-      <h2 class="section-title mb-3">Where and when</h2>
+      <h2 class="section-title mb-3">Place and time</h2>
       <div class="mb-3">
         <label class="form-label" for="facility_id">Facility</label>
         <select class="form-select" id="facility_id" name="facility_id" required>
