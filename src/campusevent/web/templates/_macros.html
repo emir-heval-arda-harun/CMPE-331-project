@@ -30,11 +30,27 @@
   {% elif name == 'plus' %}<path d="M12 5v14M5 12h14"/>
   {% elif name == 'check' %}<path d="M5 12.5l4.5 4.5L19 7.5"/>
   {% elif name == 'alert' %}<path d="M12 4l9 16H3L12 4z"/><path d="M12 10v4M12 17.2v.1"/>
+  {% elif name == 'ball' %}<circle cx="12" cy="12" r="9"/><path d="M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18M3 12h18"/>
+  {% elif name == 'trophy' %}<path d="M8 4h8v5a4 4 0 0 1-8 0z"/><path d="M8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8 20h8"/>
+  {% elif name == 'music' %}<path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/>
+  {% elif name == 'book' %}<path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 19V5"/>
   {% elif name == 'link' %}<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>
   {% elif name == 'x' %}<path d="M6 6l12 12M18 6L6 18"/>
   {% elif name == 'info' %}<circle cx="12" cy="12" r="8.5"/><path d="M12 11v5M12 8v.1"/>
   {% else %}<rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/>{% endif %}
 </svg>
+{% endmacro %}
+
+{# Faint event icons that float slowly in the hero band and on the brand panel. Decorative only. #}
+{% macro floating_icons() %}
+<div class="hero-icons" aria-hidden="true">
+  <span style="left: 63%; top: 46%;">{{ icon('ball', 46) }}</span>
+  <span style="left: 72%; top: 62%; animation-delay: -2s;">{{ icon('trophy', 40) }}</span>
+  <span style="left: 77%; top: 30%; animation-delay: -4s;">{{ icon('calendar', 42) }}</span>
+  <span style="left: 87%; top: 56%; animation-delay: -6s;">{{ icon('music', 38) }}</span>
+  <span style="left: 66%; top: 20%; animation-delay: -3s;">{{ icon('book', 30) }}</span>
+  <span style="left: 96%; top: 44%; animation-delay: -5s;">{{ icon('users', 34) }}</span>
+</div>
 {% endmacro %}
 
 {% macro brand(light=true) %}

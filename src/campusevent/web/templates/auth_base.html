@@ -1,6 +1,8 @@
 {% extends "base.html" %}
-{% from "_macros.html" import flashes, brand, icon %}
+{% from "_macros.html" import flashes, brand, icon, floating_icons %}
 {# Layout of the sign up and log in pages: a brand panel on wide screens, only the form card on phones. #}
+{% block body_class %}auth{% endblock %}
+{% block hero %}{% endblock %}
 {% block nav %}{% endblock %}
 {% block footer %}{% endblock %}
 {% block main %}
@@ -16,6 +18,7 @@
       <li><span class="pt-icon">{{ icon('building') }}</span><span>Organize your own event at a campus facility, with its free and busy times in sight.</span></li>
       <li><span class="pt-icon">{{ icon('history') }}</span><span>Keep a list of the events you have taken part in.</span></li>
     </ul>
+    {{ floating_icons() }}
     {% if not campus_photo %}
     {# Drawn campus skyline, shown while no photo is set (see CAMPUS_PHOTO_NAMES in web/__init__.py). #}
     <svg class="auth-skyline" viewBox="0 0 600 170" preserveAspectRatio="xMidYMax slice" fill="#fff" aria-hidden="true" focusable="false">
