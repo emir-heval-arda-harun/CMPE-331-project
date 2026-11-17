@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% from "_macros.html" import flashes, brand, icon %}
+{# Layout of the sign up and log in pages: a brand panel on wide screens, only the form card on phones. #}
+{% block nav %}{% endblock %}
+{% block main %}
+<main class="auth-wrap">
+  <section class="auth-side d-none d-lg-flex" aria-label="About CampusEvent">
+    <div class="d-flex align-items-center gap-2 mb-4">
+      {{ brand() }}<span class="fs-5 fw-semibold">CampusEvent</span>
+    </div>
+    <h2 class="display-6">Find people to play, study and meet with on your campus.</h2>
+    <ul class="auth-points">
+      <li><span class="pt-icon">{{ icon('search') }}</span><span>Browse upcoming events by category, date and keyword, and join with one click.</span></li>
+      <li><span class="pt-icon">{{ icon('building') }}</span><span>Organize your own event at a campus facility, with its free and busy times in sight.</span></li>
+      <li><span class="pt-icon">{{ icon('history') }}</span><span>Keep a list of the events you have taken part in.</span></li>
+    </ul>
+  </section>
+  <section class="auth-main">
+    <div class="auth-card">
+      <div class="d-lg-none d-flex align-items-center gap-2 mb-4">
+        {{ brand(false) }}<span class="fs-5 fw-semibold">CampusEvent</span>
+      </div>
+      {{ flashes() }}
+      {% block auth_content %}{% endblock %}
+    </div>
+  </section>
+</main>
+{% endblock %}
+{% block scripts %}
+<script>
+  // "Show password" button: switches the field between hidden and visible text.
+  document.querySelectorAll('[data-toggle-password]').forEach(function (button) {
+    button.addEventListener('click', function () {
+      var field = document.querySelector(button.getAttribute('data-toggle-password'));
+      var show = field.type === 'password';
+      field.type = show ? 'text' : 'password';
+      button.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+    });
+  });
+</script>
+{% endblock %}

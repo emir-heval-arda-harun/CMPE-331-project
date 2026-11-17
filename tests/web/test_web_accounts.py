@@ -15,6 +15,14 @@ def test_signup_shows_code_box_after_registration(client):
     assert b'name="code"' in response.data
 
 
+def test_login_and_signup_pages_have_a_show_password_button_and_no_main_navigation(client):
+    for path in ("/login", "/signup"):
+        page = client.get(path).data
+        assert b'data-toggle-password="#password"' in page, path
+        assert b'type="password"' in page, path  # the field is hidden until the user asks
+        assert b"<nav" not in page, path  # these pages use the brand panel layout
+
+
 def test_signup_rejects_non_university_email(client):
     response = client.post(
         "/signup", data={"full_name": "Deniz", "email": "deniz@gmail.com", "password": PASSWORD}

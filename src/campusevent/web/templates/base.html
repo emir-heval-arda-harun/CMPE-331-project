@@ -6,18 +6,59 @@
   <title>{% block title %}CampusEvent{% endblock %} – CampusEvent</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
   <style>
-    body { background: #f5f7fb; }
-    .navbar-campus { background: #14305e; }
-    .card { border-radius: .75rem; border-color: #e1e6f0; }
-    .btn { min-height: 2.5rem; }
+    :root {
+      --ce-navy: #14305e;
+      --ce-blue: #2563eb;
+      --ce-sky: #38bdf8;
+      --ce-bg: #f4f6fb;
+    }
+    body { background: var(--ce-bg); font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+    .navbar-campus { background: var(--ce-navy); }
+    .card { border-radius: .9rem; border-color: #e1e6f0; box-shadow: 0 1px 2px rgba(20, 48, 94, .05); }
+    .btn { min-height: 2.5rem; border-radius: .6rem; }
+    .btn-primary { background: var(--ce-blue); border-color: var(--ce-blue); }
+    .btn-primary:hover, .btn-primary:focus { background: #1d4ed8; border-color: #1d4ed8; }
+    a { color: var(--ce-blue); }
+
+    .brand-mark { display: inline-flex; align-items: center; justify-content: center; width: 2.4rem; height: 2.4rem;
+      border-radius: .7rem; background: var(--ce-blue); color: #fff; }
+    .brand-mark-light { background: rgba(255, 255, 255, .16); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .28); }
+
+    /* sign up and log in */
+    .auth-wrap { min-height: 100vh; display: flex; }
+    .auth-side { flex: 1 1 46%; flex-direction: column; justify-content: center; padding: 4rem; color: #fff;
+      background: radial-gradient(circle at 18% 12%, rgba(56, 189, 248, .35), transparent 45%),
+                  linear-gradient(145deg, var(--ce-navy) 0%, #1e40af 60%, var(--ce-blue) 100%); }
+    .auth-side h2 { font-weight: 700; letter-spacing: -.02em; max-width: 24rem; }
+    .auth-points { list-style: none; padding: 0; margin: 2rem 0 0; display: grid; gap: 1.1rem; max-width: 26rem; }
+    .auth-points li { display: flex; gap: .9rem; align-items: flex-start; color: rgba(255, 255, 255, .92); }
+    .auth-points .pt-icon { flex: none; display: inline-flex; width: 2.2rem; height: 2.2rem; align-items: center;
+      justify-content: center; border-radius: .6rem; background: rgba(255, 255, 255, .14); }
+    .auth-main { flex: 1 1 54%; display: flex; align-items: center; justify-content: center; padding: 1.5rem 1rem; }
+    .auth-card { width: 100%; max-width: 26rem; background: #fff; border-radius: 1.1rem; padding: 2rem 1.75rem;
+      box-shadow: 0 10px 30px rgba(20, 48, 94, .10), 0 1px 3px rgba(20, 48, 94, .08); }
+    .auth-card h1 { font-size: 1.6rem; font-weight: 700; letter-spacing: -.02em; }
+    .auth-card .form-control { min-height: 2.9rem; border-left: 0; }
+    .auth-card .input-group-text { background: #fff; color: #64748b; border-right: 0; }
+    .auth-card .input-group:focus-within .input-group-text,
+    .auth-card .input-group:focus-within .form-control { border-color: #86b7fe; }
+    .auth-card .form-control:focus { box-shadow: none; }
+    .auth-card .input-group:focus-within { box-shadow: 0 0 0 .22rem rgba(37, 99, 235, .18); border-radius: .5rem; }
+    .auth-card .btn-lg { font-weight: 600; min-height: 3rem; }
+    .pw-toggle { border: 1px solid var(--bs-border-color); border-left: 0; background: #fff; color: #64748b; }
+    @media (max-width: 575.98px) { .auth-card { padding: 1.5rem 1.25rem; box-shadow: none; background: transparent; }
+      .auth-main { align-items: flex-start; padding-top: 2rem; background: #fff; } }
   </style>
 </head>
 <body>
-{% from "_macros.html" import csrf %}
+{% from "_macros.html" import csrf, flashes, brand %}
 
+{% block nav %}
 <nav class="navbar navbar-expand-md navbar-dark navbar-campus">
   <div class="container">
-    <a class="navbar-brand fw-semibold" href="{{ url_for('index') }}">CampusEvent</a>
+    <a class="navbar-brand fw-semibold d-flex align-items-center gap-2" href="{{ url_for('index') }}">
+      {{ brand() }}<span>CampusEvent</span>
+    </a>
     {% if current_user %}
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav" aria-controls="nav" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
@@ -46,16 +87,16 @@
     {% endif %}
   </div>
 </nav>
+{% endblock %}
 
+{% block main %}
 <main class="container py-4">
-  {% with messages = get_flashed_messages(with_categories=true) %}
-    {% for category, message in messages %}
-      <div class="alert alert-{{ 'success' if category == 'success' else 'info' }}" role="status">{{ message }}</div>
-    {% endfor %}
-  {% endwith %}
+  {{ flashes() }}
   {% block content %}{% endblock %}
 </main>
+{% endblock %}
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+{% block scripts %}{% endblock %}
 </body>
 </html>

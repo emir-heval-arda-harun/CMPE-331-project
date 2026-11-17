@@ -3,3 +3,30 @@
 {% macro status_tag(event) %}
 <span class="badge {{ 'text-bg-success' if event.status == 'open' else 'text-bg-warning' if event.status == 'full' else 'text-bg-secondary' }}">{{ event.status_label }}</span>
 {% endmacro %}
+
+{% macro flashes() %}
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}
+      <div class="alert alert-{{ 'success' if category == 'success' else 'info' }}" role="status">{{ message }}</div>
+    {% endfor %}
+  {% endwith %}
+{% endmacro %}
+
+{# Small line icons (inline SVG, no extra download). Decorative, hidden from screen readers. #}
+{% macro icon(name, size=20) %}
+<svg width="{{ size }}" height="{{ size }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+  {% if name == 'mail' %}<rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M3.5 7l8.5 6 8.5-6"/>
+  {% elif name == 'lock' %}<rect x="4.5" y="10.5" width="15" height="10" rx="2.5"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/>
+  {% elif name == 'user' %}<circle cx="12" cy="8" r="4"/><path d="M4.5 20c.8-3.6 3.8-5.5 7.5-5.5s6.7 1.9 7.5 5.5"/>
+  {% elif name == 'key' %}<circle cx="8" cy="15" r="4"/><path d="M11 12l8-8M16 7l3 3"/>
+  {% elif name == 'eye' %}<path d="M2 12s3.7-7 10-7 10 7 10 7-3.7 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>
+  {% elif name == 'search' %}<circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/>
+  {% elif name == 'building' %}<path d="M4 20V6l8-3 8 3v14M9 20v-5h6v5M8 9h2M14 9h2"/>
+  {% elif name == 'history' %}<path d="M4 12a8 8 0 1 0 2.5-5.8L4 8.5M4 4v4.5h4.5M12 8v4.5l3 1.8"/>
+  {% else %}<rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/>{% endif %}
+</svg>
+{% endmacro %}
+
+{% macro brand(light=true) %}
+<span class="brand-mark{{ ' brand-mark-light' if light }}">{{ icon('calendar', 22) }}</span>
+{% endmacro %}
