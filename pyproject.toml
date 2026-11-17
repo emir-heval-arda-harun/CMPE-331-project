@@ -7,6 +7,15 @@ requires-python = ">=3.10"
 [project.optional-dependencies]
 test = ["pytest>=8"]
 
+[tool.ruff]
+target-version = "py312"
+line-length = 120
+extend-exclude = ["docs"]
+
+[tool.ruff.lint]
+# Errors only (syntax, undefined names, unused imports); style is not enforced in CI.
+select = ["E4", "E7", "E9", "F"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]

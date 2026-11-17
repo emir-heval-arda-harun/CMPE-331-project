@@ -1,0 +1,38 @@
+# Render Blueprint (Software Design Report §3.4): web service + managed PostgreSQL.
+# Deploys are triggered from GitHub Actions (deploy hook) after CI is green on main,
+# so autoDeploy is off here.
+services:
+  - type: web
+    name: campusevent
+    runtime: python
+    plan: free
+    branch: main
+    autoDeploy: false
+    buildCommand: pip install -r requirements.txt
+    # Entry point: the Flask app factory from task 3.5 (PR #7, campusevent.web).
+    startCommand: gunicorn --chdir src --bind 0.0.0.0:$PORT "campusevent.web:create_web_app()"
+    healthCheckPath: /login
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.7"
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: campusevent-db
+          property: connectionString
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_USERNAME
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false
+      - key: SMTP_FROM
+        sync: false
+
+databases:
+  - name: campusevent-db
+    plan: free
+    postgresMajorVersion: "16"
