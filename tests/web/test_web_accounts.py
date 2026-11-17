@@ -23,6 +23,14 @@ def test_login_and_signup_pages_have_a_show_password_button_and_no_main_navigati
         assert b"<nav" not in page, path  # these pages use the brand panel layout
 
 
+def test_every_page_has_the_animated_background_that_stops_for_reduced_motion(client, student):
+    for path in ("/login", "/signup", "/events", "/events/new", "/profile", "/activities"):
+        page = client.get(path).data
+        assert b'class="bg-orbs"' in page, path
+        assert b"prefers-reduced-motion: reduce" in page, path  # no motion for people who ask for none
+        assert page.count(b"<span></span>") >= 3, path
+
+
 def test_login_background_is_a_drawn_skyline_until_a_campus_photo_is_added(client):
     page = client.get("/login").data
     assert b'class="auth-skyline"' in page

@@ -12,15 +12,30 @@
       --ce-sky: #38bdf8;
       --ce-bg: #f4f6fb;
     }
-    /* soft blue wash at the top and a faint dot grid, so the pages do not sit on a flat grey */
-    body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; min-height: 100vh;
-      background:
-        radial-gradient(circle at 1px 1px, rgba(37, 99, 235, .10) 1px, transparent 0) 0 0 / 24px 24px,
-        radial-gradient(ellipse 60% 220px at 85% 0, rgba(56, 189, 248, .20), transparent 70%),
-        radial-gradient(ellipse 55% 260px at 10% 0, rgba(37, 99, 235, .14), transparent 70%),
-        var(--ce-bg);
-      background-repeat: repeat, no-repeat, no-repeat, no-repeat; }
-    .navbar-campus { background: var(--ce-navy); }
+    /* Background of the whole site: a soft gradient, three slowly drifting colour orbs and a faint dot grid
+       that fades out downwards. CSS only (no image download); the motion stops for visitors who ask their
+       system for reduced motion. */
+    body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; min-height: 100vh; position: relative;
+      background: linear-gradient(180deg, #e6efff 0%, #f0f5fd 40%, var(--ce-bg) 100%) fixed; }
+    body::before { content: ""; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background: radial-gradient(circle at 1px 1px, rgba(20, 48, 94, .12) 1px, transparent 0) 0 0 / 26px 26px;
+      -webkit-mask-image: linear-gradient(180deg, #000 0%, transparent 82%); mask-image: linear-gradient(180deg, #000 0%, transparent 82%); }
+    .bg-orbs { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+    .bg-orbs span { position: absolute; border-radius: 50%; will-change: transform; }
+    .bg-orbs span:nth-child(1) { width: 38rem; height: 38rem; top: -14rem; left: -10rem; animation: orb-a 26s ease-in-out infinite;
+      background: radial-gradient(circle at 35% 35%, rgba(37, 99, 235, .42), rgba(37, 99, 235, 0) 68%); }
+    .bg-orbs span:nth-child(2) { width: 34rem; height: 34rem; top: 6%; right: -12rem; animation: orb-b 32s ease-in-out infinite;
+      background: radial-gradient(circle at 40% 40%, rgba(56, 189, 248, .42), rgba(56, 189, 248, 0) 68%); }
+    .bg-orbs span:nth-child(3) { width: 42rem; height: 42rem; bottom: -18rem; left: 26%; animation: orb-c 38s ease-in-out infinite;
+      background: radial-gradient(circle at 50% 50%, rgba(124, 58, 237, .26), rgba(124, 58, 237, 0) 68%); }
+    @keyframes orb-a { 0%, 100% { transform: translate3d(0, 0, 0) scale(1); } 50% { transform: translate3d(7rem, 4rem, 0) scale(1.1); } }
+    @keyframes orb-b { 0%, 100% { transform: translate3d(0, 0, 0) scale(1); } 50% { transform: translate3d(-6rem, 5rem, 0) scale(1.12); } }
+    @keyframes orb-c { 0%, 100% { transform: translate3d(0, 0, 0) scale(1); } 50% { transform: translate3d(-5rem, -4rem, 0) scale(1.08); } }
+    nav.navbar, main { position: relative; z-index: 1; }
+    @media (prefers-reduced-motion: reduce) { .bg-orbs span, .auth-side, .auth-side::after { animation: none !important; } }
+
+    .navbar-campus { background: linear-gradient(90deg, var(--ce-navy) 0%, #1e3a8a 65%, #1d4ed8 100%);
+      box-shadow: 0 2px 14px rgba(20, 48, 94, .28); }
     .card { border-radius: .9rem; border-color: #e1e6f0; box-shadow: 0 1px 2px rgba(20, 48, 94, .05); }
     .btn { min-height: 2.5rem; border-radius: .6rem; }
     .btn-primary { background: var(--ce-blue); border-color: var(--ce-blue); }
@@ -37,8 +52,10 @@
     .navbar-campus .nav-link.active { background: rgba(255, 255, 255, .18); color: #fff; font-weight: 600; }
     .page-head h1 { font-weight: 700; letter-spacing: -.02em; }
     .section-title { font-size: .8rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #64748b; }
-    .card-soft { background: #fff; border: 1px solid #e3e8f2; border-radius: 1rem;
-      box-shadow: 0 1px 2px rgba(20, 48, 94, .04), 0 4px 14px rgba(20, 48, 94, .04); }
+    /* frosted glass: the background colours shine through softly, the text stays on an almost white layer */
+    .card-soft { background: rgba(255, 255, 255, .86); border: 1px solid rgba(255, 255, 255, .75); border-radius: 1rem;
+      -webkit-backdrop-filter: blur(10px) saturate(1.3); backdrop-filter: blur(10px) saturate(1.3);
+      box-shadow: 0 1px 2px rgba(20, 48, 94, .05), 0 8px 28px rgba(20, 48, 94, .08); }
     .event-card { transition: box-shadow .15s ease, transform .15s ease; }
     .event-card:hover { box-shadow: 0 6px 20px rgba(20, 48, 94, .10); transform: translateY(-1px); }
     .event-title { font-size: 1.1rem; font-weight: 650; color: var(--ce-navy); text-decoration: none; }
@@ -79,17 +96,25 @@
     .auth-skyline { position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: 42%; opacity: .13; pointer-events: none; }
     .auth-side { flex: 1 1 46%; flex-direction: column; justify-content: center; padding: 4rem; color: #fff;
       background: radial-gradient(circle at 18% 12%, rgba(56, 189, 248, .35), transparent 45%),
-                  linear-gradient(145deg, var(--ce-navy) 0%, #1e40af 60%, var(--ce-blue) 100%); }
+                  linear-gradient(145deg, var(--ce-navy) 0%, #1e40af 45%, var(--ce-blue) 80%, #0ea5e9 100%); }
+    /* the colours of the panel move slowly (not when a photo is set, because then the style attribute is present) */
+    .auth-side:not([style]) { background-size: 100% 100%, 220% 220%; animation: auth-shift 24s ease-in-out infinite; }
+    @keyframes auth-shift { 0%, 100% { background-position: 0 0, 0% 40%; } 50% { background-position: 0 0, 100% 60%; } }
+    .auth-side::before { content: ""; position: absolute; width: 34rem; height: 34rem; right: -12rem; top: -12rem; border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, .22); pointer-events: none;
+      box-shadow: 0 0 0 3.5rem rgba(255, 255, 255, .045), 0 0 0 7.5rem rgba(255, 255, 255, .03); }
+    .auth-side::after { content: ""; position: absolute; width: 20rem; height: 20rem; left: -7rem; bottom: 20%; border-radius: 50%;
+      background: radial-gradient(circle, rgba(56, 189, 248, .30), rgba(56, 189, 248, 0) 70%); pointer-events: none;
+      animation: orb-b 20s ease-in-out infinite; }
     .auth-side h2 { font-weight: 700; letter-spacing: -.02em; max-width: 24rem; }
     .auth-points { list-style: none; padding: 0; margin: 2rem 0 0; display: grid; gap: 1.1rem; max-width: 26rem; }
     .auth-points li { display: flex; gap: .9rem; align-items: flex-start; color: rgba(255, 255, 255, .92); }
     .auth-points .pt-icon { flex: none; display: inline-flex; width: 2.2rem; height: 2.2rem; align-items: center;
       justify-content: center; border-radius: .6rem; background: rgba(255, 255, 255, .14); }
-    .auth-main { flex: 1 1 54%; display: flex; align-items: center; justify-content: center; padding: 1.5rem 1rem;
-      background: radial-gradient(circle at 85% 8%, rgba(56, 189, 248, .22), transparent 38%),
-                  radial-gradient(circle at 10% 95%, rgba(37, 99, 235, .12), transparent 40%), #f4f6fb; }
-    .auth-card { width: 100%; max-width: 26rem; background: #fff; border-radius: 1.1rem; padding: 2rem 1.75rem;
-      box-shadow: 0 10px 30px rgba(20, 48, 94, .10), 0 1px 3px rgba(20, 48, 94, .08); }
+    .auth-main { flex: 1 1 54%; display: flex; align-items: center; justify-content: center; padding: 1.5rem 1rem; }
+    .auth-card { width: 100%; max-width: 26rem; background: rgba(255, 255, 255, .93); border-radius: 1.1rem; padding: 2rem 1.75rem;
+      border: 1px solid rgba(255, 255, 255, .85); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+      box-shadow: 0 18px 44px rgba(20, 48, 94, .14), 0 1px 3px rgba(20, 48, 94, .08); }
     .auth-card h1 { font-size: 1.6rem; font-weight: 700; letter-spacing: -.02em; }
     .auth-card .form-control { min-height: 2.9rem; border-left: 0; }
     .auth-card .input-group-text { background: #fff; color: #64748b; border-right: 0; }
@@ -99,11 +124,12 @@
     .auth-card .input-group:focus-within { box-shadow: 0 0 0 .22rem rgba(37, 99, 235, .18); border-radius: .5rem; }
     .auth-card .btn-lg { font-weight: 600; min-height: 3rem; }
     .pw-toggle { border: 1px solid var(--bs-border-color); border-left: 0; background: #fff; color: #64748b; }
-    @media (max-width: 575.98px) { .auth-card { padding: 1.5rem 1.25rem; box-shadow: none; background: transparent; }
-      .auth-main { align-items: flex-start; padding-top: 2rem; background: #fff; } }
+    @media (max-width: 575.98px) { .auth-card { padding: 1.5rem 1.25rem; box-shadow: none; background: transparent; border: 0; }
+      .auth-main { align-items: flex-start; padding-top: 2rem; background: rgba(255, 255, 255, .88); } }
   </style>
 </head>
 <body>
+<div class="bg-orbs" aria-hidden="true"><span></span><span></span><span></span></div>
 {% from "_macros.html" import csrf, flashes, brand %}
 
 {% block nav %}
