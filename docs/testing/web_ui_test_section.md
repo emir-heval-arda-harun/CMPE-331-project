@@ -51,7 +51,9 @@ Every use case of this section has at least one test of the main flow. UC-01 to 
 | NFR-04 Access control | Staff cannot open student pages; only the organizer can cancel | `test_staff_cannot_open_student_pages`, `test_only_the_organizer_can_cancel` | Passed |
 | NFR-05 Privacy | No e-mail address on event list and details | `test_event_details_never_show_email_addresses` | Passed |
 | Security (XSS) | Text typed by users is escaped | `test_text_in_events_is_escaped` | Passed |
-| NFR-07 Portability | Chrome, Firefox, Safari, Edge | – | **Not checked.** Only one Chromium-based browser was used so far. |
+| NFR-07 Portability | Firefox (Gecko) and WebKit (Safari's engine), desktop 1280 px and phone 360 px | Automated walk-through with Playwright on 17.11.2026 against the demo (`scripts/run_demo.py`): sign up password guide, log in, category shortcut, schedule reload, overlap warning, free slot button, create event, cancel confirmation window, Add to calendar, interest tags; console errors and horizontal scrolling recorded | Passed in both browsers and both sizes; no console errors, no horizontal scrolling |
+| NFR-07 Portability | Chromium (Chrome, Edge) | Built-in browser of the development tool (Chromium) for all pages; Edge only for the log in page | Passed |
+| NFR-07 Portability | Safari itself on macOS and iOS | – | **Not checked.** WebKit on Windows is the closest available test; a check on a Mac or an iPhone is still open. Note: WebKit on Windows shows the empty date filter without a date hint |
 
 ## 5. Open items and risks
 | # | Item | Owner of the next step |
@@ -59,5 +61,5 @@ Every use case of this section has at least one test of the main flow. UC-01 to 
 | 1 | Run the UI against the real services as soon as they exist and fix differences (integration test, task 4.2) | All |
 | 2 | The UI needs three service methods that are not in the design report: `EventService.get_event`, `FacilityService.list_facilities`, `AuthService.get_user` raising `NotFoundError` ([details](../../src/campusevent/web/README.md)) | Backend owners (Heval, E. Arda, Harun) |
 | 3 | Missing features because the service interface cannot do them: resend verification code (UC-01), time range filter (UC-05), "Upcoming" tab on My Activities (F-09). Free slot suggestions (UC-04 4a) are now done in the UI, with assumed opening hours 08:00–22:00 | Team decision |
-| 4 | Check the pages in Firefox, Safari and Edge (NFR-07) and the remaining 360 px cases of NFR-01 | Web UI owner |
+| 4 | Check the pages on a real Safari (Mac or iPhone) (NFR-07) and the remaining 360 px cases of NFR-01 | Web UI owner |
 | 5 | Add a GitHub Actions run for `tests/web` (CI, task 3.7) | Onur |
