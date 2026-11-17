@@ -1,0 +1,73 @@
+sequenceDiagram
+    autonumber
+    actor S as Student
+    box rgb(232,240,254) Layer 1 Presentation
+        participant R as auth_routes
+    end
+    box rgb(232,245,233) Layer 2 Application
+        participant A as AuthService
+    end
+    box rgb(255,243,224) Layer 3 Data access and integration
+        participant W as UnitOfWork
+        participant U as UserRepository
+        participant H as PasswordHasher
+        participant M as EmailSender
+    end
+    box rgb(243,229,245) Layer 4 External systems
+        participant DB as PostgreSQL
+        participant SM as SMTP provider
+    end
+
+    S->>R: POST /signup (full_name, email, password)
+    R->>A: register(email, password, full_name)
+    A->>A: check e-mail domain against allowed_email_domains
+    alt domain not allowed
+        A-->>R: raise InvalidEmailDomainError
+        R-->>S: form with "Please use your university e-mail address."
+    else domain allowed
+        A->>W: begin()
+        W->>DB: BEGIN
+        A->>U: find_by_email(email)
+        U->>DB: SELECT user WHERE lower(email) = ?
+        alt e-mail already registered
+            A->>W: rollback()
+            A-->>R: raise DuplicateEmailError
+            R-->>S: form with error
+        else new e-mail
+            A->>H: hash(password)
+            H-->>A: argon2id hash
+            A->>U: add(user, password_hash)
+            U->>DB: INSERT user (is_verified = false)
+            A->>A: generate 6-digit code with secrets module
+            A->>H: hash(code)
+            A->>U: save_code(user_id, code_hash, now + 15 min)
+            U->>DB: INSERT verification_code
+            A->>W: commit()
+            W->>DB: COMMIT
+            A->>M: send_verification_code(email, code)
+            M->>SM: SMTP with STARTTLS
+            A-->>R: user
+            R-->>S: 303 redirect to /verify
+        end
+    end
+
+    S->>R: POST /verify (email, code)
+    R->>A: verify_email(email, code)
+    A->>W: begin()
+    A->>U: find_by_email(email)
+    A->>U: get_latest_code(user_id)
+    U->>DB: SELECT verification_code ORDER BY id DESC LIMIT 1
+    A->>A: code.is_valid(now)
+    A->>H: verify(code_hash, code)
+    alt code wrong, used or expired
+        A->>W: rollback()
+        A-->>R: raise InvalidVerificationCodeError
+        R-->>S: form with error and "Send a new code"
+    else code correct
+        A->>U: mark_code_used(code_id)
+        A->>U: mark_verified(user_id)
+        U->>DB: UPDATE verification_code, UPDATE user
+        A->>W: commit()
+        A-->>R: user
+        R-->>S: 303 redirect to /login
+    end
