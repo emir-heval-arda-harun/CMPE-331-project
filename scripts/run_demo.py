@@ -5,10 +5,16 @@
 Nothing is stored: all data disappears when the program stops. The accounts below exist only in
 this demo and only on your own computer; they are not real accounts and open nothing else.
 The services are the stand-ins of tests/web/fakes.py, so this works before the real backend exists.
+
+No password is written in this file. The demo password is CAMPUSEVENT_DEMO_PASSWORD from the
+environment or from a local .env file (see .env.example); without it a random password is made
+at every start and printed in the terminal.
 """
 
 from __future__ import annotations
 
+import os
+import secrets
 import sys
 from pathlib import Path
 
@@ -20,7 +26,19 @@ from campusevent.models import Role  # noqa: E402
 from campusevent.web import create_web_app  # noqa: E402
 from tests.web.fakes import make_fake_services, slot  # noqa: E402
 
-DEMO_PASSWORD = "Campus-Demo-2026!"
+
+def load_env_file(path: Path = ROOT / ".env") -> None:
+    """Read KEY=VALUE lines of a local .env file. Values already set in the environment win."""
+    if not path.is_file():
+        return
+    for line in path.read_text(encoding="utf-8-sig").splitlines():
+        key, sep, value = line.strip().partition("=")
+        if sep and key and not key.startswith("#"):
+            os.environ.setdefault(key.strip(), value.strip().strip('"').strip("'"))
+
+
+load_env_file()
+DEMO_PASSWORD = os.environ.get("CAMPUSEVENT_DEMO_PASSWORD") or secrets.token_urlsafe(9)
 
 # (e-mail, name, role). Every account uses DEMO_PASSWORD.
 DEMO_ACCOUNTS = [
@@ -51,10 +69,15 @@ def build_services():
 def main(port: int = 5055) -> None:
     app = create_web_app(
         build_services(),
-        {"SESSION_COOKIE_SECURE": False, "SECRET_KEY": "demo-only-not-a-secret"},
+        {"SESSION_COOKIE_SECURE": False, "SECRET_KEY": secrets.token_hex(32)},  # plain http on localhost only
     )
-    print(f"CampusEvent demo: http://localhost:{port}  (accounts: see DEMO_ACCOUNTS in this file)")
-    app.run(port=port)
+    print(f"CampusEvent demo: http://localhost:{port}")
+    print("Demo accounts: " + ", ".join(email for email, _, _ in DEMO_ACCOUNTS))
+    if os.environ.get("CAMPUSEVENT_DEMO_PASSWORD"):
+        print("Demo password: the one in CAMPUSEVENT_DEMO_PASSWORD")
+    else:
+        print(f"Demo password for this run: {DEMO_PASSWORD}")
+    app.run(host="127.0.0.1", port=port)  # reachable from this computer only
 
 
 if __name__ == "__main__":
