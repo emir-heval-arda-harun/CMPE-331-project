@@ -46,7 +46,7 @@ def test_create_form_lists_facilities_with_capacity(client, student, hall):
 
 
 def test_create_event_on_busy_slot_shows_message_and_the_busy_times(client, student, hall, services):
-    other = make_user(services, "ece@bilgiedu.net")
+    other = make_user(services, "organizer@bilgiedu.net")
     organized_event(services, hall, other)
     response = create(client, hall, start="18:30", end="19:30")
     assert response.status_code == 409
@@ -77,17 +77,17 @@ def test_schedule_card_shows_free_facility(client, student, hall):
 
 
 def test_find_events_lists_open_events_soonest_first(client, student, hall, services):
-    other = make_user(services, "ece@bilgiedu.net", name="Ece Demir")
+    other = make_user(services, "organizer@bilgiedu.net", name="Demo Organizer")
     organized_event(services, hall, other, title="Late one", slot=slot(day=22, hour=20))
     organized_event(services, hall, other, title="Early one", slot=slot(day=21, hour=9))
     page = client.get("/events").data.decode()
     assert page.index("Early one") < page.index("Late one")
-    assert "organized by Ece Demir" in page
+    assert "organized by Demo Organizer" in page
     assert "Santral Event Hall" in page
 
 
 def test_find_events_filters_by_keyword_category_and_date(client, student, hall, services):
-    other = make_user(services, "ece@bilgiedu.net")
+    other = make_user(services, "organizer@bilgiedu.net")
     organized_event(services, hall, other, title="Football friendly", category="football", slot=slot(day=21))
     organized_event(services, hall, other, title="Chess club", category="chess", slot=slot(day=22))
 
@@ -110,9 +110,9 @@ def test_find_events_rejects_invalid_date(client, student):
 
 
 def test_full_event_is_not_in_the_open_list(client, student, hall, services):
-    other = make_user(services, "ece@bilgiedu.net")
+    other = make_user(services, "organizer@bilgiedu.net")
     event = organized_event(services, hall, other, capacity=2)
-    services.events.join_event(event.id, make_user(services, "can@bilgiedu.net").id)
+    services.events.join_event(event.id, make_user(services, "participant@bilgiedu.net").id)
     assert event.status == EventStatus.FULL
     assert b"Game night" not in client.get("/events").data
 
@@ -121,7 +121,7 @@ def test_full_event_is_not_in_the_open_list(client, student, hall, services):
 
 
 def test_join_then_leave(client, student, hall, services):
-    other = make_user(services, "ece@bilgiedu.net")
+    other = make_user(services, "organizer@bilgiedu.net")
     event = organized_event(services, hall, other)
 
     details = client.get(f"/events/{event.id}").data
@@ -138,7 +138,7 @@ def test_join_then_leave(client, student, hall, services):
 
 
 def test_join_twice_shows_clear_message(client, student, hall, services):
-    other = make_user(services, "ece@bilgiedu.net")
+    other = make_user(services, "organizer@bilgiedu.net")
     event = organized_event(services, hall, other)
     client.post(f"/events/{event.id}/join")
     again = client.post(f"/events/{event.id}/join")
@@ -147,16 +147,16 @@ def test_join_twice_shows_clear_message(client, student, hall, services):
 
 
 def test_join_full_event_shows_message(client, student, hall, services):
-    other = make_user(services, "ece@bilgiedu.net")
+    other = make_user(services, "organizer@bilgiedu.net")
     event = organized_event(services, hall, other, capacity=2)
-    services.events.join_event(event.id, make_user(services, "can@bilgiedu.net").id)
+    services.events.join_event(event.id, make_user(services, "participant@bilgiedu.net").id)
     response = client.post(f"/events/{event.id}/join")
     assert response.status_code == 409
     assert b"This event is full." in response.data
 
 
 def test_join_buttons_in_list_follow_the_rules(client, student, hall, services):
-    other = make_user(services, "ece@bilgiedu.net")
+    other = make_user(services, "organizer@bilgiedu.net")
     event = organized_event(services, hall, other)
     assert f"/events/{event.id}/join".encode() in client.get("/events").data
     client.post(f"/events/{event.id}/join")
@@ -177,7 +177,7 @@ def test_organizer_sees_cancel_but_not_leave_and_can_cancel(client, student, hal
 
 
 def test_only_the_organizer_can_cancel(client, student, hall, services):
-    other = make_user(services, "ece@bilgiedu.net")
+    other = make_user(services, "organizer@bilgiedu.net")
     event = organized_event(services, hall, other)
     response = client.post(f"/events/{event.id}/cancel")
     assert response.status_code == 403
@@ -185,11 +185,11 @@ def test_only_the_organizer_can_cancel(client, student, hall, services):
 
 
 def test_event_details_never_show_email_addresses(client, student, hall, services):
-    other = make_user(services, "ece@bilgiedu.net", name="Ece Demir")
+    other = make_user(services, "organizer@bilgiedu.net", name="Demo Organizer")
     event = organized_event(services, hall, other)
     client.post(f"/events/{event.id}/join")
     page = client.get(f"/events/{event.id}").data
-    assert b"Ece Demir" in page and b"Deniz Kaya" in page
+    assert b"Demo Organizer" in page and b"Test Student" in page
     assert b"@bilgiedu.net" not in page and b"@bilgi.edu.tr" not in page
     assert b"@bilgiedu.net" not in client.get("/events").data
 
@@ -215,7 +215,7 @@ def test_activities_empty_state(client, student):
 
 
 def test_activities_list_completed_events_newest_first(client, student, hall, services):
-    other = make_user(services, "ece@bilgiedu.net")
+    other = make_user(services, "organizer@bilgiedu.net")
     for day, title in ((10, "Older"), (12, "Newer")):
         event = organized_event(services, hall, other, title=title, slot=slot(day=day))
         services.events.join_event(event.id, student.id)

@@ -8,7 +8,7 @@ from tests.web.fakes import PASSWORD, make_fake_services
 
 def test_signup_shows_code_box_after_registration(client):
     response = client.post(
-        "/signup", data={"full_name": "Deniz Kaya", "email": "deniz@bilgiedu.net", "password": PASSWORD}
+        "/signup", data={"full_name": "Test Student", "email": "student@bilgiedu.net", "password": PASSWORD}
     )
     assert response.status_code == 200
     assert b"Verify your e-mail" in response.data
@@ -25,40 +25,40 @@ def test_login_and_signup_pages_have_a_show_password_button_and_no_main_navigati
 
 def test_signup_rejects_non_university_email(client):
     response = client.post(
-        "/signup", data={"full_name": "Deniz", "email": "deniz@gmail.com", "password": PASSWORD}
+        "/signup", data={"full_name": "Sample Name", "email": "student@gmail.com", "password": PASSWORD}
     )
     assert response.status_code == 400
     assert b"Please use your university e-mail address." in response.data
     assert b"Create your account" in response.data  # the form stays, the entered name stays
-    assert b"Deniz" in response.data
+    assert b"Sample Name" in response.data
 
 
 def test_signup_rejects_duplicate_email(client, services):
-    make_user(services, "deniz@bilgiedu.net")
+    make_user(services, "student@bilgiedu.net")
     response = client.post(
-        "/signup", data={"full_name": "Deniz", "email": "deniz@bilgiedu.net", "password": PASSWORD}
+        "/signup", data={"full_name": "Test Student", "email": "student@bilgiedu.net", "password": PASSWORD}
     )
     assert b"already exists" in response.data
 
 
 def test_verify_with_correct_code_goes_to_login(client, services):
-    services.auth.register("deniz@bilgiedu.net", PASSWORD, "Deniz")
-    response = client.post("/verify", data={"email": "deniz@bilgiedu.net", "code": "123456"}, follow_redirects=True)
+    services.auth.register("student@bilgiedu.net", PASSWORD, "Test Student")
+    response = client.post("/verify", data={"email": "student@bilgiedu.net", "code": "123456"}, follow_redirects=True)
     assert b"Your e-mail address is verified" in response.data
     assert b"Log in" in response.data
 
 
 def test_verify_with_wrong_code_shows_error_and_keeps_form(client, services):
-    services.auth.register("deniz@bilgiedu.net", PASSWORD, "Deniz")
-    response = client.post("/verify", data={"email": "deniz@bilgiedu.net", "code": "000000"})
+    services.auth.register("student@bilgiedu.net", PASSWORD, "Test Student")
+    response = client.post("/verify", data={"email": "student@bilgiedu.net", "code": "000000"})
     assert response.status_code == 400
     assert b"wrong or has expired" in response.data
     assert b'name="code"' in response.data
 
 
 def test_student_logs_in_and_lands_on_find_events(client, services):
-    make_user(services, "deniz@bilgiedu.net")
-    response = log_in(client, "deniz@bilgiedu.net")
+    make_user(services, "student@bilgiedu.net")
+    response = log_in(client, "student@bilgiedu.net")
     assert response.status_code == 302
     assert response.headers["Location"].endswith("/events")
 
@@ -70,8 +70,8 @@ def test_facility_staff_lands_on_facility_management(client, services):
 
 
 def test_wrong_credentials_do_not_say_which_part_is_wrong(client, services):
-    make_user(services, "deniz@bilgiedu.net")
-    wrong_password = client.post("/login", data={"email": "deniz@bilgiedu.net", "password": "nope"})
+    make_user(services, "student@bilgiedu.net")
+    wrong_password = client.post("/login", data={"email": "student@bilgiedu.net", "password": "nope"})
     unknown_email = client.post("/login", data={"email": "who@bilgiedu.net", "password": PASSWORD})
     assert wrong_password.status_code == unknown_email.status_code == 401
     assert b"Invalid e-mail or password." in wrong_password.data
@@ -79,8 +79,8 @@ def test_wrong_credentials_do_not_say_which_part_is_wrong(client, services):
 
 
 def test_unverified_account_cannot_log_in_and_is_offered_the_code_page(client, services):
-    services.auth.register("deniz@bilgiedu.net", PASSWORD, "Deniz")
-    response = log_in(client, "deniz@bilgiedu.net")
+    services.auth.register("student@bilgiedu.net", PASSWORD, "Test Student")
+    response = log_in(client, "student@bilgiedu.net")
     assert response.status_code == 401
     assert b"verify your e-mail" in response.data
     assert b'href="/verify"' in response.data  # the e-mail address is not put into the URL

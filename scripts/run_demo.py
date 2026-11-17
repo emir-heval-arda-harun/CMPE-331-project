@@ -25,7 +25,7 @@ DEMO_PASSWORD = "Campus-Demo-2026!"
 # (e-mail, name, role). Every account uses DEMO_PASSWORD.
 DEMO_ACCOUNTS = [
     ("demo@bilgiedu.net", "Demo Student", Role.STUDENT),
-    ("ece@bilgiedu.net", "Ece Demir", Role.STUDENT),
+    ("organizer@bilgiedu.net", "Demo Organizer", Role.STUDENT),
     ("staff@bilgi.edu.tr", "Facility Staff", Role.FACILITY_STAFF),
 ]
 

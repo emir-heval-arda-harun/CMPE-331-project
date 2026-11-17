@@ -36,8 +36,8 @@ def log_in(client, email):
 
 @pytest.fixture
 def student(services, client):
-    user = make_user(services, "deniz@bilgiedu.net", name="Deniz Kaya")
-    log_in(client, "deniz@bilgiedu.net")
+    user = make_user(services, "student@bilgiedu.net", name="Test Student")
+    log_in(client, "student@bilgiedu.net")
     return user
 
 
