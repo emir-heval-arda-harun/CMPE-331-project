@@ -14,6 +14,17 @@ from campusevent.web import auth_routes, common, event_routes, profile_routes
 
 csrf = CSRFProtect()
 
+# A photo placed in static/img/ with one of these names is used as the background of the sign up and
+# log in pages. Without a photo a drawn campus skyline is shown instead.
+CAMPUS_PHOTO_NAMES = ("campus.jpg", "campus.jpeg", "campus.png", "campus.webp")
+
+
+def _campus_photo_url(flask_app: Flask) -> str | None:
+    for name in CAMPUS_PHOTO_NAMES:
+        if os.path.isfile(os.path.join(flask_app.static_folder or "", "img", name)):
+            return url_for("static", filename=f"img/{name}")
+    return None
+
 
 def create_web_app(services: CampusEventApp | None = None, config: dict | None = None) -> Flask:
     """Build the Flask app.
@@ -44,7 +55,7 @@ def create_web_app(services: CampusEventApp | None = None, config: dict | None =
 
     @flask_app.context_processor
     def inject_user():
-        return {"current_user": common.current_user()}
+        return {"current_user": common.current_user(), "campus_photo": _campus_photo_url(flask_app)}
 
     @flask_app.errorhandler(CampusEventError)
     def handle_domain_error(error: CampusEventError):

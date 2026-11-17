@@ -23,6 +23,23 @@ def test_login_and_signup_pages_have_a_show_password_button_and_no_main_navigati
         assert b"<nav" not in page, path  # these pages use the brand panel layout
 
 
+def test_login_background_is_a_drawn_skyline_until_a_campus_photo_is_added(client):
+    page = client.get("/login").data
+    assert b'class="auth-skyline"' in page
+    assert b"/static/img/campus" not in page
+
+
+def test_login_background_uses_the_campus_photo_when_the_file_exists(web_app, tmp_path):
+    (tmp_path / "img").mkdir()
+    (tmp_path / "img" / "campus.jpg").write_bytes(b"\xff\xd8\xff fake jpeg for the test")
+    web_app.static_folder = str(tmp_path)
+    client = web_app.test_client()
+    page = client.get("/login").data
+    assert b"/static/img/campus.jpg" in page
+    assert b'class="auth-skyline"' not in page  # the photo replaces the drawing
+    assert client.get("/static/img/campus.jpg").status_code == 200
+
+
 def test_signup_rejects_non_university_email(client):
     response = client.post(
         "/signup", data={"full_name": "Sample Name", "email": "student@gmail.com", "password": PASSWORD}

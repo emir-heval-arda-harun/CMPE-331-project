@@ -15,6 +15,9 @@ python -m pytest tests/web
 ```
 The web tests use in-memory stand-ins for the services (`tests/web/fakes.py`), so they pass before the real backend exists. Once a real service is ready, run the same tests against it by replacing the fake in `make_fake_services`.
 
+## Campus photo on the log in page
+The left side of the sign up and log in pages shows a drawn campus skyline. To show a photo instead, put one file named `campus.jpg` (or `.jpeg`, `.png`, `.webp`) into `src/campusevent/web/static/img/`. No code change is needed; a dark blue layer is put over it so the text stays readable. Use a landscape photo about 1600 px wide and under 400 KB. Only add a photo that you own or that you are allowed to use: the repository is public.
+
 ## Rules the UI follows
 - Presentation calls only service methods (design report, section 3.1). Services raise `CampusEventError` subclasses; `common.message_for` maps them to the messages of the use cases and `common.status_for` to HTTP codes.
 - Templates get view models with **names only, never e-mail addresses** (NFR-05).
