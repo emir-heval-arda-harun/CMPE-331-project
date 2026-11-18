@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, status_tag, icon, avatar, fill %}
+{% block title %}{{ event.title }}{% endblock %}
+{% block content %}
+<a class="small text-decoration-none d-inline-flex align-items-center gap-1 mb-3" href="{{ url_for('events.find_events') }}">&larr; Back to Find Events</a>
+<div class="row g-3">
+  <div class="col-12 col-lg-8">
+    <div class="card-soft p-4">
+      <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+        <span class="pill">{{ event.category }}</span>
+        {{ status_tag(event) }}
+        {% if event.active %}<span class="when-label">{{ event.start|when }}</span>{% endif %}
+      </div>
+      <h1 class="h3 mb-3" style="font-weight: 700; letter-spacing: -.02em;">{{ event.title }}</h1>
+      <div class="row g-2">
+        <div class="col-12 col-sm-6"><div class="info-tile">{{ icon('calendar', 22) }}<div><div class="label">Date</div><div class="value">{{ event.start.strftime('%A, %d %b %Y') }}</div></div></div></div>
+        <div class="col-12 col-sm-6"><div class="info-tile">{{ icon('clock', 22) }}<div><div class="label">Time</div><div class="value">{{ event.start.strftime('%H:%M') }} – {{ event.end.strftime('%H:%M') }}</div></div></div></div>
+        <div class="col-12 col-sm-6"><div class="info-tile">{{ icon('pin', 22) }}<div><div class="label">Facility</div><div class="value">{{ event.facility }}</div></div></div></div>
+        <div class="col-12 col-sm-6"><div class="info-tile">{{ icon('user', 22) }}<div><div class="label">Organizer</div><div class="value">{{ event.organizer }}</div></div></div></div>
+      </div>
+      {% if event.description %}
+      <h2 class="section-title mt-4 mb-2">About this event</h2>
+      <p class="mb-0" style="white-space: pre-line;">{{ event.description }}</p>
+      {% endif %}
+    </div>
+
+    <div class="card-soft p-4 mt-3">
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <h2 class="section-title mb-0">Participants</h2>
+        {{ fill(event.count, event.capacity) }}
+      </div>
+      <ul class="list-unstyled mb-0 d-grid gap-2">
+        {% for person in event.participants %}
+        <li class="d-flex align-items-center gap-3">
+          {{ avatar(person.name) }}
+          <span class="fw-medium">{{ person.name }}</span>
+          <span class="small text-muted ms-auto">{{ person.role }}</span>
+        </li>
+        {% endfor %}
+      </ul>
+      {% if event.capacity > event.count and event.active %}
+      <p class="small text-muted mt-3 mb-0">{{ event.capacity - event.count }} {{ 'place' if event.capacity - event.count == 1 else 'places' }} left.</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="col-12 col-lg-4">
+    <div class="card-soft p-4">
+      <h2 class="section-title mb-3">Actions</h2>
+      <div class="d-grid gap-2">
+        {% if event.can_join %}
+        <form method="post" action="{{ url_for('events.join_event', event_id=event.id) }}">
+          {{ csrf() }}<button class="btn btn-primary btn-lg w-100" type="submit">Join event</button>
+        </form>
+        {% endif %}
+        {% if event.can_leave %}
+        <form method="post" action="{{ url_for('events.leave_event', event_id=event.id) }}">
+          {{ csrf() }}<button class="btn btn-outline-secondary w-100" type="submit">Leave event</button>
+        </form>
+        {% endif %}
+        {% if event.can_cancel %}
+        {# With JavaScript a confirmation window opens first; without it the browser asks. #}
+        <form method="post" action="{{ url_for('events.cancel_event', event_id=event.id) }}" id="cancel-form">
+          {{ csrf() }}<button class="btn btn-outline-danger w-100" type="submit">Cancel event</button>
+        </form>
+        <p class="small text-muted mb-0">As the organizer you cannot leave the event; cancel it instead.</p>
+        {% endif %}
+        {% if not (event.can_join or event.can_leave or event.can_cancel) %}
+        <p class="small text-muted mb-0">No actions available for this event.</p>
+        {% endif %}
+      </div>
+      {% if event.active %}
+      <hr class="my-3">
+      <div class="d-grid gap-2">
+        <a class="btn btn-light border d-inline-flex align-items-center justify-content-center gap-2" href="{{ url_for('events.event_calendar', event_id=event.id) }}">{{ icon('calendar', 18) }} Add to calendar</a>
+        <button class="btn btn-light border d-inline-flex align-items-center justify-content-center gap-2" type="button" id="copy-link" hidden>{{ icon('link', 18) }} <span>Copy link</span></button>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+{% block modals %}
+{% if event.can_cancel %}
+<div class="modal fade" id="cancel-modal" tabindex="-1" aria-labelledby="cancel-modal-title" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="border-radius: 1rem;">
+      <div class="modal-body p-4 text-center">
+        <span class="empty-icon mb-3" style="display: inline-flex; width: 3.4rem; height: 3.4rem; align-items: center; justify-content: center; border-radius: 50%; background: #fdecec; color: #b42318;">{{ icon('alert', 26) }}</span>
+        <h2 class="h5" id="cancel-modal-title">Cancel "{{ event.title }}"?</h2>
+        <p class="text-muted mb-4">Participants can no longer join and the facility slot becomes free again. This cannot be undone.</p>
+        <div class="d-flex gap-2 justify-content-center">
+          <button type="button" class="btn btn-light border px-4" data-bs-dismiss="modal">Keep the event</button>
+          <button type="button" class="btn btn-danger px-4" id="cancel-confirm">Yes, cancel it</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+{% block scripts %}
+<script>
+  (function () {
+    var form = document.getElementById('cancel-form');
+    if (form) {
+      var confirmed = false;
+      form.addEventListener('submit', function (event) {
+        if (confirmed) { return; }
+        event.preventDefault();
+        if (window.bootstrap && window.bootstrap.Modal) {
+          window.bootstrap.Modal.getOrCreateInstance(document.getElementById('cancel-modal')).show();
+        } else if (window.confirm('Cancel this event? Participants can no longer join and the facility slot becomes free again.')) {
+          confirmed = true;
+          form.submit();
+        }
+      });
+      document.getElementById('cancel-confirm').addEventListener('click', function () {
+        confirmed = true;
+        this.disabled = true;
+        form.submit();
+      });
+    }
+
+    var copy = document.getElementById('copy-link');
+    if (copy && navigator.clipboard) {
+      copy.hidden = false;
+      copy.addEventListener('click', function () {
+        var label = copy.querySelector('span');
+        navigator.clipboard.writeText(window.location.href).then(function () {
+          label.textContent = 'Link copied';
+          setTimeout(function () { label.textContent = 'Copy link'; }, 2000);
+        });
+      });
+    }
+  })();
+</script>
+{% endblock %}

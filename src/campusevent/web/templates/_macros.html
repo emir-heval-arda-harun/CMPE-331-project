@@ -1,0 +1,77 @@
+{% macro csrf() %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% endmacro %}
+
+{% macro status_tag(event) %}
+{% set colours = {'open': 'text-bg-success', 'full': 'text-bg-warning', 'pending': 'text-bg-info', 'rejected': 'text-bg-danger'} %}
+<span class="badge rounded-pill {{ colours.get(event.status, 'text-bg-secondary') }}">{{ event.status_label }}</span>
+{% endmacro %}
+
+{% macro flashes() %}
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}
+      <div class="alert alert-{{ 'success' if category == 'success' else 'info' }}" role="status">{{ message }}</div>
+    {% endfor %}
+  {% endwith %}
+{% endmacro %}
+
+{# Small line icons (inline SVG, no extra download). Decorative, hidden from screen readers. #}
+{% macro icon(name, size=20) %}
+<svg width="{{ size }}" height="{{ size }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+  {% if name == 'mail' %}<rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M3.5 7l8.5 6 8.5-6"/>
+  {% elif name == 'lock' %}<rect x="4.5" y="10.5" width="15" height="10" rx="2.5"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/>
+  {% elif name == 'user' %}<circle cx="12" cy="8" r="4"/><path d="M4.5 20c.8-3.6 3.8-5.5 7.5-5.5s6.7 1.9 7.5 5.5"/>
+  {% elif name == 'users' %}<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.3 3.2-5 6.5-5s5.9 1.7 6.5 5M16 4.8a3.5 3.5 0 0 1 0 6.4M18 15.2c1.9.6 3.1 2.2 3.5 4.8"/>
+  {% elif name == 'key' %}<circle cx="8" cy="15" r="4"/><path d="M11 12l8-8M16 7l3 3"/>
+  {% elif name == 'eye' %}<path d="M2 12s3.7-7 10-7 10 7 10 7-3.7 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>
+  {% elif name == 'search' %}<circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/>
+  {% elif name == 'building' %}<path d="M4 20V6l8-3 8 3v14M9 20v-5h6v5M8 9h2M14 9h2"/>
+  {% elif name == 'history' %}<path d="M4 12a8 8 0 1 0 2.5-5.8L4 8.5M4 4v4.5h4.5M12 8v4.5l3 1.8"/>
+  {% elif name == 'pin' %}<path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/>
+  {% elif name == 'clock' %}<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>
+  {% elif name == 'tag' %}<path d="M3.5 12.2V4.5a1 1 0 0 1 1-1h7.7a1 1 0 0 1 .7.3l7.6 7.6a1 1 0 0 1 0 1.4l-7.7 7.7a1 1 0 0 1-1.4 0l-7.6-7.6a1 1 0 0 1-.3-.7z"/><circle cx="8.2" cy="8.2" r="1.2"/>
+  {% elif name == 'plus' %}<path d="M12 5v14M5 12h14"/>
+  {% elif name == 'check' %}<path d="M5 12.5l4.5 4.5L19 7.5"/>
+  {% elif name == 'alert' %}<path d="M12 4l9 16H3L12 4z"/><path d="M12 10v4M12 17.2v.1"/>
+  {% elif name == 'ball' %}<circle cx="12" cy="12" r="9"/><path d="M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18M3 12h18"/>
+  {% elif name == 'trophy' %}<path d="M8 4h8v5a4 4 0 0 1-8 0z"/><path d="M8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8 20h8"/>
+  {% elif name == 'music' %}<path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/>
+  {% elif name == 'book' %}<path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 19V5"/>
+  {% elif name == 'link' %}<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>
+  {% elif name == 'x' %}<path d="M6 6l12 12M18 6L6 18"/>
+  {% elif name == 'info' %}<circle cx="12" cy="12" r="8.5"/><path d="M12 11v5M12 8v.1"/>
+  {% else %}<rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/>{% endif %}
+</svg>
+{% endmacro %}
+
+{# Faint event icons that float slowly in the hero band and on the brand panel. Decorative only. #}
+{% macro floating_icons() %}
+<div class="hero-icons" aria-hidden="true">
+  <span style="left: 63%; top: 46%;">{{ icon('ball', 46) }}</span>
+  <span style="left: 72%; top: 62%; animation-delay: -2s;">{{ icon('trophy', 40) }}</span>
+  <span style="left: 77%; top: 30%; animation-delay: -4s;">{{ icon('calendar', 42) }}</span>
+  <span style="left: 87%; top: 56%; animation-delay: -6s;">{{ icon('music', 38) }}</span>
+  <span style="left: 66%; top: 20%; animation-delay: -3s;">{{ icon('book', 30) }}</span>
+  <span style="left: 96%; top: 44%; animation-delay: -5s;">{{ icon('users', 34) }}</span>
+</div>
+{% endmacro %}
+
+{% macro brand(light=true) %}
+<span class="brand-mark{{ ' brand-mark-light' if light }}">{{ icon('calendar', 22) }}</span>
+{% endmacro %}
+
+{# Calendar-style date block for event cards. #}
+{% macro date_badge(dt) %}
+<div class="date-badge" aria-hidden="true"><span class="d-day">{{ dt.strftime('%d') }}</span><span class="d-mon">{{ dt.strftime('%b') }}</span></div>
+{% endmacro %}
+
+{# Round badge with the initials of a name (names only; no photos, no e-mail addresses). #}
+{% macro avatar(name) %}
+<span class="avatar avatar-{{ (name | length) % 5 }}" aria-hidden="true">{{ (name.split() | map('first') | join('') | upper)[:2] }}</span>
+{% endmacro %}
+
+{# Participant counter with a thin bar. #}
+{% macro fill(count, capacity) %}
+<span class="fill-wrap">
+  <span class="fill-bar" role="img" aria-label="{{ count }} of {{ capacity }} places taken"><span style="width: {{ [100, ((count * 100) / (capacity or 1)) | round | int] | min }}%"></span></span>
+  <span class="small text-muted">{{ count }}/{{ capacity }} participants</span>
+</span>
+{% endmacro %}

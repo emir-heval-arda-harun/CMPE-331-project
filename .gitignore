@@ -3,4 +3,10 @@ __pycache__/
 .pytest_cache/
 .venv/
 *.egg-info/
+
+# Local secrets: never commit them. .env.example lists the names without values.
 .env
+.env.*
+!.env.example
+*.pem
+*.key

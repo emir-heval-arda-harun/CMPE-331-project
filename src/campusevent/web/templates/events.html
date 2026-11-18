@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, status_tag, icon, date_badge, fill %}
+{% block title %}Find Events{% endblock %}
+{% block content %}
+<div class="page-head d-flex flex-wrap justify-content-between align-items-end gap-2 mb-3">
+  <div>
+    <h1 class="h3 mb-1">Find Events</h1>
+    <p class="text-muted mb-0">Upcoming open events on campus. Join one or organize your own.</p>
+  </div>
+  <a class="btn btn-primary d-inline-flex align-items-center gap-1" href="{{ url_for('events.create_event') }}">{{ icon('plus', 18) }} New event</a>
+</div>
+{% if error %}<div class="alert alert-danger" role="alert">{{ error }}</div>{% endif %}
+
+<form class="card-soft p-3 mb-3" method="get" action="{{ url_for('events.find_events') }}">
+  <div class="row g-2 align-items-end">
+    <div class="col-12 col-md-4">
+      <label class="form-label small mb-1" for="keyword">Keyword</label>
+      <div class="input-group">
+        <span class="input-group-text bg-white text-muted">{{ icon('search', 18) }}</span>
+        <input class="form-control border-start-0" id="keyword" name="keyword" type="search" value="{{ filters.keyword }}" placeholder="Title or description">
+      </div>
+    </div>
+    <div class="col-12 col-md-3">
+      <label class="form-label small mb-1" for="category">Category</label>
+      <div class="input-group">
+        <span class="input-group-text bg-white text-muted">{{ icon('tag', 18) }}</span>
+        <input class="form-control border-start-0" id="category" name="category" value="{{ filters.category }}" placeholder="for example football" list="category-list" autocomplete="off">
+        <datalist id="category-list">{% for name in categories %}<option value="{{ name }}">{% endfor %}</datalist>
+      </div>
+    </div>
+    <div class="col-12 col-md-3">
+      <label class="form-label small mb-1" for="date">Date</label>
+      <input class="form-control" id="date" name="date" type="date" value="{{ filters.date }}">
+    </div>
+    <div class="col-12 col-md-2">
+      <button class="btn btn-primary w-100" type="submit">Apply filters</button>
+    </div>
+  </div>
+</form>
+
+{# One-click category filters; the other filters are kept. #}
+<nav class="d-flex flex-wrap gap-2 mb-4" aria-label="Quick category filters">
+  {% set others = active_filters.copy() %}{% set _ = others.pop('category', None) %}
+  <a class="chip {{ 'chip-active' if not filters.category }}" href="{{ url_for('events.find_events', **others) }}">All</a>
+  {% for name in shortcuts %}
+  {% set selected = filters.category|lower == name|lower %}
+  <a class="chip {{ 'chip-active' if selected }}" {{ 'aria-current="true"'|safe if selected }} href="{{ url_for('events.find_events', category=name, **others) }}">{{ name }}</a>
+  {% endfor %}
+  {% if active_filters %}
+  <a class="chip chip-clear" href="{{ url_for('events.find_events') }}">Clear all filters</a>
+  {% endif %}
+</nav>
+
+{% if total %}
+<p class="section-title mb-2">{{ total }} {{ 'event' if total == 1 else 'events' }}{% if pages > 1 %} · page {{ page }} of {{ pages }}{% endif %}</p>
+{% endif %}
+
+{% for event in events %}
+<article class="card-soft event-card mb-3">
+  <div class="p-3 d-flex flex-wrap gap-3 align-items-start">
+    <div class="text-center">
+      {{ date_badge(event.start) }}
+      <div class="when-label mt-1">{{ event.start|when }}</div>
+    </div>
+    <div class="flex-grow-1" style="min-width: 0;">
+      <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+        <a class="event-title" href="{{ url_for('events.event_details', event_id=event.id) }}">{{ event.title }}</a>
+        <span class="pill">{{ event.category }}</span>
+        {{ status_tag(event) }}
+      </div>
+      <div class="event-meta">
+        <span>{{ icon('clock', 16) }}{{ event.start.strftime('%H:%M') }} – {{ event.end.strftime('%H:%M') }}</span>
+        <span>{{ icon('pin', 16) }}{{ event.facility }}</span>
+        <span>{{ icon('user', 16) }}<span>organized by {{ event.organizer }}</span></span>
+      </div>
+      <div class="mt-2">{{ fill(event.count, event.capacity) }}</div>
+    </div>
+    <div class="join-col">
+      {% if event.can_join %}
+      <form method="post" action="{{ url_for('events.join_event', event_id=event.id) }}" class="d-grid">
+        {{ csrf() }}
+        <button class="btn btn-primary px-4" type="submit">Join</button>
+      </form>
+      {% elif event.joined %}
+      <span class="badge rounded-pill text-bg-primary d-inline-flex align-items-center gap-1 px-3 py-2">{{ icon('check', 14) }} You joined</span>
+      {% else %}
+      <div class="d-grid"><button class="btn btn-secondary px-4" type="button" disabled>Join</button></div>
+      {% endif %}
+    </div>
+  </div>
+</article>
+{% else %}
+<div class="card-soft empty-state">
+  <span class="empty-icon">{{ icon('search', 28) }}</span>
+  <p class="h5 text-dark mb-1">No events match your search.</p>
+  <p class="mb-3">Try other filters, or be the first to organize something.</p>
+  <a class="btn btn-primary" href="{{ url_for('events.create_event') }}">Create an event</a>
+</div>
+{% endfor %}
+
+{% if pages > 1 %}
+<nav aria-label="Pages of events" class="mt-4">
+  <ul class="pagination justify-content-center flex-wrap">
+    <li class="page-item {{ 'disabled' if page == 1 }}"><a class="page-link" href="{{ url_for('events.find_events', page=page - 1, **active_filters) }}">Previous</a></li>
+    {% for number in range(1, pages + 1) %}
+    <li class="page-item {{ 'active' if number == page }}" {{ 'aria-current="page"'|safe if number == page }}><a class="page-link" href="{{ url_for('events.find_events', page=number, **active_filters) }}">{{ number }}</a></li>
+    {% endfor %}
+    <li class="page-item {{ 'disabled' if page == pages }}"><a class="page-link" href="{{ url_for('events.find_events', page=page + 1, **active_filters) }}">Next</a></li>
+  </ul>
+</nav>
+{% endif %}
+{% endblock %}

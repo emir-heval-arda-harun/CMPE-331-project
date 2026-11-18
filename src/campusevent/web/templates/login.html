@@ -1,0 +1,31 @@
+{% extends "auth_base.html" %}
+{% from "_macros.html" import csrf, icon %}
+{% block title %}Log in{% endblock %}
+{% block auth_content %}
+<h1 class="mb-1">Log in</h1>
+<p class="text-muted mb-4">Welcome back! Enter your university e-mail and password.</p>
+{% if error %}<div class="alert alert-danger" role="alert">{{ error }}</div>{% endif %}
+{% if unverified_email %}
+<p class="small"><a href="{{ url_for('auth.verify_form') }}">Enter your verification code</a></p>
+{% endif %}
+<form method="post" action="{{ url_for('auth.login') }}" novalidate>
+  {{ csrf() }}
+  <div class="mb-3">
+    <label class="form-label fw-medium" for="email">E-mail</label>
+    <div class="input-group">
+      <span class="input-group-text">{{ icon('mail') }}</span>
+      <input class="form-control" id="email" name="email" type="email" required autofocus autocomplete="email" placeholder="name@university.edu">
+    </div>
+  </div>
+  <div class="mb-4">
+    <label class="form-label fw-medium" for="password">Password</label>
+    <div class="input-group">
+      <span class="input-group-text">{{ icon('lock') }}</span>
+      <input class="form-control" id="password" name="password" type="password" required autocomplete="current-password">
+      <button class="btn pw-toggle" type="button" data-toggle-password="#password" aria-label="Show password">{{ icon('eye') }}</button>
+    </div>
+  </div>
+  <button class="btn btn-primary btn-lg w-100" type="submit">Log in</button>
+</form>
+<p class="mt-4 mb-0 text-center text-muted">No account yet? <a class="fw-medium" href="{{ url_for('auth.signup') }}">Sign up</a></p>
+{% endblock %}
