@@ -272,7 +272,11 @@ def make_fake_services(email_sender: InMemoryEmailSender | None = None, auto_app
 
 
 def slot(day: int = 20, hour: int = 18, hours: int = 1) -> TimeSlot:
+    """A slot given in campus (Istanbul) time, returned in naive UTC as the services keep it (team rule):
+    slot(day=20, hour=18) is 18:00 on the pages and 15:00 UTC in the service."""
     from datetime import timedelta
 
+    from campusevent.web.common import slot_to_utc
+
     start = datetime(2026, 11, day, hour, 0)
-    return TimeSlot(start, start + timedelta(hours=hours))
+    return slot_to_utc(TimeSlot(start, start + timedelta(hours=hours)))

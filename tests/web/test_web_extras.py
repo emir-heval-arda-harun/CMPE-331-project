@@ -107,10 +107,8 @@ def test_add_to_calendar_downloads_an_ics_file(client, student, hall, services):
     assert "attachment" in response.headers["Content-Disposition"]
     text = response.data.decode()
     assert "BEGIN:VEVENT" in text and "END:VCALENDAR" in text
-    assert "DTSTART;TZID=Europe/Istanbul:20261120T180000" in text and "DTEND;TZID=Europe/Istanbul:20261120T190000" in text
-    # the time zone is defined in the file (RFC 5545 asks for a VTIMEZONE for every TZID used): UTC+3, no summer time
-    assert "BEGIN:VTIMEZONE" in text and "TZID:Europe/Istanbul" in text and "TZOFFSETTO:+0300" in text
-    assert text.index("END:VTIMEZONE") < text.index("BEGIN:VEVENT")
+    # 18:00-19:00 Istanbul time, written in UTC form so every calendar shows the right moment
+    assert "DTSTART:20261120T150000Z" in text and "DTEND:20261120T160000Z" in text
     assert all(line.endswith("\r") or not line for line in text.split("\n"))  # CRLF line ends
     assert "SUMMARY:Game night\\, round 2" in text  # commas are escaped as RFC 5545 asks
     assert "DESCRIPTION:Bring snacks\\; and games" in text
@@ -241,3 +239,26 @@ def test_signup_has_a_password_strength_guide(client):
 def test_footer_is_on_the_pages_after_login_only(client, student):
     assert b"<footer" in client.get("/events").data
     assert b"<footer" not in client.get("/login").data
+
+
+# time rule: services keep naive UTC, people see Istanbul time ---------------------------------------------
+
+
+def test_time_conversion_helpers_round_trip():
+    local = datetime(2026, 11, 21, 0, 30)
+    assert common.to_utc(local) == datetime(2026, 11, 20, 21, 30)  # Istanbul is UTC+3
+    assert common.to_campus(common.to_utc(local)) == local
+    assert common.campus_day_in_utc(date(2026, 11, 21)) == (datetime(2026, 11, 20, 21, 0), datetime(2026, 11, 21, 21, 0))
+
+
+def test_an_event_just_after_midnight_belongs_to_its_istanbul_day(client, student, hall, services):
+    organizer = make_user(services, "organizer@bilgiedu.net")
+    # 01:00 on 21 Nov in Istanbul is 22:00 on 20 Nov in UTC: the UTC date and the campus date differ
+    event = services.events.create_event(organizer.id, "Night owls", "chess", hall.id, slot(day=21, hour=1), 4)
+    assert event.slot.start == datetime(2026, 11, 20, 22, 0)
+
+    assert b"Night owls" in client.get("/events?date=2026-11-21").data  # date filter uses the campus day
+    assert b"Night owls" not in client.get("/events?date=2026-11-20").data
+    assert b"Busy: 01:00" in client.get(f"/events/schedule?facility_id={hall.id}&date=2026-11-21").data
+    assert b"Busy" not in client.get(f"/events/schedule?facility_id={hall.id}&date=2026-11-20").data
+    assert b"Saturday, 21 Nov 2026" in client.get(f"/events/{event.id}").data  # the details page shows the campus date

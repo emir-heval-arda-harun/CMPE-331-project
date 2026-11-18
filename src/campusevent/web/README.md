@@ -24,6 +24,7 @@ The left side of the sign up and log in pages shows a drawn campus skyline. To s
 - Templates get view models with **names only, never e-mail addresses** (NFR-05).
 - CSRF token on every POST (Flask-WTF); session cookie is `Secure`, `HttpOnly`, `SameSite=Lax` (NFR-03). Set `SECRET_KEY` as an environment variable in production.
 - Role checks: `student_required` / `admin_required` here **and** inside the services (NFR-04).
+- **Times:** services and the database keep naive **UTC**; people see and type **Istanbul time** (UTC+3, no summer time). The UI converts only at the border, with `common.to_utc` / `slot_to_utc` before a service call and `to_campus` / `slot_to_campus` before a page shows a time. Methods that take a `day` work with a UTC day, so for the facility schedule the UI asks for both UTC days of the Istanbul day, and for the date filter it filters by Istanbul date itself. *Add to calendar* files are written in UTC (`…Z`).
 - Pending and rejected requests are visible only to their organizer; for other students they do not exist (404), because BR-15 keeps them out of the public list.
 - Bootstrap grid, checked at 375 px with no horizontal scrolling (NFR-01).
 

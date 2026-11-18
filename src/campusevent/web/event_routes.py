@@ -71,8 +71,8 @@ def _event_view(event: Event, names: _Names, viewer_id: int) -> dict:
         "description": event.description,
         "status": str(getattr(event.status, "value", event.status)),
         "status_label": _status_label(event.status),
-        "start": event.slot.start,
-        "end": event.slot.end,
+        "start": common.to_campus(event.slot.start),  # services keep UTC, pages show Istanbul time
+        "end": common.to_campus(event.slot.end),
         "facility": names.facility(event.facility_id),
         "organizer": names.user(event.organizer_id),
         "count": len(event.participant_ids),
@@ -126,9 +126,12 @@ def find_events(user):
     events: list[Event] = []
     try:
         day = common.parse_date(day_text)
+        # The service's day is a UTC day; an Istanbul day covers two of them, so the UI filters by campus day.
         events = common.services().events.search_events(
-            category=category.strip() or None, day=day, keyword=keyword.strip() or None, only_open=True
+            category=category.strip() or None, day=None, keyword=keyword.strip() or None, only_open=True
         )
+        if day:
+            events = [e for e in events if common.to_campus(e.slot.start).date() == day]
     except exc.ValidationError as error_:
         error = common.message_for(error_)
 
@@ -179,7 +182,13 @@ def _schedule_context(facility_text: str, date_text: str) -> dict:
     try:
         day = common.parse_date(date_text)
         if facility_text and day:
-            busy = sorted(common.services().facilities.get_schedule(int(facility_text), day), key=lambda s: s.start)
+            # get_schedule works per UTC day; the campus day overlaps the UTC day before and the UTC day itself.
+            facilities = common.services().facilities
+            utc_start, utc_end = common.campus_day_in_utc(day)
+            raw = {s for d in (utc_start.date(), utc_end.date()) for s in facilities.get_schedule(int(facility_text), d)}
+            busy = sorted(
+                (common.slot_to_campus(s) for s in raw if s.start < utc_end and utc_start < s.end), key=lambda s: s.start
+            )
             return {"schedule": busy, "free": common.free_slots(busy, day)}
     except (exc.CampusEventError, ValueError):
         pass  # an invalid date or facility is reported when the form is submitted
@@ -224,7 +233,7 @@ def create_event(user):
 
     form = request.form.to_dict()
     try:
-        slot = common.parse_slot(form.get("date", ""), form.get("start", ""), form.get("end", ""))
+        slot = common.slot_to_utc(common.parse_slot(form.get("date", ""), form.get("start", ""), form.get("end", "")))
         event = common.services().events.create_event(
             organizer_id=user.id,
             title=form.get("title", ""),
@@ -289,8 +298,8 @@ def my_activities(user):
     records = common.services().events.get_activity_history(user.id)
     names = _Names()
     rows = [
-        {"event_id": r.event_id, "title": r.title, "category": r.category, "start": r.slot.start,
-         "end": r.slot.end, "facility": names.facility(r.facility_id)}
+        {"event_id": r.event_id, "title": r.title, "category": r.category, "start": common.to_campus(r.slot.start),
+         "end": common.to_campus(r.slot.end), "facility": names.facility(r.facility_id)}
         for r in sorted(records, key=lambda r: r.slot.start, reverse=True)
     ]
     # UC-12 organizer view: every own event in any status. Completed ones are already in the history above.

@@ -22,8 +22,8 @@ def _request_view(event, names: _Names) -> dict:
         "title": event.title,
         "category": event.category,
         "description": event.description,
-        "start": event.slot.start,
-        "end": event.slot.end,
+        "start": common.to_campus(event.slot.start),  # services keep UTC, pages show Istanbul time
+        "end": common.to_campus(event.slot.end),
         "facility": names.facility(event.facility_id),
         "organizer": names.user(event.organizer_id),
         "capacity": event.capacity,

@@ -24,7 +24,7 @@ sys.path.insert(0, str(ROOT))
 
 from campusevent.models import Role  # noqa: E402
 from campusevent.web import create_web_app  # noqa: E402
-from tests.web.fakes import make_fake_services, slot  # noqa: E402
+from tests.web.fakes import make_fake_services, slot  # noqa: E402  (slot: Istanbul time in, UTC out)
 
 
 def load_env_file(path: Path = ROOT / ".env") -> None:
