@@ -119,7 +119,7 @@ class FakeFacilities:
             if (
                 event.facility_id == facility_id
                 and event.slot.start.date() == day
-                and event.status in (EventStatus.OPEN, EventStatus.FULL)
+                and event.status in (EventStatus.PENDING, EventStatus.OPEN, EventStatus.FULL)
             ):
                 busy.append(event.slot)
         return busy
@@ -150,6 +150,8 @@ class FakeEvents:
         event = Event(
             len(self.events) + 1, organizer_id, title, category.strip().lower(), facility_id, slot,
             capacity, description, [organizer_id],
+            # The admin review page (UC-12) is not built yet, so the fake approves new events at once.
+            status=EventStatus.OPEN,
         )
         self.events[event.id] = event
         return event
