@@ -3,6 +3,8 @@
 
 from datetime import date, datetime
 
+import pytest
+
 from campusevent.models import TimeSlot
 from campusevent.web import common
 from tests.web.conftest import make_user
@@ -168,6 +170,38 @@ def test_category_shortcuts_filter_with_one_click(client, student):
     assert b"category=Football" in page
     assert b"Clear all filters" in page
     assert b"Clear all filters" not in client.get("/events").data
+
+
+def test_joined_event_card_has_a_leave_button_that_returns_to_the_same_list(client, student, hall, services):
+    organizer = make_user(services, "organizer@bilgiedu.net")
+    event = services.events.create_event(organizer.id, "Game night", "board games", hall.id, slot(day=20), 6)
+    client.post(f"/events/{event.id}/join")
+    page = client.get("/events?category=board+games").data
+    assert b"You joined" in page and f'action="/events/{event.id}/leave"'.encode() in page
+    assert b'name="next" value="/events?category=board+games"' in page
+
+    left = client.post(f"/events/{event.id}/leave", data={"next": "/events?category=board+games"})
+    assert left.status_code == 302 and left.headers["Location"] == "/events?category=board+games"
+    assert student.id not in event.participant_ids
+    assert b"Join" in client.get("/events?category=board+games").data
+
+
+def test_organizer_card_has_no_leave_button(client, student, hall, services):
+    client.post("/events/new", data={
+        "title": "Mine", "category": "chess", "facility_id": str(hall.id), "date": "2026-11-21",
+        "start": "10:00", "end": "11:00", "capacity": "4",
+    })
+    page = client.get("/events").data
+    assert b"You joined" in page and b"/events/1/leave" not in page  # the organizer cancels instead
+
+
+@pytest.mark.parametrize("target", ["https://evil.example/", "//evil.example/events", "/profile", r"/events?x=\evil", ""])
+def test_leave_never_redirects_outside_find_events(client, student, hall, services, target):
+    organizer = make_user(services, "organizer@bilgiedu.net")
+    event = services.events.create_event(organizer.id, "Game night", "board games", hall.id, slot(day=20), 6)
+    client.post(f"/events/{event.id}/join")
+    left = client.post(f"/events/{event.id}/leave", data={"next": target})
+    assert left.headers["Location"] == f"/events/{event.id}"  # unsafe or missing: the event page
 
 
 def test_event_cards_show_how_far_away_the_event_is(client, student, hall, services):

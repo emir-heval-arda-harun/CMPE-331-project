@@ -256,10 +256,19 @@ def join_event(user, event_id: int):
 @bp.post("/events/<int:event_id>/leave")
 @common.student_required
 def leave_event(user, event_id: int):
-    _visible_event(event_id, user.id)
+    event = _visible_event(event_id, user.id)
     common.services().events.leave_event(event_id, user.id)
-    flash("You left the event.", "success")
-    return redirect(url_for("events.event_details", event_id=event_id))
+    flash(f'You left "{event.title}".', "success")
+    return redirect(_back_to_find_events(request.form.get("next", "")) or url_for("events.event_details", event_id=event_id))
+
+
+def _back_to_find_events(target: str) -> str | None:
+    """The Find Events address the Leave button was pressed on, so the list comes back with the same filters
+    and page. Only that page of this site is accepted: anything else could send the user to another site."""
+    if target.startswith("/events?") or target in ("/events", "/events?"):
+        if "//" not in target and "\\" not in target:
+            return target
+    return None
 
 
 @bp.post("/events/<int:event_id>/cancel")

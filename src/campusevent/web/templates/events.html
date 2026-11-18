@@ -82,7 +82,16 @@
         <button class="btn btn-primary px-4" type="submit">Join</button>
       </form>
       {% elif event.joined %}
-      <span class="badge rounded-pill text-bg-primary d-inline-flex align-items-center gap-1 px-3 py-2">{{ icon('check', 14) }} You joined</span>
+      <div class="d-flex flex-wrap align-items-center gap-2">
+        <span class="badge rounded-pill text-bg-primary d-inline-flex align-items-center gap-1 px-3 py-2">{{ icon('check', 14) }} You joined</span>
+        {% if event.can_leave %}
+        {# Leave straight from the list; the page comes back with the same filters and page number. #}
+        <form method="post" action="{{ url_for('events.leave_event', event_id=event.id) }}" class="m-0">
+          {{ csrf() }}<input type="hidden" name="next" value="{{ request.full_path }}">
+          <button class="btn btn-sm btn-outline-secondary rounded-pill px-3" type="submit" aria-label="Leave {{ event.title }}">Leave</button>
+        </form>
+        {% endif %}
+      </div>
       {% else %}
       <div class="d-grid"><button class="btn btn-secondary px-4" type="button" disabled>Join</button></div>
       {% endif %}

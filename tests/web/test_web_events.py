@@ -152,7 +152,7 @@ def test_join_then_leave(client, student, hall, services):
     assert b"Leave event" in joined.data and b"Join event" not in joined.data
 
     left = client.post(f"/events/{event.id}/leave", follow_redirects=True)
-    assert b"You left the event." in left.data
+    assert b"You left" in left.data and left.request.path == f"/events/{event.id}"  # from the details page
     assert student.id not in event.participant_ids
 
 
