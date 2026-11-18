@@ -63,9 +63,7 @@ def login():
 
     session.clear()  # new session after login, so an old session id cannot be reused
     session[common.TOKEN_KEY] = token
-    if user.role == Role.FACILITY_STAFF:
-        return redirect("/facilities")
-    return redirect(url_for("events.find_events"))
+    return redirect(common.home_url(user))
 
 
 @bp.post("/logout")

@@ -119,28 +119,23 @@ def test_only_the_organizer_gets_the_cancel_confirmation_window(client, student,
     assert b'id="cancel-modal"' not in client.get(f"/events/{other.id}").data
 
 
-# statuses this branch does not know yet (CR-01 / PR #8 adds "pending" and "rejected") ---------------
+# a status the UI does not know (a later change request could add one) -----------------------------
 
 
 def test_event_with_a_status_the_page_does_not_know_still_opens(client, student, hall, services):
     from enum import Enum
 
-    class FutureStatus(str, Enum):  # stands in for EventStatus.PENDING / REJECTED of PR #8
-        PENDING = "pending"
-        REJECTED = "rejected"
+    class FutureStatus(str, Enum):  # stands in for a status a later change request might add
+        ARCHIVED = "archived"
 
     organizer = make_user(services, "organizer@bilgiedu.net")
-    pending = services.events.create_event(organizer.id, "Waiting event", "chess", hall.id, slot(day=20), 4)
-    rejected = services.events.create_event(organizer.id, "Refused event", "chess", hall.id, slot(day=21), 4)
-    pending.status, rejected.status = FutureStatus.PENDING, FutureStatus.REJECTED
+    event = services.events.create_event(organizer.id, "Old event", "chess", hall.id, slot(day=20), 4)
+    event.status = FutureStatus.ARCHIVED
 
-    page = client.get(f"/events/{pending.id}")
+    page = client.get(f"/events/{event.id}")
     assert page.status_code == 200
-    assert b"Pending" in page.data and b"text-bg-info" in page.data
+    assert b"Archived" in page.data and b"text-bg-secondary" in page.data
     assert b"Join event" not in page.data  # only open events can be joined
-    refused = client.get(f"/events/{rejected.id}")
-    assert refused.status_code == 200
-    assert b"Rejected" in refused.data and b"text-bg-danger" in refused.data
 
 
 # find events ---------------------------------------------------------------------------------------

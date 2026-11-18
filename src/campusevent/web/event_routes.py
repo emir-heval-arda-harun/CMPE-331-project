@@ -1,5 +1,5 @@
 """UC-04 Create event, UC-05 Browse and filter, UC-06 Join, UC-09 Activity history,
-UC-10 Leave, UC-11 Cancel.
+UC-10 Leave, UC-11 Cancel, and the organizer's view of UC-12 (pending and rejected requests).
 
 The templates only get view models (plain dicts) with names, never e-mail addresses (NFR-05).
 """
@@ -17,6 +17,8 @@ from campusevent.web import common
 bp = Blueprint("events", __name__)
 
 STATUS_LABELS = {
+    EventStatus.PENDING: "Waiting for approval",
+    EventStatus.REJECTED: "Rejected",
     EventStatus.OPEN: "Open",
     EventStatus.FULL: "Full",
     EventStatus.COMPLETED: "Completed",
@@ -25,8 +27,8 @@ STATUS_LABELS = {
 
 
 def _status_label(status) -> str:
-    """Label of an event status. A status this page does not know yet (for example "pending" or "rejected"
-    from change request CR-01, PR #8) is shown with its own name instead of breaking the page."""
+    """Label of an event status. A status this page does not know yet is shown with its own name
+    instead of breaking the page."""
     return STATUS_LABELS.get(status) or str(getattr(status, "value", status)).replace("_", " ").capitalize()
 
 
@@ -61,6 +63,7 @@ def _event_view(event: Event, names: _Names, viewer_id: int) -> dict:
     joined = viewer_id in event.participant_ids
     is_organizer = viewer_id == event.organizer_id
     active = event.status in (EventStatus.OPEN, EventStatus.FULL)
+    pending = event.status == EventStatus.PENDING
     return {
         "id": event.id,
         "title": event.title,
@@ -80,9 +83,32 @@ def _event_view(event: Event, names: _Names, viewer_id: int) -> dict:
         ],
         "can_join": event.status == EventStatus.OPEN and not joined,
         "can_leave": active and joined and not is_organizer,
-        "can_cancel": active and is_organizer,
+        "can_cancel": (active or pending) and is_organizer,  # a pending request is withdrawn (UC-11)
         "active": active,
+        "pending": pending,
+        "rejected": event.status == EventStatus.REJECTED,
+        "rejection_reason": event.rejection_reason,
+        "is_organizer": is_organizer,
         "joined": joined,
+        "facility_id": event.facility_id,
+    }
+
+
+def _visible_event(event_id: int, viewer_id: int) -> Event:
+    """An event the viewer may open. Pending and rejected requests are not public (BR-15): only their
+    organizer sees them; for everyone else they do not exist."""
+    event = common.services().events.get_event(event_id)
+    if event.status in (EventStatus.PENDING, EventStatus.REJECTED) and event.organizer_id != viewer_id:
+        raise exc.NotFoundError()
+    return event
+
+
+def resubmit_args(view: dict) -> dict:
+    """Form values for 'Submit a corrected request' after a rejection (UC-12 2a.4); date and time are
+    left out on purpose, so the organizer picks a slot again."""
+    return {
+        "title": view["title"], "category": view["category"], "facility_id": view["facility_id"],
+        "capacity": view["capacity"], "description": view["description"],
     }
 
 
@@ -129,15 +155,15 @@ def find_events(user):
 @bp.get("/events/<int:event_id>")
 @common.student_required
 def event_details(user, event_id: int):
-    event = common.services().events.get_event(event_id)
-    return render_template("event_details.html", event=_event_view(event, _Names(), user.id))
+    view = _event_view(_visible_event(event_id, user.id), _Names(), user.id)
+    return render_template("event_details.html", event=view, resubmit=resubmit_args(view))
 
 
 @bp.get("/events/<int:event_id>/calendar.ics")
 @common.student_required
 def event_calendar(user, event_id: int):
     """'Add to calendar': the event as an iCalendar file for Google Calendar, Outlook or Apple Calendar."""
-    event = common.services().events.get_event(event_id)
+    event = _visible_event(event_id, user.id)
     body = common.ics_for(
         event.id, event.title, _Names().facility(event.facility_id), event.slot.start, event.slot.end, event.description
     )
@@ -210,13 +236,18 @@ def create_event(user):
         )
     except exc.CampusEventError as error:
         return _render_create_form(user, form, common.message_for(error), common.status_for(error))
-    flash("Your event is created.", "success")
+    if event.status == EventStatus.PENDING:
+        flash("Your request is sent. An admin reviews it before the event is listed; you get an e-mail "
+              "with the decision.", "success")
+    else:
+        flash("Your event is created.", "success")
     return redirect(url_for("events.event_details", event_id=event.id))
 
 
 @bp.post("/events/<int:event_id>/join")
 @common.student_required
 def join_event(user, event_id: int):
+    _visible_event(event_id, user.id)  # someone else's pending request does not exist for this user
     common.services().events.join_event(event_id, user.id)
     flash("You joined the event.", "success")
     return redirect(url_for("events.event_details", event_id=event_id))
@@ -225,6 +256,7 @@ def join_event(user, event_id: int):
 @bp.post("/events/<int:event_id>/leave")
 @common.student_required
 def leave_event(user, event_id: int):
+    _visible_event(event_id, user.id)
     common.services().events.leave_event(event_id, user.id)
     flash("You left the event.", "success")
     return redirect(url_for("events.event_details", event_id=event_id))
@@ -233,8 +265,12 @@ def leave_event(user, event_id: int):
 @bp.post("/events/<int:event_id>/cancel")
 @common.student_required
 def cancel_event(user, event_id: int):
+    was_pending = _visible_event(event_id, user.id).status == EventStatus.PENDING
     common.services().events.cancel_event(event_id, user.id)
-    flash("The event is cancelled and the facility slot is free again.", "success")
+    if was_pending:
+        flash("Your request is withdrawn and the facility slot is free again.", "success")
+    else:
+        flash("The event is cancelled and the facility slot is free again.", "success")
     return redirect(url_for("events.my_activities"))
 
 
@@ -248,4 +284,12 @@ def my_activities(user):
          "end": r.slot.end, "facility": names.facility(r.facility_id)}
         for r in sorted(records, key=lambda r: r.slot.start, reverse=True)
     ]
-    return render_template("activities.html", rows=rows)
+    # UC-12 organizer view: every own event in any status. Completed ones are already in the history above.
+    own = [e for e in common.services().events.list_my_requests(user.id) if e.status != EventStatus.COMPLETED]
+    order = {EventStatus.PENDING: 0, EventStatus.REJECTED: 1, EventStatus.OPEN: 2, EventStatus.FULL: 2}
+    requests = [
+        _event_view(e, names, user.id) for e in sorted(own, key=lambda e: (order.get(e.status, 3), e.slot.start))
+    ]
+    for view in requests:
+        view["resubmit"] = resubmit_args(view)
+    return render_template("activities.html", rows=rows, requests=requests)

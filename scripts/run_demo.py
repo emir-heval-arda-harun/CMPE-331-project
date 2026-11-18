@@ -45,24 +45,35 @@ DEMO_ACCOUNTS = [
     ("demo@bilgiedu.net", "Demo Student", Role.STUDENT),
     ("organizer@bilgiedu.net", "Demo Organizer", Role.STUDENT),
     ("staff@bilgi.edu.tr", "Facility Staff", Role.FACILITY_STAFF),
+    ("admin@bilgi.edu.tr", "Demo Admin", Role.ADMIN),  # reviews event requests (UC-12)
 ]
 
 
 def build_services():
-    services = make_fake_services()
+    services = make_fake_services(auto_approve=False)  # new events wait for the admin, as in CR-01
     for email, name, role in DEMO_ACCOUNTS:
         services.auth.register(email, DEMO_PASSWORD, name, role)
         services.auth.verify_email(email, "123456")  # the fake e-mail sender always sends 123456
     staff = next(u for u in services.auth.users.values() if u.role == Role.FACILITY_STAFF)
+    student = services.auth.users[1]
     organizer = services.auth.users[2]
+    admin = next(u for u in services.auth.users.values() if u.role == Role.ADMIN)
     hall = services.facilities.add_facility(staff.id, "Santral Event Hall", 50)
     court = services.facilities.add_facility(staff.id, "Main Court", 20)
     services.facilities.add_facility(staff.id, "Indoor Sports Hall", 30)
     services.facilities.add_facility(staff.id, "Study Room A", 8)
-    services.events.create_event(
+    games = services.events.create_event(
         organizer.id, "Board game night", "board games", hall.id, slot(day=20, hour=18), 8, "Bring your own games."
     )
-    services.events.create_event(organizer.id, "Football friendly", "football", court.id, slot(day=21, hour=17), 10)
+    match = services.events.create_event(organizer.id, "Football friendly", "football", court.id, slot(day=21, hour=17), 10)
+    for event in (games, match):
+        services.events.approve_event(event.id, admin.id)
+    # One request in each review state, so the admin page and My Activities have something to show.
+    services.events.create_event(
+        student.id, "Chess club meetup", "chess", hall.id, slot(day=22, hour=16), 12, "Beginners welcome."
+    )
+    refused = services.events.create_event(student.id, "Late night karaoke", "music", hall.id, slot(day=23, hour=21), 30)
+    services.events.reject_event(refused.id, admin.id, "The hall closes at 22:00; please choose an earlier time.")
     return services
 
 

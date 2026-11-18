@@ -1,11 +1,42 @@
 {% extends "base.html" %}
-{% from "_macros.html" import icon, date_badge %}
+{% from "_macros.html" import icon, date_badge, status_tag %}
 {% block title %}My Activities{% endblock %}
 {% block content %}
 <div class="page-head mb-3">
   <h1 class="h3 mb-1">My Activities</h1>
-  <p class="text-muted mb-0">The events you have taken part in, newest first.</p>
+  <p class="text-muted mb-0">The events you organize and the events you have taken part in.</p>
 </div>
+
+{% if requests %}
+<h2 class="section-title mb-2">My requests and events</h2>
+<div class="d-grid gap-3 mb-4" id="my-requests">
+  {% for item in requests %}
+  <article class="card-soft event-card p-3 d-flex flex-wrap gap-3 align-items-center">
+    <div class="text-center">
+      {{ date_badge(item.start) }}
+      <div class="when-label mt-1">{{ item.start|when }}</div>
+    </div>
+    <div class="flex-grow-1" style="min-width: 0;">
+      <a class="event-title" href="{{ url_for('events.event_details', event_id=item.id) }}">{{ item.title }}</a>
+      {{ status_tag(item) }}
+      <div class="event-meta mt-1">
+        <span>{{ icon('clock', 16) }}{{ item.start.strftime('%d %b %Y') }}, {{ item.start.strftime('%H:%M') }} – {{ item.end.strftime('%H:%M') }}</span>
+        <span>{{ icon('pin', 16) }}{{ item.facility }}</span>
+      </div>
+      {% if item.rejected and item.rejection_reason %}
+      <div class="small mt-1" style="color: #7a1c14;">Reason: {{ item.rejection_reason }}</div>
+      {% endif %}
+    </div>
+    {% if item.rejected %}
+    <a class="btn btn-sm btn-light border" href="{{ url_for('events.create_event', **item.resubmit) }}">Submit a corrected request</a>
+    {% elif item.pending %}
+    <a class="btn btn-sm btn-light border" href="{{ url_for('events.event_details', event_id=item.id) }}">View or withdraw</a>
+    {% endif %}
+  </article>
+  {% endfor %}
+</div>
+<h2 class="section-title mb-2">Activity history</h2>
+{% endif %}
 {% if rows %}
 <div class="d-grid gap-3">
   {% for row in rows %}

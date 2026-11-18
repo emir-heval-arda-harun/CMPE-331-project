@@ -136,9 +136,13 @@ class FakeFacilities:
 
 
 class FakeEvents:
-    def __init__(self, auth, facilities):
+    """``auto_approve`` keeps the behaviour from before CR-01 for the older tests: a new event is open at
+    once. With ``auto_approve=False`` (new tests and the demo) it starts as a pending request (UC-12)."""
+
+    def __init__(self, auth, facilities, auto_approve=True):
         self.auth = auth
         self.facilities = facilities
+        self.auto_approve = auto_approve
         self.events: dict[int, Event] = {}
 
     def create_event(self, organizer_id, title, category, facility_id, slot, capacity, description=""):
@@ -150,8 +154,7 @@ class FakeEvents:
         event = Event(
             len(self.events) + 1, organizer_id, title, category.strip().lower(), facility_id, slot,
             capacity, description, [organizer_id],
-            # The admin review page (UC-12) is not built yet, so the fake approves new events at once.
-            status=EventStatus.OPEN,
+            status=EventStatus.OPEN if self.auto_approve else EventStatus.PENDING,
         )
         self.events[event.id] = event
         return event
@@ -174,6 +177,41 @@ class FakeEvents:
                 continue
             result.append(event)
         return result
+
+    # UC-12 review of event requests ------------------------------------------------------------
+
+    def list_pending_events(self, admin_id):
+        self.auth.require_role(admin_id, Role.ADMIN)
+        pending = [e for e in self.events.values() if e.status == EventStatus.PENDING]
+        return sorted(pending, key=lambda e: e.slot.start)
+
+    def _review(self, event_id, admin_id):
+        self.auth.require_role(admin_id, Role.ADMIN)
+        event = self.get_event(event_id)
+        if event.status != EventStatus.PENDING:
+            raise exc.ValidationError("This request is no longer pending.")
+        event.reviewed_by, event.reviewed_at = admin_id, datetime(2026, 11, 18, 12, 0)
+        return event
+
+    def approve_event(self, event_id, admin_id):
+        event = self._review(event_id, admin_id)
+        event.status = EventStatus.OPEN
+        organizer = self.auth.get_user(event.organizer_id)
+        self.auth.email_sender.send_event_decision(organizer.email, event.title, True)
+        return event
+
+    def reject_event(self, event_id, admin_id, reason):
+        if not (reason or "").strip():
+            self.auth.require_role(admin_id, Role.ADMIN)
+            raise exc.ValidationError("Please give a reason for the rejection.")
+        event = self._review(event_id, admin_id)
+        event.status, event.rejection_reason = EventStatus.REJECTED, reason.strip()
+        organizer = self.auth.get_user(event.organizer_id)
+        self.auth.email_sender.send_event_decision(organizer.email, event.title, False, event.rejection_reason)
+        return event
+
+    def list_my_requests(self, organizer_id):
+        return [e for e in self.events.values() if e.organizer_id == organizer_id]
 
     def _set_status(self, event):
         if event.status in (EventStatus.OPEN, EventStatus.FULL):
@@ -205,6 +243,8 @@ class FakeEvents:
         event = self.get_event(event_id)
         if user_id != event.organizer_id:
             raise exc.PermissionDeniedError()
+        if event.status not in (EventStatus.PENDING, EventStatus.OPEN, EventStatus.FULL):
+            raise exc.ValidationError("This event can no longer be cancelled.")
         event.status = EventStatus.CANCELLED
         return event
 
@@ -221,12 +261,12 @@ class FakeEvents:
         ]
 
 
-def make_fake_services(email_sender: InMemoryEmailSender | None = None) -> CampusEventApp:
+def make_fake_services(email_sender: InMemoryEmailSender | None = None, auto_approve: bool = True) -> CampusEventApp:
     sender = email_sender or InMemoryEmailSender()
     auth = FakeAuth(("bilgiedu.net", "bilgi.edu.tr"), sender)
     holder: dict = {}
     facilities = FakeFacilities(auth, lambda: holder["events"])
-    events = FakeEvents(auth, facilities)
+    events = FakeEvents(auth, facilities, auto_approve)
     holder["events"] = events
     return CampusEventApp(auth=auth, profiles=FakeProfiles(), facilities=facilities, events=events)
 

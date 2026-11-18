@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, icon, date_badge %}
+{% block title %}Event Requests{% endblock %}
+{% block content %}
+<div class="page-head mb-3">
+  <h1 class="h3 mb-1">Event Requests</h1>
+  <p class="text-muted mb-0">New events wait here until you approve or reject them. Soonest first.</p>
+</div>
+{% for message in general_errors %}
+<div class="alert alert-warning" role="alert">{{ message }} The list below is up to date.</div>
+{% endfor %}
+{% if requests %}
+<p class="section-title mb-2">{{ requests | length }} {{ 'request' if requests | length == 1 else 'requests' }} waiting</p>
+<div class="d-grid gap-3">
+  {% for item in requests %}
+  <article class="card-soft event-card p-3" id="request-{{ item.id }}">
+    <div class="d-flex flex-wrap gap-3 align-items-start">
+      <div class="text-center">
+        {{ date_badge(item.start) }}
+        <div class="when-label mt-1">{{ item.start|when }}</div>
+      </div>
+      <div class="flex-grow-1" style="min-width: 0;">
+        <h2 class="h5 mb-1 event-title">{{ item.title }}</h2>
+        <span class="pill">{{ item.category }}</span>
+        <div class="event-meta mt-2">
+          <span>{{ icon('clock', 16) }}{{ item.start.strftime('%d %b %Y') }}, {{ item.start.strftime('%H:%M') }} – {{ item.end.strftime('%H:%M') }}</span>
+          <span>{{ icon('pin', 16) }}{{ item.facility }}</span>
+          <span>{{ icon('user', 16) }}{{ item.organizer }}</span>
+          <span>{{ icon('users', 16) }}up to {{ item.capacity }} people</span>
+        </div>
+        {% if item.description %}
+        <p class="small mt-2 mb-0" style="white-space: pre-line;">{{ item.description }}</p>
+        {% endif %}
+      </div>
+    </div>
+
+    {% if errors.get(item.id) %}
+    <div class="alert alert-danger mt-3 mb-0" role="alert">{{ errors[item.id] }}</div>
+    {% endif %}
+
+    <div class="d-flex flex-wrap gap-2 mt-3 align-items-start">
+      <form method="post" action="{{ url_for('admin.approve_request', event_id=item.id) }}" class="m-0">
+        {{ csrf() }}
+        <button class="btn btn-success d-inline-flex align-items-center gap-1" type="submit">{{ icon('check', 18) }} Approve</button>
+      </form>
+      <details class="flex-grow-1" {{ 'open' if errors.get(item.id) or reasons.get(item.id) }}>
+        <summary class="btn btn-outline-danger d-inline-flex align-items-center gap-1">{{ icon('x', 18) }} Reject…</summary>
+        <form method="post" action="{{ url_for('admin.reject_request', event_id=item.id) }}" class="mt-2">
+          {{ csrf() }}
+          <label class="form-label small" for="reason-{{ item.id }}">Reason for the organizer (required)</label>
+          <textarea class="form-control" id="reason-{{ item.id }}" name="reason" rows="2" maxlength="{{ reason_max }}" required
+            placeholder="for example: The hall is reserved for exams that week.">{{ reasons.get(item.id, '') }}</textarea>
+          <button class="btn btn-danger mt-2" type="submit">Reject request</button>
+        </form>
+      </details>
+    </div>
+  </article>
+  {% endfor %}
+</div>
+{% else %}
+<div class="card-soft empty-state">
+  <span class="empty-icon">{{ icon('check', 28) }}</span>
+  <p class="h5 text-dark mb-1">No requests are waiting.</p>
+  <p class="mb-0">New events that students create will show up here.</p>
+</div>
+{% endif %}
+{% endblock %}

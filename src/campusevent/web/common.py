@@ -54,6 +54,29 @@ def student_required(view):
     return wrapper
 
 
+def admin_required(view):
+    """Logged in and an admin (UC-12); the service layer checks the role again (NFR-04)."""
+
+    @wraps(view)
+    @login_required
+    def wrapper(user, *args, **kwargs):
+        if user.role != Role.ADMIN:
+            raise exc.PermissionDeniedError("Only admins can use this page.")
+        return view(user, *args, **kwargs)
+
+    return wrapper
+
+
+def home_url(user: User) -> str:
+    """First page after login: students find events, admins review requests, facility staff manage
+    facilities (task 3.6, not part of this UI yet)."""
+    if user.role == Role.ADMIN:
+        return url_for("admin.event_requests")
+    if user.role == Role.FACILITY_STAFF:
+        return "/facilities"
+    return url_for("events.find_events")
+
+
 def parse_date(value: str) -> date | None:
     value = (value or "").strip()
     if not value:
