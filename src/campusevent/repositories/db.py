@@ -6,9 +6,12 @@ set by the managed database (render.yaml), on your computer it is in your local 
 
 Typical use in the composition root (``app.py``)::
 
-    engine = create_db_engine()
-    session_factory = create_session_factory(engine)
-    # one session per request, shared by SqlUnitOfWork and all Sql*Repository objects
+    engine = create_db_engine()                  # once per process
+    session = create_scoped_session(engine)      # one session per request
+    uow = SqlUnitOfWork(session)                 # all of them share that session
+    users = SqlUserRepository(session)
+    # Flask: end the session of every request
+    web_app.teardown_appcontext(lambda exc: session.remove())
 """
 
 from __future__ import annotations
@@ -16,7 +19,7 @@ from __future__ import annotations
 import os
 
 from sqlalchemy import Engine, create_engine
-from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.orm import Session, scoped_session, sessionmaker
 
 DRIVER_PREFIX = "postgresql+psycopg://"
 
@@ -59,3 +62,13 @@ def create_db_engine(url: str | None = None, **kwargs) -> Engine:
 def create_session_factory(engine: Engine) -> sessionmaker[Session]:
     # expire_on_commit=False: objects can still be read after commit (e.g. to build the response).
     return sessionmaker(bind=engine, expire_on_commit=False)
+
+
+def create_scoped_session(engine: Engine) -> scoped_session[Session]:
+    """A registry that gives every thread its own session; in Flask that is one session per request.
+
+    The services are created once, but each request needs its own transaction. So the repositories
+    and SqlUnitOfWork keep this registry and use the session of the current request. Call
+    ``.remove()`` at the end of every request (Flask ``teardown_appcontext``) to close it.
+    """
+    return scoped_session(create_session_factory(engine))

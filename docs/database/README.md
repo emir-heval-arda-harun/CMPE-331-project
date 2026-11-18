@@ -9,6 +9,7 @@ PostgreSQL 16, SQLAlchemy 2 (ORM), psycopg 3 (driver), Alembic (migrations).
 |---|---|
 | [`src/campusevent/repositories/db.py`](../../src/campusevent/repositories/db.py) | Connection: engine and sessions from `DATABASE_URL` (layer 3) |
 | [`src/campusevent/repositories/tables.py`](../../src/campusevent/repositories/tables.py) | SQLAlchemy mappings of the 8 tables (`UserRow`, `EventRow`, ...) with all constraints |
+| [`src/campusevent/repositories/unit_of_work.py`](../../src/campusevent/repositories/unit_of_work.py) | `UnitOfWork` interface, `SqlUnitOfWork` (production) and `InMemoryUnitOfWork` (tests) |
 | [`alembic.ini`](../../alembic.ini), [`migrations/`](../../migrations/) | Alembic configuration and the migrations (`versions/`) |
 | [`scripts/seed_db.py`](../../scripts/seed_db.py) | Demo data: 5 students, 1 facility staff member, 1 admin, 4 facilities, events in every status |
 | [`tests/db/`](../../tests/db/) | Tests of the constraints against a real database (skipped without `TEST_DATABASE_URL`) |
@@ -23,6 +24,10 @@ The commands are for Windows PowerShell; on macOS/Linux use `python3` and `sourc
 winget install --id PostgreSQL.PostgreSQL.16 -e --interactive     # Windows
 brew install postgresql@16; brew services start postgresql@16     # macOS
 ```
+> **Windows in Turkish:** the installer stops with *"Failed to initialise the database cluster with initdb"* and the log (`%TEMP%\install-postgresql.log`) says `locale name "Turkish_Türkiye.1254" contains non-ASCII characters`. In the installer, choose **Locale: English, United States** instead of *[Default locale]* (Render uses an English locale too; Turkish text is still stored correctly because the encoding is UTF-8). If a failed install is left behind, remove it first with `winget uninstall --id PostgreSQL.PostgreSQL.16 -e`. Without the installer screens:
+> ```powershell
+> winget install --id PostgreSQL.PostgreSQL.16 -e --override "--mode unattended --superpassword CHOOSE-ONE --serverport 5432 --locale en-US --disable-components stackbuilder"
+> ```
 
 **2. Create a user and two databases** (one for development, one that the tests empty and rebuild):
 ```powershell
@@ -95,6 +100,40 @@ Time ranges are half-open `[start, end)`: an event ending at 18:00 and one start
 - event capacity ≤ facility capacity, and participants ≤ event capacity (lock the event row before joining);
 - the facility manager is facility staff, the reviewer is an admin, the e-mail domain is a university domain (BR-01).
 
+## Writing a `Sql*Repository` (tasks 3.2–3.4)
+Every SQL repository gets the **same scoped session** as `SqlUnitOfWork`, so all its calls between `uow.begin()` and `uow.commit()` are one transaction (Software Design Report 4.3, 7.1). It maps rows to the domain objects of `models.py`; the services never see a `*Row`.
+```python
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session, scoped_session
+
+from campusevent.exceptions import FacilityConflictError, NotFoundError
+from campusevent.models import Facility
+from campusevent.repositories.tables import FacilityRow
+
+
+class SqlFacilityRepository:
+    def __init__(self, session: scoped_session[Session]) -> None:
+        self.session = session
+
+    def get_for_update(self, facility_id: int) -> Facility:
+        row = self.session.get(FacilityRow, facility_id, with_for_update=True)  # SELECT ... FOR UPDATE
+        if row is None:
+            raise NotFoundError(f"Facility {facility_id} does not exist")
+        return Facility(id=row.id, name=row.name, capacity=row.capacity)
+```
+- **Database errors → domain errors.** Call `self.session.flush()` right after `add()`, so a constraint error comes out inside the repository, and translate it by the constraint name (the names are in the table above), e.g. `ex_event_facility_no_overlap` → `FacilityConflictError`, `ux_user_email_lower` → `DuplicateEmailError`:
+  ```python
+  try:
+      self.session.add(row)
+      self.session.flush()
+  except IntegrityError as error:
+      if error.orig.diag.constraint_name == "ex_event_facility_no_overlap":
+          raise FacilityConflictError("The facility is already booked at this time") from error
+      raise
+  ```
+- **Times.** PostgreSQL returns time-zone-aware datetimes in UTC; the tests build naive datetimes (`tests/helpers.slot`). Agree on one rule in task 3.2, for example: the domain uses naive UTC, and repositories convert read values with `value.astimezone(timezone.utc).replace(tzinfo=None)`.
+- **Wiring** (composition root `app.py`, task 3.2): `create_db_engine()` once, `create_scoped_session(engine)` once, pass that session to `SqlUnitOfWork` and every `Sql*Repository`, and call `session.remove()` at the end of each request (`teardown_appcontext` in Flask). The requirement tests keep using the in-memory versions and `InMemoryUnitOfWork`.
+
 ## Changing the schema
 Never change a table by hand and never edit a migration that is already on `main`. Instead:
 1. Change the class in `tables.py`.
@@ -108,3 +147,4 @@ Never change a table by hand and never edit a migration that is already on `main
 - `render.yaml` sets `DATABASE_URL` from the managed PostgreSQL 16 database. `db.py` turns the `postgresql://` address into `postgresql+psycopg://` so SQLAlchemy uses psycopg 3.
 - A new database is empty: run `alembic upgrade head` and then `scripts/seed_db.py` once. The free database is deleted after 30 days; after creating a new one, run the same two commands again.
 - To run them from your own computer, put the *External Database URL* from the Render dashboard into `DATABASE_URL` for that one command only, not into a committed file.
+- Suggestion for task 4.4: new migrations can run on every deploy by starting the web service with `alembic upgrade head && gunicorn ...` (useful if the plan has no pre-deploy command). `alembic upgrade head` does nothing when the database is already up to date.
