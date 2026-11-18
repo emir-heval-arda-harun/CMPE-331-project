@@ -52,7 +52,10 @@
     .navbar-campus .nav-link:hover { background: rgba(255, 255, 255, .10); }
     .navbar-campus .nav-link.active { background: rgba(255, 255, 255, .18); color: #fff; font-weight: 600; }
     .page-head h1 { font-weight: 700; letter-spacing: -.02em; }
-    .section-title { font-size: .8rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #64748b; }
+    .section-title { font-size: .8rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #475569; }
+    /* Headings straight on the page (not in a card) can fall on the blue hero band: dark text on a light pill. */
+    .app main > .section-title { display: inline-block; color: #1e293b; background: rgba(255, 255, 255, .9);
+      padding: .3rem .75rem; border-radius: 999px; box-shadow: 0 1px 3px rgba(15, 23, 42, .12); }
     /* frosted glass: the background colours shine through softly, the text stays on an almost white layer */
     .card-soft { background: rgba(255, 255, 255, .86); border: 1px solid rgba(255, 255, 255, .75); border-radius: 1rem;
       -webkit-backdrop-filter: blur(10px) saturate(1.3); backdrop-filter: blur(10px) saturate(1.3);
