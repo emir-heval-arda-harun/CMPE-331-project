@@ -44,7 +44,8 @@ Items marked **(proposed)** are analysis proposals that are not part of a use ca
 |---|---|
 | Student | UC-01 to UC-07, UC-09, UC-10, UC-11 (UC-04 and UC-11 as organizer) |
 | Facility Staff | UC-02, UC-08 |
-| E-mail service (external) | UC-01 |
+| Admin | UC-02, UC-12 |
+| E-mail service (external) | UC-01, UC-12 |
 
 Relations between use cases: UC-04 **includes** UC-07 (facility check). UC-06 **extends** UC-05 (join from the event list). UC-10 and UC-11 need an event created by UC-04.
 
@@ -104,9 +105,12 @@ classDiagram
         <<enumeration>>
         STUDENT
         FACILITY_STAFF
+        ADMIN
     }
     class EventStatus {
         <<enumeration>>
+        PENDING
+        REJECTED
         OPEN
         FULL
         COMPLETED
@@ -134,7 +138,7 @@ classDiagram
 | Busy slot | A time slot of a facility that is blocked by staff or already used by an active event |
 | Free place | `capacity` minus the number of participants of an event |
 | Category | Free-text label of an event or interest, e.g. "football", "study group"; trimmed and compared without regard to upper or lower case |
-| Active event | An event with status Open or Full (it occupies its facility slot) |
+| Active event | An event with status Pending, Open or Full (it occupies its facility slot); a Pending event is not listed or joinable |
 
 ### 2.4 Business process models (BPD)
 The business process diagrams show who does what in the important processes. Each lane is an actor or the system; diamonds are decisions.
@@ -179,6 +183,7 @@ erDiagram
     USER ||--o{ PROFILE_INTEREST : declares
     USER ||--o{ AVAILABILITY_SLOT : offers
     USER ||--o{ EVENT : organizes
+    USER |o--o{ EVENT : reviews
     USER ||--o{ EVENT_PARTICIPANT : joins
     EVENT ||--o{ EVENT_PARTICIPANT : has
     FACILITY ||--o{ EVENT : hosts
@@ -234,6 +239,9 @@ erDiagram
         datetime end_time
         int capacity
         string status
+        int reviewed_by FK
+        datetime reviewed_at
+        string rejection_reason
     }
     EVENT_PARTICIPANT {
         int event_id PK
@@ -248,7 +256,7 @@ erDiagram
 | Entity | Constraint | Source |
 |---|---|---|
 | USER | `email` unique; domain must be `bilgiedu.net` or `bilgi.edu.tr`; `password_hash` is never plain text | UC-01, BR-01, BR-02 |
-| USER | `role` is one of student, facility_staff | `Role` enum |
+| USER | `role` is one of student, facility_staff, admin | `Role` enum |
 | PROFILE_INTEREST | One row per user and interest text; a profile needs at least one row; text is trimmed and stored in lower case | UC-03, BR-14 |
 | AVAILABILITY_SLOT | `end_time` is after `start_time` | UC-03 alt. 5b |
 | FACILITY | `manager_id` is a user with the facility staff role; `capacity` is at least 2 | UC-08, F-02 |
@@ -256,7 +264,8 @@ erDiagram
 | EVENT | `title` and `category` are not empty; `category` is free text | UC-04, BR-14 |
 | EVENT | `capacity` is at least 2 and at most the `capacity` of the facility | UC-04, BR-04, F-03 |
 | EVENT | The time slot must not overlap any block or other active event of the same facility | UC-04, UC-07, BR-06 |
-| EVENT | `status` is one of open, full, completed, cancelled | `EventStatus` enum |
+| EVENT | `status` is one of pending, rejected, open, full, completed, cancelled; new events start as pending | `EventStatus` enum, UC-12, BR-15 |
+| EVENT | `reviewed_by` is a user with the admin role (empty if not reviewed or expired); `rejection_reason` is not empty when `status` is rejected | UC-12, BR-17 |
 | EVENT_PARTICIPANT | A user can join an event only once (composite key); number of rows is at most `capacity`; the organizer is the first row | UC-06, BR-05, BR-07 |
 
 ### 3.3 Design notes for the database
@@ -324,10 +333,10 @@ sequenceDiagram
             W-->>S: Show conflict and free slots
         else Slot is free
             FS-->>ES: available
-            ES->>D: Insert event with status open
+            ES->>D: Insert event with status pending (holds the slot)
             ES->>D: Insert organizer as first participant
-            ES-->>W: Event created
-            W-->>S: Show event in the list
+            ES-->>W: Event request created
+            W-->>S: Show "waiting for admin approval" (UC-12)
         end
     end
 ```
@@ -402,10 +411,13 @@ sequenceDiagram
 
 ### 4.5 State diagrams
 
-**Event** (UC-04, UC-06, UC-09, UC-10, UC-11). The transition to Completed happens automatically when the end time has passed.
+**Event** (UC-04, UC-06, UC-09, UC-10, UC-11, UC-12). The transition to Completed happens automatically when the end time has passed; a request still Pending at its start time becomes Rejected automatically.
 ```mermaid
 stateDiagram-v2
-    [*] --> Open : UC-04 event created
+    [*] --> Pending : UC-04 event request created
+    Pending --> Open : UC-12 admin approves
+    Pending --> Rejected : UC-12 admin rejects or start time reached
+    Pending --> Cancelled : organizer withdraws
     Open --> Full : UC-06 capacity reached
     Full --> Open : participant leaves
     Open --> Cancelled : organizer cancels
@@ -414,6 +426,7 @@ stateDiagram-v2
     Full --> Completed : end time passed
     Completed --> [*]
     Cancelled --> [*]
+    Rejected --> [*]
 ```
 
 *Diagram files: [`state_event.png`](analysis/behavior/state_event.png), [source `state_event.mmd`](analysis/behavior/state_event.mmd)*
@@ -487,6 +500,10 @@ Every use case has at least one behavioral model.
 | BR-12 | An organizer cannot leave their own event; the event has to be cancelled | UC-10 |
 | BR-13 | Only the organizer can cancel an event; a cancelled event never appears in the history and does not occupy its facility slot | UC-11, UC-07, UC-09 |
 | BR-14 | Categories are free text; they are trimmed and compared without regard to upper or lower case **(derived)** | UC-03, UC-04, UC-05 |
+| BR-15 | Every new event starts as Pending; pending events are not listed and cannot be joined | UC-04, UC-05, UC-06, UC-12 |
+| BR-16 | A pending request holds its facility slot | UC-07, UC-12 |
+| BR-17 | Only an admin approves or rejects requests; a rejection needs a reason; only pending requests can be reviewed | UC-12 |
+| BR-18 | A request not reviewed before its start time is rejected automatically | UC-12 |
 
 ---
 
@@ -556,6 +573,8 @@ The requirements (use cases, tests, specification) and the analysis models were 
 | 8 | The plan contained AI and tournament tasks | WBS, Gantt and PERT now show 19 tasks; the critical path is unchanged (71 days) |
 
 Test counts after the change: 39 tests (33 use case tests and 6 non-functional tests), all failing by design.
+
+**Revision 17.11.2026 – [CR-01 Admin approval of event requests](change_requests/CR-01_admin_event_approval.md).** New actor Admin and use case [UC-12](requirements/UC-12_review_event_requests.md); new event states Pending and Rejected; BR-15 to BR-18; E-R (`reviewed_by`, `reviewed_at`, `rejection_reason`), domain model, event state diagram and the UC-04 sequence updated. Test count: 51 tests (44 use case tests and 7 non-functional tests), all failing by design.
 
 ## 10. Preliminary UI Mockups
 The frontend design starts with low-fidelity mockups of the main screens. They are plain HTML pages ([`analysis/ui/`](analysis/ui/README.md)); the final design will be refined with the team. The screens are also described in the **UI Spec Lite** format in [`analysis/ui/ui_spec_lite.md`](analysis/ui/ui_spec_lite.md), which can be given to an AI mockup tool to produce higher-fidelity designs. Yellow notes show error cases and rules from the use cases. NFR-01 requires a responsive layout, so a 390 px mobile view is included.

@@ -1,5 +1,8 @@
 stateDiagram-v2
-    [*] --> Open : UC-04 event created
+    [*] --> Pending : UC-04 event request created
+    Pending --> Open : UC-12 admin approves
+    Pending --> Rejected : UC-12 admin rejects or start time reached
+    Pending --> Cancelled : organizer withdraws
     Open --> Full : UC-06 capacity reached
     Full --> Open : participant leaves
     Open --> Cancelled : organizer cancels
@@ -8,3 +11,4 @@ stateDiagram-v2
     Full --> Completed : end time passed
     Completed --> [*]
     Cancelled --> [*]
+    Rejected --> [*]

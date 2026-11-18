@@ -20,7 +20,7 @@ The student opens a facility page, or an event is being created (UC-04).
 
 ## Main Success Scenario
 1. The student selects a facility and a day.
-2. The system shows all busy slots: staff blocks (UC-08) and scheduled events. Cancelled events (UC-11) do not occupy a slot.
+2. The system shows all busy slots: staff blocks (UC-08), approved events and pending event requests (UC-12). Cancelled and rejected events do not occupy a slot.
 3. When an event is being created, the system checks the requested slot against all busy slots.
 4. If there is no overlap, the slot is reported as available.
 
@@ -32,3 +32,4 @@ The student opens a facility page, or an event is being created (UC-04).
 
 ## Business Rules
 - BR-06: A facility cannot be used by two active events, or by an event and a block, at the same time.
+- BR-16: A pending event request also holds its slot (UC-12).

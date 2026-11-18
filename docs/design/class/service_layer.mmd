@@ -53,6 +53,11 @@ classDiagram
         +join_event(event_id, user_id) Event
         +leave_event(event_id, user_id) Event
         +cancel_event(event_id, user_id) Event
+        +list_pending_events(admin_id) list~Event~
+        +approve_event(event_id, admin_id) Event
+        +reject_event(event_id, admin_id, reason) Event
+        +expire_pending_requests(now) list~Event~
+        +list_my_requests(organizer_id) list~Event~
         +complete_event(event_id) Event
         +get_activity_history(user_id) list~ActivityRecord~
     }
@@ -90,6 +95,8 @@ classDiagram
         +search(category, day, keyword, only_open) list~Event~
         +active_on(facility_id, day) list~Event~
         +completed_for(user_id) list~Event~
+        +pending(before) list~Event~
+        +organized_by(user_id) list~Event~
     }
     class UnitOfWork {
         <<interface>>
@@ -105,6 +112,7 @@ classDiagram
     class EmailSender {
         <<interface>>
         +send_verification_code(email, code)
+        +send_event_decision(email, event_title, approved, reason)
     }
 
     FlaskWebApp --> CampusEventApp : calls services
@@ -127,3 +135,4 @@ classDiagram
     FacilityService --> UnitOfWork
     EventService --> EventRepository
     EventService --> UnitOfWork
+    EventService --> EmailSender : send_event_decision

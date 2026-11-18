@@ -10,9 +10,12 @@ from enum import Enum
 class Role(str, Enum):
     STUDENT = "student"
     FACILITY_STAFF = "facility_staff"
+    ADMIN = "admin"  # reviews event requests (UC-12)
 
 
 class EventStatus(str, Enum):
+    PENDING = "pending"  # waiting for admin review (UC-12); holds the facility slot, not listed
+    REJECTED = "rejected"  # refused by an admin or not reviewed before the start time
     OPEN = "open"
     FULL = "full"
     COMPLETED = "completed"
@@ -71,7 +74,10 @@ class Event:
     capacity: int
     description: str = ""
     participant_ids: list[int] = field(default_factory=list)
-    status: EventStatus = EventStatus.OPEN
+    status: EventStatus = EventStatus.PENDING
+    reviewed_by: int | None = None  # admin who approved/rejected; None if not reviewed or expired
+    reviewed_at: datetime | None = None
+    rejection_reason: str = ""
 
 
 @dataclass

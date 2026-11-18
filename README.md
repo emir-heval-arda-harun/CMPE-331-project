@@ -8,6 +8,7 @@ A campus event platform for university students to organize, join and track even
 - [Use cases](docs/requirements/README.md)
 - [Requirements Specification Report](docs/requirements_specification.md)
 - [Software Design Report](docs/software_design_report.md) and [design models](docs/design/README.md)
+- [Change requests](docs/change_requests/): [CR-01 Admin approval of event requests](docs/change_requests/CR-01_admin_event_approval.md)
 - [Requirement Analysis Report](docs/requirement_analysis_report.md), [analysis models, BPD, DFD](docs/analysis/README.md) and [UI mockups](docs/analysis/ui/README.md)
 
 ## Running the requirement tests

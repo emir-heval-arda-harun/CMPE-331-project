@@ -15,7 +15,8 @@ The models of the [Software Design Report](../software_design_report.md). Each d
 | Sequence UC-05, UC-06 browse and join | [png](sequence/uc05_uc06_browse_and_join.png), [mmd](sequence/uc05_uc06_browse_and_join.mmd) | 5.4 |
 | Sequence UC-08 manage facility schedule | [png](sequence/uc08_manage_facility_schedule.png), [mmd](sequence/uc08_manage_facility_schedule.mmd) | 5.5 |
 | Sequence UC-10, UC-11 leave and cancel | [png](sequence/uc10_uc11_leave_and_cancel.png), [mmd](sequence/uc10_uc11_leave_and_cancel.mmd) | 5.6 |
+| Sequence UC-12 review event requests | [png](sequence/uc12_review_event_request.png), [mmd](sequence/uc12_review_event_request.mmd) | 5.7 |
 
-Sequence diagrams cover 9 of 11 use cases (82 %; required: at least 30 %). Their participants are grouped by architecture layer (report section 3.1).
+Sequence diagrams cover 10 of 12 use cases (83 %; required: at least 30 %). Their participants are grouped by architecture layer (report section 3.1).
 
 Render a diagram: `npx -p @mermaid-js/mermaid-cli mmdc -i arch/layered_architecture.mmd -o arch/layered_architecture.png -s 2 -b white`

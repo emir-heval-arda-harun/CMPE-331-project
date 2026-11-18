@@ -4,9 +4,12 @@ classDiagram
         <<enumeration>>
         STUDENT
         FACILITY_STAFF
+        ADMIN
     }
     class EventStatus {
         <<enumeration>>
+        PENDING
+        REJECTED
         OPEN
         FULL
         COMPLETED
@@ -59,6 +62,9 @@ classDiagram
         +str description
         +list~int~ participant_ids
         +EventStatus status
+        +int reviewed_by
+        +datetime reviewed_at
+        +str rejection_reason
         +free_places() int
         +is_active() bool
     }
@@ -96,6 +102,7 @@ classDiagram
     Event "*" --> "1" Facility : held at
     Event "*" --> "1" User : organizer
     Event "*" --> "*" User : participants
+    Event "*" --> "0..1" User : reviewed by
     ActivityRecord ..> Event : built from
     CampusEventError <|-- InvalidEmailDomainError
     CampusEventError <|-- DuplicateEmailError

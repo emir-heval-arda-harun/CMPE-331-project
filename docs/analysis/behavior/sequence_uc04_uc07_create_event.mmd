@@ -23,9 +23,9 @@ sequenceDiagram
             W-->>S: Show conflict and free slots
         else Slot is free
             FS-->>ES: available
-            ES->>D: Insert event with status open
+            ES->>D: Insert event with status pending (holds the slot)
             ES->>D: Insert organizer as first participant
-            ES-->>W: Event created
-            W-->>S: Show event in the list
+            ES-->>W: Event request created
+            W-->>S: Show "waiting for admin approval" (UC-12)
         end
     end

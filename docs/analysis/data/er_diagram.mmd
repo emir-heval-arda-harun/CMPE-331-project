@@ -5,6 +5,7 @@ erDiagram
     USER ||--o{ PROFILE_INTEREST : declares
     USER ||--o{ AVAILABILITY_SLOT : offers
     USER ||--o{ EVENT : organizes
+    USER |o--o{ EVENT : reviews
     USER ||--o{ EVENT_PARTICIPANT : joins
     EVENT ||--o{ EVENT_PARTICIPANT : has
     FACILITY ||--o{ EVENT : hosts
@@ -60,6 +61,9 @@ erDiagram
         datetime end_time
         int capacity
         string status
+        int reviewed_by FK
+        datetime reviewed_at
+        string rejection_reason
     }
     EVENT_PARTICIPANT {
         int event_id PK

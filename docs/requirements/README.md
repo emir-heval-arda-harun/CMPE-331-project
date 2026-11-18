@@ -17,6 +17,7 @@ Requirements are written in **use case format**. Each use case has its own file 
 | [UC-09](UC-09_activity_history.md) | Track activity history | Student | Low | [test](../../tests/test_uc09_activity_history.py) |
 | [UC-10](UC-10_leave_event.md) | Leave event | Student | Medium | [test](../../tests/test_uc10_leave_event.py) |
 | [UC-11](UC-11_cancel_event.md) | Cancel event | Student (organizer) | Medium | [test](../../tests/test_uc11_cancel_event.py) |
+| [UC-12](UC-12_review_event_requests.md) | Review event requests (approve / reject) | Admin | High | [test](../../tests/test_uc12_review_event_requests.py) |
 
 The diagram is generated from [`diagrams/make_use_case_diagram.py`](diagrams/make_use_case_diagram.py).
 
@@ -28,7 +29,7 @@ The non-functional requirements (NFR-01 ... NFR-07) are defined in the [Requirem
 | NFR-01 | Usability | Responsive from 360 px to desktop width | Manual: open each page in the browser developer tools at 360 px and desktop width |
 | NFR-02 | Performance | Event search < 2 s for 1,000 open events | `test_nfr02_search_is_fast_with_1000_open_events` |
 | NFR-03 | Security | Passwords stored only as salted hashes | `test_nfr03_password_is_never_stored_in_plain_text`, `test_nfr03_same_password_gives_different_stored_values` |
-| NFR-04 | Security | Role-based access | `test_nfr04_*` (3 tests) |
+| NFR-04 | Security | Role-based access | `test_nfr04_*` (4 tests) |
 | NFR-05 | Privacy | Only the data needed for an event is shown to other students | Manual: review of the event and participant pages |
 | NFR-06 | Maintainability | One command runs all tests | Verified by running `python -m pytest` |
 | NFR-07 | Portability | Works in Chrome, Firefox, Safari and Edge | Manual: open the main pages in each browser |

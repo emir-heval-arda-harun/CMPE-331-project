@@ -47,11 +47,11 @@ sequenceDiagram
         E->>W: rollback()
         E-->>R: raise PermissionDeniedError
         R-->>O: 403 page
-    else status is COMPLETED or CANCELLED
+    else status is COMPLETED, CANCELLED or REJECTED
         E->>W: rollback()
         E-->>R: raise ValidationError
         R-->>O: event details with error
-    else status is OPEN or FULL
+    else status is PENDING, OPEN or FULL (a pending request is withdrawn)
         E->>E: status = CANCELLED
         E->>ER: save(event)
         ER->>DB: UPDATE event SET status = cancelled

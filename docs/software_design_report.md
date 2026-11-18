@@ -92,26 +92,26 @@ Every arrow of the architecture diagram is labelled with the interface it uses:
 | Blueprints → Templates | `render_template(page, view_model)` | View models without e-mail addresses (NFR-05) |
 | Presentation → Application | Public service methods, e.g. `EventService.join_event(event_id, user_id)` | Primitive values and `TimeSlot`; returns domain objects or raises a `CampusEventError` subclass |
 | Application → Application | `AuthService.require_role()`, `AuthService.get_user()`, `FacilityService.check_bookable()`, `FacilityService.is_available()` | User ids, roles, facility id and slot |
-| Application → Data access | Repository methods (`add`, `get`, `get_for_update`, `search`, `save`, …), `UnitOfWork.begin/commit/rollback`, `PasswordHasher.hash/verify`, `EmailSender.send_verification_code` | Domain objects and ids |
+| Application → Data access | Repository methods (`add`, `get`, `get_for_update`, `search`, `save`, …), `UnitOfWork.begin/commit/rollback`, `PasswordHasher.hash/verify`, `EmailSender.send_verification_code/send_event_decision` | Domain objects and ids |
 | Data access → PostgreSQL | SQL through one SQLAlchemy session per request (psycopg, TLS) | Rows; `SELECT … FOR UPDATE` for locks |
-| Data access → SMTP provider | SMTP with STARTTLS | Verification e-mail |
+| Data access → SMTP provider | SMTP with STARTTLS | Verification and review decision e-mails |
 
 ### 3.3 Components
 | Layer | Component | Responsibility | Use cases |
 |---|---|---|---|
 | Presentation | `auth_routes` | Sign up, verification, log in, log out | UC-01, UC-02 |
 | Presentation | `profile_routes` | My Profile page | UC-03 |
-| Presentation | `event_routes` | Find events, event details, create, join, leave, cancel, My Activities | UC-04 to UC-07, UC-09 to UC-11 |
+| Presentation | `event_routes` | Find events, event details, create, join, leave, cancel, My Activities, Event Requests (admin only) | UC-04 to UC-07, UC-09 to UC-12 |
 | Presentation | `facility_routes` | Facility management (staff only) | UC-07, UC-08 |
 | Presentation | Security middleware | Session handling, CSRF, `login_required`, `role_required` decorators | all |
 | Application | `AuthService` | Registration, e-mail verification, login, roles | UC-01, UC-02 |
 | Application | `ProfileService` | Interests and availability | UC-03 |
-| Application | `EventService` | Event life cycle and search, activity history | UC-04 to UC-06, UC-09 to UC-11 |
+| Application | `EventService` | Event life cycle and search, review of event requests, activity history | UC-04 to UC-06, UC-09 to UC-12 |
 | Application | `FacilityService` | Facilities, blocks, schedules, conflict check | UC-07, UC-08 |
 | Data access and integration | `UserRepository`, `ProfileRepository`, `FacilityRepository`, `EventRepository` (`Sql*` and `InMemory*` implementations) | Storing and reading domain objects, row locks | all |
 | Data access and integration | `UnitOfWork` (`SqlUnitOfWork`, `InMemoryUnitOfWork`) | Transactions; one SQLAlchemy session shared by all repositories of a request | all writing use cases |
 | Data access and integration | `PasswordHasher` (`Argon2PasswordHasher`) | Hashing passwords and verification codes | UC-01, UC-02 |
-| Data access and integration | `EmailSender` (`SmtpEmailSender`, `InMemoryEmailSender`) | Sending verification codes | UC-01 |
+| Data access and integration | `EmailSender` (`SmtpEmailSender`, `InMemoryEmailSender`) | Sending verification codes and review decisions | UC-01, UC-12 |
 | External systems | PostgreSQL 16, SMTP provider | Storage, e-mail delivery | all |
 | Shared domain model | `models.py`, `exceptions.py` | Entities, value objects, enums, domain errors | all |
 
@@ -171,7 +171,7 @@ The service classes keep the public methods of the skeleton (which the tests cal
 
 ## 5. Object Interactions (Sequence Diagrams)
 
-Six design-level sequence diagrams show the messages between the real classes and methods of section 4. The participants are grouped in boxes by layer (section 3.1); every arrow goes from a layer to the same layer or to the layer directly below, and only layer 3 components send messages to PostgreSQL or the SMTP provider. Together they cover **9 of 11 use cases (82 %)**; the remaining two (UC-03 manage profile, UC-09 activity history) are simple read/update flows already shown at analysis level in the Requirement Analysis Report, section 4.6.
+Six design-level sequence diagrams show the messages between the real classes and methods of section 4. The participants are grouped in boxes by layer (section 3.1); every arrow goes from a layer to the same layer or to the layer directly below, and only layer 3 components send messages to PostgreSQL or the SMTP provider. Together they cover **10 of 12 use cases (83 %)**; the remaining two (UC-03 manage profile, UC-09 activity history) are simple read/update flows already shown at analysis level in the Requirement Analysis Report, section 4.6.
 
 | Diagram | Use cases |
 |---|---|
@@ -181,6 +181,7 @@ Six design-level sequence diagrams show the messages between the real classes an
 | [Browse, filter and join](design/sequence/uc05_uc06_browse_and_join.png) | UC-05, UC-06 |
 | [Manage facility schedule](design/sequence/uc08_manage_facility_schedule.png) | UC-08 |
 | [Leave and cancel](design/sequence/uc10_uc11_leave_and_cancel.png) | UC-10, UC-11 |
+| [Review event requests](design/sequence/uc12_review_event_request.png) | UC-12 |
 
 ### 5.1 UC-01 Register and verify
 ![UC-01 sequence](design/sequence/uc01_register_and_verify.png)
@@ -204,6 +205,11 @@ Six design-level sequence diagrams show the messages between the real classes an
 ### 5.6 UC-10 and UC-11 Leave and cancel an event
 ![UC-10 and UC-11 sequence](design/sequence/uc10_uc11_leave_and_cancel.png)
 
+### 5.7 UC-12 Review event requests
+The admin approves or rejects a pending request inside one transaction with the event row locked, so two admins cannot decide on the same request at the same time. The decision e-mail is sent after `COMMIT`.
+
+![UC-12 sequence](design/sequence/uc12_review_event_request.png)
+
 ---
 
 ## 6. Data Design
@@ -213,9 +219,13 @@ The tables follow the E-R diagram of the Requirement Analysis Report (section 3.
 | Table | Constraint or index | Purpose |
 |---|---|---|
 | `user` | `UNIQUE (lower(email))` | No duplicate accounts (UC-01) |
+| `user` | `CHECK (role IN ('student', 'facility_staff', 'admin'))` | Roles, including the admin of UC-12 |
 | `verification_code` | `code_hash`, `expires_at`, `used` | Codes are stored hashed and expire after 15 minutes |
 | `event` | `CHECK (capacity >= 2)`, `CHECK (end_time > start_time)` | BR-04 |
 | `event` | Index on `(category, start_time)` and on `(facility_id, start_time)` | Fast search (NFR-02) and fast conflict check (UC-07) |
+| `event` | `status` default `'pending'`; `CHECK (status IN ('pending', 'rejected', 'open', 'full', 'completed', 'cancelled'))` | New events wait for review (UC-12, BR-15) |
+| `event` | `reviewed_by` FK → `user(id)`, nullable; `reviewed_at`; `CHECK (status <> 'rejected' OR rejection_reason <> '')` | Who decided and why (UC-12, BR-17) |
+| `event` | Partial index on `(start_time) WHERE status = 'pending'` | Fast admin queue and expiry job (UC-12) |
 | `event_participant` | Primary key `(event_id, user_id)` | A user joins an event once (BR-07) |
 | `facility` | `CHECK (capacity >= 2)`, `UNIQUE (name)` | UC-08 |
 
@@ -271,6 +281,7 @@ Services raise domain exceptions (`ValidationError`, `FacilityConflictError`, `E
 | UC-09 | `event_routes` `/activities` | `EventService.get_activity_history` | `EventRepository` | analysis 4.6 |
 | UC-10 | `event_routes` `/events/{id}/leave` | `EventService.leave_event` | `EventRepository`, `UnitOfWork` | 5.6 |
 | UC-11 | `event_routes` `/events/{id}/cancel` | `EventService.cancel_event` | `EventRepository`, `UnitOfWork` | 5.6 |
+| UC-12 | `event_routes` `/admin/requests`, `/admin/requests/{id}` | `EventService.list_pending_events`, `approve_event`, `reject_event`, `expire_pending_requests`, `list_my_requests`, `AuthService.require_role` | `EventRepository`, `UnitOfWork`, `EmailSender` | 5.7 |
 
 ---
 
@@ -296,3 +307,5 @@ After the review of version 1.0 all diagrams were compared with each other and w
 | 10 | The search sequence filtered `status IN (open, full)` although `search_events(only_open=True)` returns open events only (UC-05) | The search filters `status = open`; `active_on` (conflict check) still counts open and full events |
 
 Checks done for version 1.1: every participant of every sequence diagram exists in a class diagram; every message between classes is a method of the receiving class; every arrow in a sequence goes to the same layer or the layer directly below; every dependency in the class diagrams appears as a labelled arrow (or a group arrow) in the architecture diagram.
+
+**Revision 17.11.2026 – [CR-01 Admin approval of event requests](change_requests/CR-01_admin_event_approval.md).** Role `ADMIN`, event states `PENDING` and `REJECTED`, review fields on `Event`, five new `EventService` methods, `EmailSender.send_event_decision`, `EventRepository.pending()` and `organized_by()`, data design rows for the review columns, sequence 5.7 and traceability row UC-12 were added. `active_on()` (conflict check) now counts pending, open and full events. The test suite has 51 tests (44 use case tests and 7 non-functional tests).

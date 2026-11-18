@@ -8,11 +8,11 @@
 | **Test** | [tests/test_uc11_cancel_event.py](../../tests/test_uc11_cancel_event.py) |
 
 ## Description
-The organizer cancels an event that will not take place. The facility slot becomes free again.
+The organizer cancels an event that will not take place, or withdraws an event request that is still waiting for admin review (UC-12). The facility slot becomes free again.
 
 ## Preconditions
 - The student is logged in and is the organizer of the event.
-- The event is **Open** or **Full** and has not started.
+- The event is **Pending**, **Open** or **Full** and has not started.
 
 ## Trigger
 The organizer selects **Cancel Event** on the event details page.
@@ -25,7 +25,7 @@ The organizer selects **Cancel Event** on the event details page.
 
 ## Alternative Flows
 - **1a. User is not the organizer:** the system refuses the request.
-- **1b. Event is already completed or cancelled:** the system refuses the request.
+- **1b. Event is already completed, cancelled or rejected:** the system refuses the request.
 
 ## Postconditions
 - The event has status **Cancelled**; its facility slot can be booked again.
