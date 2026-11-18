@@ -2,3 +2,10 @@
 flask>=3,<4
 flask-wtf>=1.2
 gunicorn>=22
+# Database (Software Design Report §2 and §6, docs/database/README.md)
+SQLAlchemy>=2.1,<3
+psycopg[binary]>=3.3,<4
+alembic>=1.16,<2
+python-dotenv>=1.0
+# Password hashing (NFR-03); also used by scripts/seed_db.py
+argon2-cffi>=25.1
