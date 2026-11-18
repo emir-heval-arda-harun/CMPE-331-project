@@ -1,0 +1,129 @@
+classDiagram
+    direction TB
+    class FlaskWebApp {
+        <<presentation>>
+        +create_web_app(config) Flask
+        blueprints: auth, profile, events, facilities
+    }
+    class CampusEventApp {
+        <<composition root>>
+        +AuthService auth
+        +ProfileService profiles
+        +FacilityService facilities
+        +EventService events
+    }
+    class AuthService {
+        -tuple allowed_email_domains
+        -UserRepository users
+        -UnitOfWork uow
+        -PasswordHasher hasher
+        -EmailSender email_sender
+        +register(email, password, full_name, role) User
+        +verify_email(email, code) User
+        +login(email, password) str
+        +get_user_by_token(token) User
+        +get_user(user_id) User
+        +require_role(user_id, role) User
+    }
+    class ProfileService {
+        -AuthService auth
+        -ProfileRepository profiles
+        -UnitOfWork uow
+        +update_profile(user_id, interests, availability) Profile
+        +get_profile(user_id) Profile
+    }
+    class FacilityService {
+        -AuthService auth
+        -FacilityRepository facilities
+        -EventRepository events
+        -UnitOfWork uow
+        +add_facility(staff_id, name, capacity) Facility
+        +add_block(staff_id, facility_id, slot, reason) FacilityBlock
+        +get_schedule(facility_id, day) list~TimeSlot~
+        +is_available(facility_id, slot) bool
+        +check_bookable(facility_id, slot, capacity) Facility
+    }
+    class EventService {
+        -AuthService auth
+        -FacilityService facilities
+        -EventRepository events
+        -UnitOfWork uow
+        +create_event(organizer_id, title, category, facility_id, slot, capacity, description) Event
+        +search_events(category, day, keyword, only_open) list~Event~
+        +join_event(event_id, user_id) Event
+        +leave_event(event_id, user_id) Event
+        +cancel_event(event_id, user_id) Event
+        +complete_event(event_id) Event
+        +get_activity_history(user_id) list~ActivityRecord~
+    }
+    class UserRepository {
+        <<interface>>
+        +add(user, password_hash) User
+        +get(user_id) User
+        +find_by_email(email) User
+        +get_password_hash(user_id) str
+        +save_code(user_id, code_hash, expires_at)
+        +get_latest_code(user_id) VerificationCode
+        +mark_code_used(code_id)
+        +mark_verified(user_id)
+    }
+    class ProfileRepository {
+        <<interface>>
+        +get(user_id) Profile
+        +save(profile)
+    }
+    class FacilityRepository {
+        <<interface>>
+        +add(facility) Facility
+        +get(facility_id) Facility
+        +get_for_update(facility_id) Facility
+        +find_by_name(name) Facility
+        +add_block(block) FacilityBlock
+        +blocks_on(facility_id, day) list~FacilityBlock~
+    }
+    class EventRepository {
+        <<interface>>
+        +add(event) Event
+        +get(event_id) Event
+        +get_for_update(event_id) Event
+        +save(event)
+        +search(category, day, keyword, only_open) list~Event~
+        +active_on(facility_id, day) list~Event~
+        +completed_for(user_id) list~Event~
+    }
+    class UnitOfWork {
+        <<interface>>
+        +begin()
+        +commit()
+        +rollback()
+    }
+    class PasswordHasher {
+        <<interface>>
+        +hash(password) str
+        +verify(password_hash, password) bool
+    }
+    class EmailSender {
+        <<interface>>
+        +send_verification_code(email, code)
+    }
+
+    FlaskWebApp --> CampusEventApp : calls services
+    CampusEventApp *-- AuthService
+    CampusEventApp *-- ProfileService
+    CampusEventApp *-- FacilityService
+    CampusEventApp *-- EventService
+    ProfileService --> AuthService
+    FacilityService --> AuthService
+    EventService --> AuthService
+    EventService --> FacilityService : check_bookable
+    AuthService --> UserRepository
+    AuthService --> UnitOfWork
+    AuthService --> PasswordHasher
+    AuthService --> EmailSender
+    ProfileService --> ProfileRepository
+    ProfileService --> UnitOfWork
+    FacilityService --> FacilityRepository
+    FacilityService --> EventRepository : active_on
+    FacilityService --> UnitOfWork
+    EventService --> EventRepository
+    EventService --> UnitOfWork

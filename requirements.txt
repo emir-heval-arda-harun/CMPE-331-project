@@ -1,0 +1,4 @@
+# Runtime dependencies installed on Render (render.yaml buildCommand).
+flask>=3,<4
+flask-wtf>=1.2
+gunicorn>=22

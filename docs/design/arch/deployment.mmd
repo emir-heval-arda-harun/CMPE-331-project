@@ -1,0 +1,25 @@
+flowchart LR
+    subgraph Dev["Development"]
+        D1["Developer laptop<br/>Python 3.12, pytest"]
+        GH["GitHub repository<br/>pull request + review"]
+    end
+    subgraph CI["GitHub Actions (CI/CD)"]
+        T["Job 1: ruff lint + pytest<br/>(every push and pull request)"]
+        DPL["Job 2: deploy<br/>(only main, after tests pass)"]
+    end
+    subgraph Cloud["Render (cloud hosting)"]
+        W["Web service<br/>gunicorn + Flask app<br/>HTTPS certificate by Render"]
+        PG[("Managed PostgreSQL<br/>daily backups")]
+        ENV["Environment variables<br/>SECRET_KEY, DATABASE_URL, SMTP_*"]
+    end
+    SMTP["SMTP e-mail provider"]
+    U["Students and facility staff<br/>(browser)"]
+
+    D1 -- "git push" --> GH
+    GH --> T
+    T -- "green" --> DPL
+    DPL -- "deploy hook" --> W
+    ENV -.-> W
+    W -- "SQL over TLS" --> PG
+    W -- "SMTP over TLS" --> SMTP
+    U -- "HTTPS" --> W
