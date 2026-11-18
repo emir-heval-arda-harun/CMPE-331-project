@@ -45,6 +45,16 @@ def test_relative_day_labels():
     assert common.relative_day(datetime(2026, 11, 10, 9), today) == "7 days ago"
 
 
+def test_today_is_the_istanbul_date_even_when_the_server_runs_in_utc():
+    from datetime import timezone
+
+    late_night_utc = datetime(2026, 11, 19, 22, 30, tzinfo=timezone.utc)  # 01:30 on 20 Nov in Istanbul
+    assert common.campus_today(late_night_utc) == date(2026, 11, 20)
+    assert common.campus_today(datetime(2026, 11, 19, 20, 59, tzinfo=timezone.utc)) == date(2026, 11, 19)
+    # a 10:00 event on 20 Nov is "Today" for a student looking at it at 01:30, not "Tomorrow"
+    assert common.relative_day(datetime(2026, 11, 20, 10), common.campus_today(late_night_utc)) == "Today"
+
+
 # schedule box and suggestions --------------------------------------------------------------------
 
 

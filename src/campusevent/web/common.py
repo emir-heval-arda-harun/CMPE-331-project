@@ -138,9 +138,20 @@ def free_slots(busy: list[TimeSlot], day: date, min_minutes: int = 60) -> list[T
     return gaps
 
 
+# Event times are Istanbul times (team rule). The server may run in UTC (Render does), so "today" is taken
+# from the Istanbul clock, not the server clock. Turkey is UTC+3 all year (no summer time since 2016); a fixed
+# offset needs no time zone database, which Windows does not ship.
+CAMPUS_TZ = timezone(timedelta(hours=3), "+03")
+
+
+def campus_today(now: datetime | None = None) -> date:
+    """Today's date on the campus. ``now`` is an aware datetime, only given by tests."""
+    return (now or datetime.now(timezone.utc)).astimezone(CAMPUS_TZ).date()
+
+
 def relative_day(value: datetime, today: date | None = None) -> str:
     """'Today', 'Tomorrow', 'In 3 days', '2 days ago' ... used as a small label next to dates."""
-    days = (value.date() - (today or date.today())).days
+    days = (value.date() - (today or campus_today())).days
     if days == 0:
         return "Today"
     if days == 1:
