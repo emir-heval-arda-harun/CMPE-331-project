@@ -154,14 +154,26 @@ def _ics_text(value: str) -> str:
     return value.replace("\\", "\\\\").replace(";", "\\;").replace(",", "\\,").replace("\r\n", "\\n").replace("\n", "\\n")
 
 
+# All events take place on the campus in Istanbul. Turkey has used UTC+3 all year, without summer time, since 2016.
+CAMPUS_TIMEZONE = "Europe/Istanbul"
+_CAMPUS_VTIMEZONE = [
+    "BEGIN:VTIMEZONE", f"TZID:{CAMPUS_TIMEZONE}",
+    "BEGIN:STANDARD", "DTSTART:20160907T000000", "TZOFFSETFROM:+0300", "TZOFFSETTO:+0300", "TZNAME:+03", "END:STANDARD",
+    "END:VTIMEZONE",
+]
+
+
 def ics_for(uid: int, title: str, location: str, start: datetime, end: datetime, description: str = "") -> str:
     """A one-event iCalendar file (RFC 5545) that Google Calendar, Outlook and Apple Calendar can import.
-    Times are written as local times without a time zone, the same way the pages show them."""
+    The times are the campus times shown on the pages, marked as Istanbul time, so a phone set to another
+    time zone still shows the right moment (for example 17:00 in Istanbul is 15:00 in Berlin in winter)."""
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     lines = [
-        "BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//CampusEvent//CMPE 331//EN", "BEGIN:VEVENT",
-        f"UID:event-{uid}@campusevent", f"DTSTAMP:{stamp}",
-        f"DTSTART:{start.strftime('%Y%m%dT%H%M%S')}", f"DTEND:{end.strftime('%Y%m%dT%H%M%S')}",
+        "BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//CampusEvent//CMPE 331//EN", "CALSCALE:GREGORIAN",
+        *_CAMPUS_VTIMEZONE,
+        "BEGIN:VEVENT", f"UID:event-{uid}@campusevent", f"DTSTAMP:{stamp}",
+        f"DTSTART;TZID={CAMPUS_TIMEZONE}:{start.strftime('%Y%m%dT%H%M%S')}",
+        f"DTEND;TZID={CAMPUS_TIMEZONE}:{end.strftime('%Y%m%dT%H%M%S')}",
         f"SUMMARY:{_ics_text(title)}", f"LOCATION:{_ics_text(location)}",
     ]
     if description:

@@ -97,7 +97,11 @@ def test_add_to_calendar_downloads_an_ics_file(client, student, hall, services):
     assert "attachment" in response.headers["Content-Disposition"]
     text = response.data.decode()
     assert "BEGIN:VEVENT" in text and "END:VCALENDAR" in text
-    assert "DTSTART:20261120T180000" in text and "DTEND:20261120T190000" in text
+    assert "DTSTART;TZID=Europe/Istanbul:20261120T180000" in text and "DTEND;TZID=Europe/Istanbul:20261120T190000" in text
+    # the time zone is defined in the file (RFC 5545 asks for a VTIMEZONE for every TZID used): UTC+3, no summer time
+    assert "BEGIN:VTIMEZONE" in text and "TZID:Europe/Istanbul" in text and "TZOFFSETTO:+0300" in text
+    assert text.index("END:VTIMEZONE") < text.index("BEGIN:VEVENT")
+    assert all(line.endswith("\r") or not line for line in text.split("\n"))  # CRLF line ends
     assert "SUMMARY:Game night\\, round 2" in text  # commas are escaped as RFC 5545 asks
     assert "DESCRIPTION:Bring snacks\\; and games" in text
     assert "LOCATION:Santral Event Hall" in text
