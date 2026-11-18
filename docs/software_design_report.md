@@ -224,10 +224,12 @@ The tables follow the E-R diagram of the Requirement Analysis Report (section 3.
 | `event` | `CHECK (capacity >= 2)`, `CHECK (end_time > start_time)` | BR-04 |
 | `event` | Index on `(category, start_time)` and on `(facility_id, start_time)` | Fast search (NFR-02) and fast conflict check (UC-07) |
 | `event` | `status` default `'pending'`; `CHECK (status IN ('pending', 'rejected', 'open', 'full', 'completed', 'cancelled'))` | New events wait for review (UC-12, BR-15) |
-| `event` | `reviewed_by` FK → `user(id)`, nullable; `reviewed_at`; `CHECK (status <> 'rejected' OR rejection_reason <> '')` | Who decided and why (UC-12, BR-17) |
+| `event` | `reviewed_by` FK → `user(id)`, nullable; `reviewed_at`; `CHECK (status <> 'rejected' OR btrim(rejection_reason) <> '')` | Who decided and why (UC-12, BR-17); also the automatic rejection (BR-18) stores a reason |
 | `event` | Partial index on `(start_time) WHERE status = 'pending'` | Fast admin queue and expiry job (UC-12) |
+| `event` | `EXCLUDE USING gist (facility_id WITH =, tstzrange(start_time, end_time) WITH &&) WHERE (status IN ('pending', 'open', 'full'))`, extension `btree_gist` | No two active events in one facility at the same time, also under simultaneous requests (BR-06, BR-16). EXCLUDE compares rows of one table only, so event/block overlaps are checked in `FacilityService.check_bookable()` |
 | `event_participant` | Primary key `(event_id, user_id)` | A user joins an event once (BR-07) |
 | `facility` | `CHECK (capacity >= 2)`, `UNIQUE (name)` | UC-08 |
+| `facility_block` | `EXCLUDE USING gist (facility_id WITH =, tstzrange(start_time, end_time) WITH &&)` | Blocks of one facility do not overlap (BR-10) |
 
 Categories and interests are stored trimmed and in lower case (BR-14). All times are stored in UTC and shown in Europe/Istanbul. Schema changes are made only through Alembic migrations, which are reviewed in pull requests like any other code.
 
