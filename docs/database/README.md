@@ -144,7 +144,7 @@ Never change a table by hand and never edit a migration that is already on `main
 `alembic downgrade -1` undoes the last migration, `alembic current` shows the version of your database.
 
 ## Render (deployment, task 4.4)
-- `render.yaml` sets `DATABASE_URL` from the managed PostgreSQL 16 database. `db.py` turns the `postgresql://` address into `postgresql+psycopg://` so SQLAlchemy uses psycopg 3.
+- The managed PostgreSQL 16 database is defined in `render.yaml` (owner: Onur, see [docs/devops](../devops/README.md)); it gives the web service `DATABASE_URL` (`fromDatabase` → `connectionString`). `db.py` turns the `postgresql://` address into `postgresql+psycopg://` so SQLAlchemy uses psycopg 3.
 - A new database is empty: run `alembic upgrade head` and then `scripts/seed_db.py` once. The free database is deleted after 30 days; after creating a new one, run the same two commands again.
 - To run them from your own computer, put the *External Database URL* from the Render dashboard into `DATABASE_URL` for that one command only, not into a committed file.
 - Suggestion for task 4.4: new migrations can run on every deploy by starting the web service with `alembic upgrade head && gunicorn ...` (useful if the plan has no pre-deploy command). `alembic upgrade head` does nothing when the database is already up to date.
