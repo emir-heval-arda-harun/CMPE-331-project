@@ -163,8 +163,14 @@
       else { capacity.removeAttribute('max'); capacityHint.textContent = ''; }
     }
 
+    // While a date is typed digit by digit the field already holds dates like 0002-11-18; wait until the
+    // year is complete and the typing has paused, so the box loads once instead of on every key.
+    var timer = null;
+    function scheduleSoon() { clearTimeout(timer); timer = setTimeout(loadSchedule, 350); }
+    function completeDate(value) { return /^\d{4}-\d{2}-\d{2}$/.test(value) && +value.slice(0, 4) >= 2000; }
+
     function loadSchedule() {
-      if (!facility.value || !date.value) { checkTimes(); return; }
+      if (!facility.value || !completeDate(date.value)) { checkTimes(); return; }
       var url = '{{ url_for("events.facility_schedule") }}?facility_id=' + encodeURIComponent(facility.value) + '&date=' + encodeURIComponent(date.value);
       body.style.opacity = '.5';
       fetch(url, { credentials: 'same-origin' })
@@ -186,7 +192,7 @@
     function countCharacters() { counter.textContent = description.value.length + ' / ' + description.maxLength; }
 
     facility.addEventListener('change', function () { updateCapacity(); loadSchedule(); });
-    date.addEventListener('change', loadSchedule);
+    date.addEventListener('change', scheduleSoon);
     start.addEventListener('change', checkTimes);
     end.addEventListener('change', checkTimes);
     description.addEventListener('input', countCharacters);

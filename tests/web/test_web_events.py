@@ -37,7 +37,8 @@ def test_create_event_redirects_to_its_details_and_adds_the_organizer(client, st
     event = services.events.get_event(1)
     assert event.participant_ids == [student.id]
     assert event.category == "board games"  # normalized by the service
-    assert event.slot.start.hour == 18
+    assert event.slot.start.hour == 15  # typed 18:00 Istanbul time, sent to the service as 15:00 UTC
+    assert b"18:00" in client.get("/events/1").data  # and shown as 18:00 again
 
 
 def test_create_form_lists_facilities_with_capacity(client, student, hall):
@@ -152,7 +153,7 @@ def test_join_then_leave(client, student, hall, services):
     assert b"Leave event" in joined.data and b"Join event" not in joined.data
 
     left = client.post(f"/events/{event.id}/leave", follow_redirects=True)
-    assert b"You left the event." in left.data
+    assert b"You left" in left.data and left.request.path == f"/events/{event.id}"  # from the details page
     assert student.id not in event.participant_ids
 
 

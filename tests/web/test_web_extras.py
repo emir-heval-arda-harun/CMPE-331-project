@@ -3,6 +3,8 @@
 
 from datetime import date, datetime
 
+import pytest
+
 from campusevent.models import TimeSlot
 from campusevent.web import common
 from tests.web.conftest import make_user
@@ -41,6 +43,16 @@ def test_relative_day_labels():
     assert common.relative_day(datetime(2026, 11, 20, 9), today) == "In 3 days"
     assert common.relative_day(datetime(2026, 11, 16, 9), today) == "Yesterday"
     assert common.relative_day(datetime(2026, 11, 10, 9), today) == "7 days ago"
+
+
+def test_today_is_the_istanbul_date_even_when_the_server_runs_in_utc():
+    from datetime import timezone
+
+    late_night_utc = datetime(2026, 11, 19, 22, 30, tzinfo=timezone.utc)  # 01:30 on 20 Nov in Istanbul
+    assert common.campus_today(late_night_utc) == date(2026, 11, 20)
+    assert common.campus_today(datetime(2026, 11, 19, 20, 59, tzinfo=timezone.utc)) == date(2026, 11, 19)
+    # a 10:00 event on 20 Nov is "Today" for a student looking at it at 01:30, not "Tomorrow"
+    assert common.relative_day(datetime(2026, 11, 20, 10), common.campus_today(late_night_utc)) == "Today"
 
 
 # schedule box and suggestions --------------------------------------------------------------------
@@ -95,7 +107,9 @@ def test_add_to_calendar_downloads_an_ics_file(client, student, hall, services):
     assert "attachment" in response.headers["Content-Disposition"]
     text = response.data.decode()
     assert "BEGIN:VEVENT" in text and "END:VCALENDAR" in text
-    assert "DTSTART:20261120T180000" in text and "DTEND:20261120T190000" in text
+    # 18:00-19:00 Istanbul time, written in UTC form so every calendar shows the right moment
+    assert "DTSTART:20261120T150000Z" in text and "DTEND:20261120T160000Z" in text
+    assert all(line.endswith("\r") or not line for line in text.split("\n"))  # CRLF line ends
     assert "SUMMARY:Game night\\, round 2" in text  # commas are escaped as RFC 5545 asks
     assert "DESCRIPTION:Bring snacks\\; and games" in text
     assert "LOCATION:Santral Event Hall" in text
@@ -119,28 +133,23 @@ def test_only_the_organizer_gets_the_cancel_confirmation_window(client, student,
     assert b'id="cancel-modal"' not in client.get(f"/events/{other.id}").data
 
 
-# statuses this branch does not know yet (CR-01 / PR #8 adds "pending" and "rejected") ---------------
+# a status the UI does not know (a later change request could add one) -----------------------------
 
 
 def test_event_with_a_status_the_page_does_not_know_still_opens(client, student, hall, services):
     from enum import Enum
 
-    class FutureStatus(str, Enum):  # stands in for EventStatus.PENDING / REJECTED of PR #8
-        PENDING = "pending"
-        REJECTED = "rejected"
+    class FutureStatus(str, Enum):  # stands in for a status a later change request might add
+        ARCHIVED = "archived"
 
     organizer = make_user(services, "organizer@bilgiedu.net")
-    pending = services.events.create_event(organizer.id, "Waiting event", "chess", hall.id, slot(day=20), 4)
-    rejected = services.events.create_event(organizer.id, "Refused event", "chess", hall.id, slot(day=21), 4)
-    pending.status, rejected.status = FutureStatus.PENDING, FutureStatus.REJECTED
+    event = services.events.create_event(organizer.id, "Old event", "chess", hall.id, slot(day=20), 4)
+    event.status = FutureStatus.ARCHIVED
 
-    page = client.get(f"/events/{pending.id}")
+    page = client.get(f"/events/{event.id}")
     assert page.status_code == 200
-    assert b"Pending" in page.data and b"text-bg-info" in page.data
+    assert b"Archived" in page.data and b"text-bg-secondary" in page.data
     assert b"Join event" not in page.data  # only open events can be joined
-    refused = client.get(f"/events/{rejected.id}")
-    assert refused.status_code == 200
-    assert b"Rejected" in refused.data and b"text-bg-danger" in refused.data
 
 
 # find events ---------------------------------------------------------------------------------------
@@ -175,6 +184,38 @@ def test_category_shortcuts_filter_with_one_click(client, student):
     assert b"Clear all filters" not in client.get("/events").data
 
 
+def test_joined_event_card_has_a_leave_button_that_returns_to_the_same_list(client, student, hall, services):
+    organizer = make_user(services, "organizer@bilgiedu.net")
+    event = services.events.create_event(organizer.id, "Game night", "board games", hall.id, slot(day=20), 6)
+    client.post(f"/events/{event.id}/join")
+    page = client.get("/events?category=board+games").data
+    assert b"You joined" in page and f'action="/events/{event.id}/leave"'.encode() in page
+    assert b'name="next" value="/events?category=board+games"' in page
+
+    left = client.post(f"/events/{event.id}/leave", data={"next": "/events?category=board+games"})
+    assert left.status_code == 302 and left.headers["Location"] == "/events?category=board+games"
+    assert student.id not in event.participant_ids
+    assert b"Join" in client.get("/events?category=board+games").data
+
+
+def test_organizer_card_has_no_leave_button(client, student, hall, services):
+    client.post("/events/new", data={
+        "title": "Mine", "category": "chess", "facility_id": str(hall.id), "date": "2026-11-21",
+        "start": "10:00", "end": "11:00", "capacity": "4",
+    })
+    page = client.get("/events").data
+    assert b"You joined" in page and b"/events/1/leave" not in page  # the organizer cancels instead
+
+
+@pytest.mark.parametrize("target", ["https://evil.example/", "//evil.example/events", "/profile", r"/events?x=\evil", ""])
+def test_leave_never_redirects_outside_find_events(client, student, hall, services, target):
+    organizer = make_user(services, "organizer@bilgiedu.net")
+    event = services.events.create_event(organizer.id, "Game night", "board games", hall.id, slot(day=20), 6)
+    client.post(f"/events/{event.id}/join")
+    left = client.post(f"/events/{event.id}/leave", data={"next": target})
+    assert left.headers["Location"] == f"/events/{event.id}"  # unsafe or missing: the event page
+
+
 def test_event_cards_show_how_far_away_the_event_is(client, student, hall, services):
     organizer = make_user(services, "organizer@bilgiedu.net")
     services.events.create_event(organizer.id, "Game night", "board games", hall.id, slot(day=20), 6)
@@ -198,3 +239,26 @@ def test_signup_has_a_password_strength_guide(client):
 def test_footer_is_on_the_pages_after_login_only(client, student):
     assert b"<footer" in client.get("/events").data
     assert b"<footer" not in client.get("/login").data
+
+
+# time rule: services keep naive UTC, people see Istanbul time ---------------------------------------------
+
+
+def test_time_conversion_helpers_round_trip():
+    local = datetime(2026, 11, 21, 0, 30)
+    assert common.to_utc(local) == datetime(2026, 11, 20, 21, 30)  # Istanbul is UTC+3
+    assert common.to_campus(common.to_utc(local)) == local
+    assert common.campus_day_in_utc(date(2026, 11, 21)) == (datetime(2026, 11, 20, 21, 0), datetime(2026, 11, 21, 21, 0))
+
+
+def test_an_event_just_after_midnight_belongs_to_its_istanbul_day(client, student, hall, services):
+    organizer = make_user(services, "organizer@bilgiedu.net")
+    # 01:00 on 21 Nov in Istanbul is 22:00 on 20 Nov in UTC: the UTC date and the campus date differ
+    event = services.events.create_event(organizer.id, "Night owls", "chess", hall.id, slot(day=21, hour=1), 4)
+    assert event.slot.start == datetime(2026, 11, 20, 22, 0)
+
+    assert b"Night owls" in client.get("/events?date=2026-11-21").data  # date filter uses the campus day
+    assert b"Night owls" not in client.get("/events?date=2026-11-20").data
+    assert b"Busy: 01:00" in client.get(f"/events/schedule?facility_id={hall.id}&date=2026-11-21").data
+    assert b"Busy" not in client.get(f"/events/schedule?facility_id={hall.id}&date=2026-11-20").data
+    assert b"Saturday, 21 Nov 2026" in client.get(f"/events/{event.id}").data  # the details page shows the campus date
