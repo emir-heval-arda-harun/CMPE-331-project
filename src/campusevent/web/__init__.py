@@ -10,7 +10,7 @@ from flask_wtf.csrf import CSRFError, CSRFProtect
 
 from campusevent.app import CampusEventApp, create_app
 from campusevent.exceptions import CampusEventError
-from campusevent.web import admin_routes, auth_routes, common, event_routes, profile_routes
+from campusevent.web import admin_routes, auth_routes, common, event_routes, facility_routes, profile_routes
 
 csrf = CSRFProtect()
 
@@ -55,6 +55,7 @@ def create_web_app(services: CampusEventApp | None = None, config: dict | None =
     flask_app.register_blueprint(profile_routes.bp)
     flask_app.register_blueprint(event_routes.bp)
     flask_app.register_blueprint(admin_routes.bp)
+    flask_app.register_blueprint(facility_routes.bp)
 
     @flask_app.get("/")
     def index():

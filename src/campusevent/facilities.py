@@ -91,7 +91,7 @@ class FacilityService:
                 raise ValidationError("The block overlaps another block of this facility.")  # BR-10
             if any(e.slot.overlaps(slot) for e in self._events_during(facility_id, slot)):
                 # BR-06: an event and a block never share a slot. The event has to be cancelled first.
-                raise FacilityConflictError("An event is already booked in this time. Cancel it first.")
+                raise FacilityConflictError("An event is booked in this time, so it cannot be blocked.")
             block = self.facilities.add_block(FacilityBlock(facility_id, slot, reason), created_by=staff_id)
             self.uow.commit()
         except Exception:
