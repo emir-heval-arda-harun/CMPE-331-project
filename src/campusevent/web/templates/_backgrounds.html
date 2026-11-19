@@ -1,0 +1,134 @@
+{#- Animated dark backgrounds of the glass theme: "constellation" (default) or "aurora", chosen with the
+    BACKGROUND setting of the app. The body gets the class "bgfx bgfx-<name>". CSS only, except the
+    constellation, which draws on a canvas. Every animation stops for visitors who ask their system for
+    reduced motion, and the canvas pauses while the tab is hidden. Decorative only (aria-hidden). -#}
+{% macro styles() %}
+<style>
+  .bgfx .bg-orbs, .bgfx::before { display: none !important; }
+  .bgfx-layer { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; display: none; }
+  .site-footer { position: relative; z-index: 1; }
+
+
+  /* 1. Aurora: flowing bands of light over a night sky */
+  .bgfx-aurora { background: radial-gradient(1200px 700px at 50% 120%, #1b1250 0%, transparent 60%), #060b22 !important; }
+  .bgfx-aurora .fx-aurora { display: block; }
+  .fx-aurora span { position: absolute; width: 70vmax; height: 70vmax; border-radius: 45%; filter: blur(70px); opacity: .55;
+    mix-blend-mode: screen; will-change: transform; }
+  .fx-aurora span:nth-child(1) { top: -30vmax; left: -15vmax; background: conic-gradient(from 0deg, #22d3ee, #2563eb, #22d3ee);
+    animation: aurora-a 22s ease-in-out infinite alternate; }
+  .fx-aurora span:nth-child(2) { top: -25vmax; right: -25vmax; background: conic-gradient(from 90deg, #a855f7, #ec4899, #a855f7);
+    animation: aurora-b 28s ease-in-out infinite alternate; }
+  .fx-aurora span:nth-child(3) { bottom: -40vmax; left: 15vmax; background: conic-gradient(from 180deg, #10b981, #0ea5e9, #10b981);
+    opacity: .4; animation: aurora-c 34s ease-in-out infinite alternate; }
+  @keyframes aurora-a { to { transform: translate(18vmax, 10vmax) rotate(140deg) scale(1.15); } }
+  @keyframes aurora-b { to { transform: translate(-20vmax, 14vmax) rotate(-120deg) scale(1.1); } }
+  @keyframes aurora-c { to { transform: translate(10vmax, -18vmax) rotate(160deg) scale(1.2); } }
+
+
+  /* 2. Constellation: drifting points that join into a network (canvas below) */
+  .bgfx-constellation { background: radial-gradient(1000px 600px at 80% 0%, #1e3a8a 0%, transparent 60%),
+    radial-gradient(900px 600px at 0% 100%, #4c1d95 0%, transparent 60%), #0a1330 !important; }
+  .bgfx-constellation .fx-constellation { display: block; }
+  .fx-constellation canvas { width: 100%; height: 100%; display: block; }
+
+
+  @media (prefers-reduced-motion: reduce) { .bgfx-layer span { animation: none !important; } }
+
+</style>
+{% endmacro %}
+
+{% macro layers() %}
+<div class="bgfx-layer fx-aurora" aria-hidden="true"><span></span><span></span><span></span></div>
+<div class="bgfx-layer fx-constellation" aria-hidden="true"><canvas></canvas></div>
+{% endmacro %}
+
+{% macro scripts() %}
+<script>
+  (function () {
+    var DARK = { aurora: true, constellation: true };
+    var NAMES = ['aurora', 'constellation'];
+    var body = document.body;
+
+    function apply(name) {
+      NAMES.forEach(function (n) { if (n) { body.classList.remove('bgfx-' + n); } });
+      body.classList.remove('bgfx', 'bgfx-dark');
+      if (name) { body.classList.add('bgfx', 'bgfx-' + name); if (DARK[name]) { body.classList.add('bgfx-dark'); } }
+      if (name === 'constellation') { startConstellation(); }
+    }
+
+    // Constellation: points drift; points closer than about 130 px are joined by a line. The loop runs only
+    // while this background is chosen and the tab is visible.
+    var net = null;
+    function startConstellation() {
+      if (!net) { net = setupConstellation(); }
+      net.run();
+    }
+    function setupConstellation() {
+      var canvas = document.querySelector('.fx-constellation canvas');
+      var ctx = canvas.getContext('2d');
+      var still = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      var points = [], w = 0, h = 0, mouse = null, running = false;
+      function active() { return body.classList.contains('bgfx-constellation') && !document.hidden; }
+      function resize() {
+        var ratio = window.devicePixelRatio || 1;
+        w = canvas.clientWidth; h = canvas.clientHeight;
+        canvas.width = w * ratio; canvas.height = h * ratio; ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+        var count = Math.min(110, Math.round(w * h / 14000));
+        points = [];
+        for (var i = 0; i < count; i++) {
+          points.push({ x: Math.random() * w, y: Math.random() * h, vx: (Math.random() - .5) * .35, vy: (Math.random() - .5) * .35 });
+        }
+        draw();
+      }
+      function draw() {
+        ctx.clearRect(0, 0, w, h);
+        for (var i = 0; i < points.length; i++) {
+          var p = points[i];
+          for (var j = i + 1; j < points.length; j++) {
+            var q = points[j], dx = p.x - q.x, dy = p.y - q.y, d = dx * dx + dy * dy;
+            if (d < 17000) {
+              ctx.strokeStyle = 'rgba(148, 197, 255,' + (0.35 * (1 - d / 17000)) + ')'; ctx.lineWidth = 1;
+              ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y); ctx.stroke();
+            }
+          }
+          if (mouse) {
+            var mx = p.x - mouse.x, my = p.y - mouse.y, md = mx * mx + my * my;
+            if (md < 32000) {
+              ctx.strokeStyle = 'rgba(196, 181, 253,' + (0.55 * (1 - md / 32000)) + ')';
+              ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(mouse.x, mouse.y); ctx.stroke();
+            }
+          }
+          ctx.fillStyle = 'rgba(226, 238, 255, .85)';
+          ctx.beginPath(); ctx.arc(p.x, p.y, 1.8, 0, Math.PI * 2); ctx.fill();
+        }
+      }
+      function step() {
+        if (!active()) { running = false; return; }
+        for (var i = 0; i < points.length; i++) {
+          var p = points[i];
+          p.x += p.vx; p.y += p.vy;
+          if (p.x < 0 || p.x > w) { p.vx *= -1; }
+          if (p.y < 0 || p.y > h) { p.vy *= -1; }
+        }
+        draw();
+        requestAnimationFrame(step);
+      }
+      function run() {
+        if (running || !active()) { return; }
+        if (still) { draw(); return; }  // reduced motion: one still picture
+        running = true; requestAnimationFrame(step);
+      }
+      window.addEventListener('resize', resize);
+      window.addEventListener('mousemove', function (e) { mouse = { x: e.clientX, y: e.clientY }; });
+      document.addEventListener('visibilitychange', run);
+      resize();
+      return { run: run };
+    }
+
+    var chosen = body.getAttribute('data-background') || '';
+    if (NAMES.indexOf(chosen) < 0) { chosen = 'constellation'; }  // unknown setting: the default
+    apply(chosen);
+  })();
+</script>
+{% endmacro %}
+

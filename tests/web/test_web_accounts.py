@@ -34,11 +34,11 @@ def test_every_page_has_the_animated_background_that_stops_for_reduced_motion(cl
 def test_pages_after_login_have_the_hero_band_and_auth_pages_do_not(client, student):
     for path in ("/events", "/events/new", "/profile", "/activities", "/events/999"):
         page = client.get(path).data
-        assert b'<body class="app">' in page, path
+        assert b'<body class="app theme-glass"' in page, path  # every page after login uses the glass theme
         assert b'<div class="hero-bg"' in page, path
     for path in ("/login", "/signup"):
         page = client.get(path).data
-        assert b'<body class="auth">' in page, path
+        assert b'<body class="auth theme-glass"' in page, path
         assert b'<div class="hero-bg"' not in page, path
         assert b'class="hero-icons"' in page, path  # floating icons on the brand panel
 

@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_macros.html" import icon, date_badge, status_tag %}
+{% from "_macros.html" import date_panel, icon, date_badge, status_tag %}
 {% block title %}My Activities{% endblock %}
 {% block content %}
 <div class="page-head mb-3">
@@ -12,10 +12,7 @@
 <div class="d-grid gap-3 mb-4" id="my-requests">
   {% for item in requests %}
   <article class="card-soft event-card p-3 d-flex flex-wrap gap-3 align-items-center">
-    <div class="text-center">
-      {{ date_badge(item.start) }}
-      <div class="when-label mt-1">{{ item.start|when }}</div>
-    </div>
+    {{ date_panel(item.start, item.category) }}
     <div class="flex-grow-1" style="min-width: 0;">
       <a class="event-title" href="{{ url_for('events.event_details', event_id=item.id) }}">{{ item.title }}</a>
       {{ status_tag(item) }}
@@ -41,10 +38,7 @@
 <div class="d-grid gap-3">
   {% for row in rows %}
   <article class="card-soft event-card p-3 d-flex flex-wrap gap-3 align-items-center">
-    <div class="text-center">
-      {{ date_badge(row.start) }}
-      <div class="when-label mt-1">{{ row.start|when }}</div>
-    </div>
+    {{ date_panel(row.start, row.category) }}
     <div class="flex-grow-1" style="min-width: 0;">
       <a class="event-title" href="{{ url_for('events.event_details', event_id=row.event_id) }}">{{ row.title }}</a>
       <span class="pill ms-1">{{ row.category }}</span>

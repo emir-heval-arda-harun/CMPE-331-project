@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_macros.html" import csrf, status_tag, icon, date_badge, fill %}
+{% from "_macros.html" import date_panel, csrf, status_tag, icon, date_badge, fill %}
 {% block title %}Find Events{% endblock %}
 {% block content %}
 <div class="page-head d-flex flex-wrap justify-content-between align-items-end gap-2 mb-3">
@@ -58,10 +58,7 @@
 {% for event in events %}
 <article class="card-soft event-card mb-3">
   <div class="p-3 d-flex flex-wrap gap-3 align-items-start">
-    <div class="text-center">
-      {{ date_badge(event.start) }}
-      <div class="when-label mt-1">{{ event.start|when }}</div>
-    </div>
+    {{ date_panel(event.start, event.category) }}
     <div class="flex-grow-1" style="min-width: 0;">
       <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
         <a class="event-title" href="{{ url_for('events.event_details', event_id=event.id) }}">{{ event.title }}</a>

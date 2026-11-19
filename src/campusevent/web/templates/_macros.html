@@ -58,6 +58,17 @@
 <span class="brand-mark{{ ' brand-mark-light' if light }}">{{ icon('calendar', 22) }}</span>
 {% endmacro %}
 
+{# Coloured date tile of the event lists: weekday, day, month and "In 3 days". The colour follows the
+   category (same category = same colour), so a list is easy to scan. #}
+{% macro date_panel(dt, category='') %}
+<time class="date-panel accent-{{ category | accent }}" datetime="{{ dt.strftime('%Y-%m-%dT%H:%M') }}">
+  <span class="dp-wd">{{ dt.strftime('%a') }}</span>
+  <span class="dp-day">{{ dt.strftime('%d') }}</span>
+  <span class="dp-mon">{{ dt.strftime('%b') }}</span>
+  <span class="when-label dp-when">{{ dt|when }}</span>
+</time>
+{% endmacro %}
+
 {# Calendar-style date block for event cards. #}
 {% macro date_badge(dt) %}
 <div class="date-badge" aria-hidden="true"><span class="d-day">{{ dt.strftime('%d') }}</span><span class="d-mon">{{ dt.strftime('%b') }}</span></div>

@@ -16,6 +16,12 @@ python -m pytest tests/web
 ```
 The web tests use in-memory stand-ins for the services (`tests/web/fakes.py`), so they pass before the real backend exists. Once a real service is ready, run the same tests against it by replacing the fake in `make_fake_services`.
 
+## Look of the pages ("Glass Night")
+Every page uses one design: a dark animated background with frosted glass surfaces, the Inter typeface and an indigo-to-violet accent.
+- `templates/_theme_glass.html`: colours, surfaces, buttons, forms, badges and the sign up / log in pages. Text on the glass is at least 4.5:1 against its background (WCAG AA), measured on the brightest part of the background.
+- `templates/_backgrounds.html`: the animated background. `constellation` (default) or `aurora`, chosen with the `BACKGROUND` setting of the app. The animation stops for visitors who ask their system for reduced motion, and the constellation pauses while the tab is hidden.
+- Event lists show a coloured date tile (`date_panel` in `_macros.html`); its colour follows the category (`common.accent`), so events of one category look alike.
+
 ## Campus photo on the log in page
 The left side of the sign up and log in pages shows a drawn campus skyline. To show a photo instead, put one file named `campus.jpg` (or `.jpeg`, `.png`, `.webp`) into `src/campusevent/web/static/img/`. No code change is needed; a dark blue layer is put over it so the text stays readable. Use a landscape photo about 1600 px wide and under 400 KB. Only add a photo that you own or that you are allowed to use: the repository is public.
 
