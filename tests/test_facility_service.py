@@ -90,6 +90,12 @@ def test_capacity_must_be_a_whole_number_of_at_least_2(service, capacity):
         service.add_facility(STAFF, "Room", capacity)
 
 
+def test_smallest_capacity_and_longest_name_are_accepted(service):
+    facility = service.add_facility(STAFF, "x" * 100, 2)  # boundary values: capacity 2, name 100 characters
+
+    assert (len(facility.name), facility.capacity) == (100, 2)
+
+
 @pytest.mark.parametrize("name", ["", "   ", "x" * 101])
 def test_name_is_required_and_short(service, name):
     with pytest.raises(ValidationError):
