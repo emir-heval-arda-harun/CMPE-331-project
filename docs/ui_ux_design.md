@@ -3,6 +3,7 @@
 | Field | Value |
 |---|---|
 | Task | 2.3 UI/UX Design (owners: E. Arda & Emir; this version written by Emir) |
+| Version | 1.0, 20.11.2026 |
 | Status | Describes the web UI as built (PR #7, #14) with the visual refresh of PR #20 |
 | Builds on | [Requirements Specification](requirements_specification.md), [use cases](requirements/README.md), [early mockups](analysis/ui/README.md) of the Requirement Analysis Report, [Software Design Report](software_design_report.md) (layer 1) |
 | Code | [`src/campusevent/web/`](../src/campusevent/web/README.md) |
@@ -103,6 +104,19 @@ flowchart TD
 
 ### 4.3 Review requests (UC-12)
 The admin sees all waiting requests, soonest first, with everything needed for a decision on one card (title, category, time, facility, organizer, capacity, description). *Approve* takes one click. *Reject* opens a reason box; the reason is required (max. 500 characters) and is shown to the organizer.
+
+### 4.4 Sign up and first log in (UC-01, UC-02)
+```mermaid
+flowchart LR
+  A[Sign up<br/>name, university e-mail, password] -->|error| A
+  A --> B[Verify your e-mail<br/>6-digit code]
+  B -->|wrong or expired code| B
+  B --> C[Log in<br/>'Your e-mail address is verified.']
+  C -->|wrong e-mail or password| C
+  C -->|account not verified yet| B
+  C --> D[Start page of the role]
+```
+The e-mail address is not put into the address of the verify page, so it does not end up in server logs. After login every role starts on its own page (section 3).
 
 ## 5. Screens
 Screens of the student, then the admin. All screenshots are from the demo with the default background.
@@ -213,6 +227,18 @@ Cards 1.1 rem radius, buttons 0.75 rem, chips and badges fully rounded. Buttons 
 ### 6.5 Background
 An animated drawing of the **campus at night**: a clock tower with a working clock, a library dome and a lit stadium, windows that switch on and off, stars, a moon and **fireworks** over the campus. It shows that CampusEvent is about life on campus. It runs on a canvas; parts that do not move are drawn once and copied each frame, it pauses while the tab is hidden, and visitors who ask their system for reduced motion get one still picture. Three other looks (night, dusk, neon) can be chosen with the `BACKGROUND` setting.
 
+### 6.6 Alternatives considered
+The look was chosen step by step in the demo, by comparing working versions side by side:
+
+| Question | Options tried | Chosen | Why |
+|---|---|---|---|
+| Light or dark | Light cards on a light page (first build), dark glass | Dark glass | The light version looked "too white" and plain; glass gives depth while text stays readable |
+| Card surface | White cards, tinted cards, frosted glass | Frosted glass | Fits the dark background; contrast stays above 4.5:1 |
+| Background | Abstract animations (aurora, constellation lines), campus skyline (night, dusk, neon, festival) | Campus skyline with fireworks | It shows what the app is about (events on campus) instead of a decoration without meaning |
+| Date on event cards | Text line only, coloured date tile | Coloured date tile | The date is the first thing students look for; the category colour helps scanning |
+
+The rejected backgrounds were removed from the code to keep it small; the four campus looks stay selectable.
+
 ## 7. Interaction and feedback
 | Situation | Feedback |
 |---|---|
@@ -224,6 +250,23 @@ An animated drawing of the **campus at night**: a clock tower with a working clo
 | Dates | Relative labels ("Today", "Tomorrow", "In 3 days") next to the full date, counted in Istanbul time |
 | Waiting for approval | Note on the event page and a badge on My Activities; the slot is kept |
 | Expired form | "Your form has expired. Please try again." instead of an error code |
+
+### 7.1 Wording and formats
+- **Language:** English on every page (`lang="en"`), like the course documents.
+- **Tone:** short, friendly sentences in the second person ("Your request is sent."). No error codes or technical words on the page.
+- **Buttons** start with a verb and say what happens: *Join event*, *Create event*, *Withdraw request*, *Submit a corrected request*.
+- **Dates** as "20 Nov 2026" (on the event page "Friday, 20 Nov 2026"), with a relative label where it helps. **Times** in 24-hour format ("18:30"), always in Istanbul time; the services store UTC and the pages convert at the border.
+- **Forms** take dates as `YYYY-MM-DD` and times as `HH:MM` through the browser's date and time pickers.
+
+### 7.2 Empty states
+An empty page never stays blank; it explains why and offers the next step:
+
+| Page | Message | Next step |
+|---|---|---|
+| Find Events | "No events match your search." | *Create an event* |
+| My Activities, history | "No completed events yet." | *Find an event* |
+| Event Requests | "No requests are waiting." | – (new requests show up here) |
+| My Profile, interests | "No interests yet. Add at least one." | type or pick a suggestion |
 
 ## 8. Accessibility, responsiveness and browsers
 - **Contrast (WCAG 2.1 AA).** Every text colour was measured against the glass surface over the brightest part of the background: body text 7.5:1, muted text 5.1:1, labels 4.7:1, pills 5.9:1 (minimum 4.5:1). On the darkest part all values are above 8:1.
@@ -239,6 +282,7 @@ An animated drawing of the **campus at night**: a clock tower with a working clo
 - Event pages and lists show **names only**; e-mail addresses never appear in pages or calendar files (NFR-05).
 - Requests that are waiting or rejected are visible only to their organizer (waiting ones also to the admin on *Event Requests*); for other students they do not exist (404, BR-15).
 - Availability on My Profile is private ("Your availability is private").
+- The screenshots in this document use invented demo accounts and events; no real person's data is shown.
 
 ## 10. From the early mockups to the final design
 The [mockups of the analysis](analysis/ui/README.md) were low-fidelity and light. The built UI keeps their structure (same screens, same fields) and changes the following:
@@ -298,3 +342,5 @@ A task-based test with students who did not build the system (for example 5 stud
 | My Activities | UC-09, UC-12 (organizer) | NFR-05 |
 | Event Requests | UC-12 | NFR-04 |
 | Facility Management (task 3.6) | UC-07, UC-08 | NFR-04 |
+| Error page | – | NFR-04 (403 for pages of other roles) |
+| All pages | – | NFR-01 (360 px and up), NFR-07 (browsers) |
