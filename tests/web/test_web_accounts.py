@@ -174,7 +174,8 @@ def test_profile_saves_interests_and_availability(client, student, services):
     profile = services.profiles.get_profile(student.id)
     assert profile.interests == ["football", "board games"]
     assert len(profile.availability) == 1
-    assert profile.availability[0].start.hour == 17
+    assert profile.availability[0].start.hour == 14  # typed 17:00 Istanbul time, kept as 14:00 UTC
+    assert b'value="17:00"' in client.get("/profile").data  # and shown as 17:00 again
     assert b"football" in response.data  # shown again after saving
 
 

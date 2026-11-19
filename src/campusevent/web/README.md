@@ -1,12 +1,13 @@
 # Web UI (layer 1, task 3.5)
 
-Flask + Jinja2 + Bootstrap 5 pages for **UC-01 to UC-06 and UC-09 to UC-11**. The facility pages (UC-07, UC-08, task 3.6) are not part of this package yet; staff are redirected to `/facilities` after login.
+Flask + Jinja2 + Bootstrap 5 pages for **UC-01 to UC-06, UC-09 to UC-11 and UC-12** (admin review of event requests, change request CR-01). The facility pages (UC-07, UC-08, task 3.6) are not part of this package yet; staff are redirected to `/facilities` after login, admins to `/admin/requests`.
 
 | Blueprint | Pages | Use cases |
 |---|---|---|
 | `auth_routes` | `/signup`, `/verify`, `/login`, `/logout` | UC-01, UC-02 |
 | `profile_routes` | `/profile` | UC-03 |
-| `event_routes` | `/events`, `/events/new`, `/events/<id>`, `/events/<id>/join`, `/leave`, `/cancel`, `/activities` | UC-04, UC-05, UC-06, UC-09, UC-10, UC-11 |
+| `event_routes` | `/events`, `/events/new`, `/events/<id>`, `/events/<id>/join`, `/leave`, `/cancel`, `/activities` | UC-04, UC-05, UC-06, UC-09, UC-10, UC-11, organizer view of UC-12 |
+| `admin_routes` | `/admin/requests`, `/admin/requests/<id>/approve`, `/reject` | UC-12 |
 
 ## Run the tests
 ```bash
@@ -22,12 +23,14 @@ The left side of the sign up and log in pages shows a drawn campus skyline. To s
 - Presentation calls only service methods (design report, section 3.1). Services raise `CampusEventError` subclasses; `common.message_for` maps them to the messages of the use cases and `common.status_for` to HTTP codes.
 - Templates get view models with **names only, never e-mail addresses** (NFR-05).
 - CSRF token on every POST (Flask-WTF); session cookie is `Secure`, `HttpOnly`, `SameSite=Lax` (NFR-03). Set `SECRET_KEY` as an environment variable in production.
-- Role checks: `student_required` here **and** inside the services (NFR-04).
+- Role checks: `student_required` / `admin_required` here **and** inside the services (NFR-04).
+- **Times:** services and the database keep naive **UTC**; people see and type **Istanbul time** (UTC+3, no summer time). The UI converts only at the border, with `common.to_utc` / `slot_to_utc` before a service call and `to_campus` / `slot_to_campus` before a page shows a time. Methods that take a `day` work with a UTC day, so for the facility schedule the UI asks for both UTC days of the Istanbul day, and for the date filter it filters by Istanbul date itself. *Add to calendar* files are written in UTC (`…Z`).
+- Pending and rejected requests are visible only to their organizer; for other students they do not exist (404), because BR-15 keeps them out of the public list.
 - Bootstrap grid, checked at 375 px with no horizontal scrolling (NFR-01).
 
 ## What the UI needs from the backend
 Planned in the design report (class diagram 4.2) and used as they are:
-`AuthService.get_user(user_id)`, `register`, `verify_email`, `login`, `get_user_by_token`, `ProfileService.get_profile/update_profile`, `FacilityService.get_schedule`, `EventService.create_event/search_events/join_event/leave_event/cancel_event/get_activity_history`.
+`AuthService.get_user(user_id)`, `register`, `verify_email`, `login`, `get_user_by_token`, `ProfileService.get_profile/update_profile`, `FacilityService.get_schedule`, `EventService.create_event/search_events/join_event/leave_event/cancel_event/get_activity_history`, and from CR-01 `list_pending_events/approve_event/reject_event/list_my_requests`.
 
 **Not in the design report yet, but needed by the pages (please add):**
 

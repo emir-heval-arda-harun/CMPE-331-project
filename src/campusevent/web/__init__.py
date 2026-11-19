@@ -10,7 +10,7 @@ from flask_wtf.csrf import CSRFError, CSRFProtect
 
 from campusevent.app import CampusEventApp, create_app
 from campusevent.exceptions import CampusEventError
-from campusevent.web import auth_routes, common, event_routes, profile_routes
+from campusevent.web import admin_routes, auth_routes, common, event_routes, profile_routes
 
 csrf = CSRFProtect()
 
@@ -40,6 +40,13 @@ def create_web_app(services: CampusEventApp | None = None, config: dict | None =
         SESSION_COOKIE_SECURE=os.environ.get("SESSION_COOKIE_SECURE", "1") == "1",
     )
     flask_app.config.update(config or {})
+    if not os.environ.get("SECRET_KEY") and "SECRET_KEY" not in (config or {}):
+        # Each process then signs sessions with its own random key: users are logged out after a restart,
+        # and with several gunicorn workers a session made by one worker is refused by the others.
+        flask_app.logger.warning(
+            "SECRET_KEY is not set: using a random key for this process only. Sessions will not survive a "
+            "restart and break with more than one worker. Set SECRET_KEY in the environment (see .env.example)."
+        )
     flask_app.extensions["campusevent"] = services or create_app()
     csrf.init_app(flask_app)
     flask_app.jinja_env.filters["when"] = common.relative_day
@@ -47,12 +54,19 @@ def create_web_app(services: CampusEventApp | None = None, config: dict | None =
     flask_app.register_blueprint(auth_routes.bp)
     flask_app.register_blueprint(profile_routes.bp)
     flask_app.register_blueprint(event_routes.bp)
+    flask_app.register_blueprint(admin_routes.bp)
 
     @flask_app.get("/")
     def index():
-        if common.current_user() is None:
+        user = common.current_user()
+        if user is None:
             return redirect(url_for("auth.login"))
-        return redirect(url_for("events.find_events"))
+        return redirect(common.home_url(user))
+
+    @flask_app.get("/favicon.ico")
+    def favicon():
+        # Browsers ask for /favicon.ico even when the page links the SVG icon.
+        return redirect(url_for("static", filename="favicon.svg"), code=301)
 
     @flask_app.context_processor
     def inject_user():

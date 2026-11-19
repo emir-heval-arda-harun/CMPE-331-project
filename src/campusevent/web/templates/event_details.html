@@ -2,7 +2,7 @@
 {% from "_macros.html" import csrf, status_tag, icon, avatar, fill %}
 {% block title %}{{ event.title }}{% endblock %}
 {% block content %}
-<a class="small text-decoration-none d-inline-flex align-items-center gap-1 mb-3" href="{{ url_for('events.find_events') }}">&larr; Back to Find Events</a>
+{% if event.pending or event.rejected %}<a class="small text-decoration-none d-inline-flex align-items-center gap-1 mb-3" href="{{ url_for('events.my_activities') }}">&larr; Back to My Activities</a>{% else %}<a class="small text-decoration-none d-inline-flex align-items-center gap-1 mb-3" href="{{ url_for('events.find_events') }}">&larr; Back to Find Events</a>{% endif %}
 <div class="row g-3">
   <div class="col-12 col-lg-8">
     <div class="card-soft p-4">
@@ -12,6 +12,19 @@
         {% if event.active %}<span class="when-label">{{ event.start|when }}</span>{% endif %}
       </div>
       <h1 class="h3 mb-3" style="font-weight: 700; letter-spacing: -.02em;">{{ event.title }}</h1>
+      {% if event.pending %}
+      <div class="status-note pending mb-3" role="status">{{ icon('clock', 20) }}
+        <div><strong>Waiting for approval.</strong> An admin reviews your request before the event is listed and others can join. You get an e-mail with the decision. Until then the facility slot is kept for you.</div>
+      </div>
+      {% elif event.rejected %}
+      <div class="status-note rejected mb-3" role="status">{{ icon('alert', 20) }}
+        <div>
+          <strong>Your request was rejected.</strong>
+          {% if event.rejection_reason %}<div class="mt-1">Reason: {{ event.rejection_reason }}</div>{% endif %}
+          <a class="btn btn-sm btn-light border mt-2" href="{{ url_for('events.create_event', **resubmit) }}">Submit a corrected request</a>
+        </div>
+      </div>
+      {% endif %}
       <div class="row g-2">
         <div class="col-12 col-sm-6"><div class="info-tile">{{ icon('calendar', 22) }}<div><div class="label">Date</div><div class="value">{{ event.start.strftime('%A, %d %b %Y') }}</div></div></div></div>
         <div class="col-12 col-sm-6"><div class="info-tile">{{ icon('clock', 22) }}<div><div class="label">Time</div><div class="value">{{ event.start.strftime('%H:%M') }} – {{ event.end.strftime('%H:%M') }}</div></div></div></div>
@@ -61,9 +74,9 @@
         {% if event.can_cancel %}
         {# With JavaScript a confirmation window opens first; without it the browser asks. #}
         <form method="post" action="{{ url_for('events.cancel_event', event_id=event.id) }}" id="cancel-form">
-          {{ csrf() }}<button class="btn btn-outline-danger w-100" type="submit">Cancel event</button>
+          {{ csrf() }}<button class="btn btn-outline-danger w-100" type="submit">{{ 'Withdraw request' if event.pending else 'Cancel event' }}</button>
         </form>
-        <p class="small text-muted mb-0">As the organizer you cannot leave the event; cancel it instead.</p>
+        <p class="small text-muted mb-0">{{ 'You can withdraw the request while it waits for approval.' if event.pending else 'As the organizer you cannot leave the event; cancel it instead.' }}</p>
         {% endif %}
         {% if not (event.can_join or event.can_leave or event.can_cancel) %}
         <p class="small text-muted mb-0">No actions available for this event.</p>
@@ -88,11 +101,16 @@
     <div class="modal-content" style="border-radius: 1rem;">
       <div class="modal-body p-4 text-center">
         <span class="empty-icon mb-3" style="display: inline-flex; width: 3.4rem; height: 3.4rem; align-items: center; justify-content: center; border-radius: 50%; background: #fdecec; color: #b42318;">{{ icon('alert', 26) }}</span>
+        {% if event.pending %}
+        <h2 class="h5" id="cancel-modal-title">Withdraw "{{ event.title }}"?</h2>
+        <p class="text-muted mb-4">The admin will not review it and the facility slot becomes free again. This cannot be undone.</p>
+        {% else %}
         <h2 class="h5" id="cancel-modal-title">Cancel "{{ event.title }}"?</h2>
         <p class="text-muted mb-4">Participants can no longer join and the facility slot becomes free again. This cannot be undone.</p>
+        {% endif %}
         <div class="d-flex gap-2 justify-content-center">
-          <button type="button" class="btn btn-light border px-4" data-bs-dismiss="modal">Keep the event</button>
-          <button type="button" class="btn btn-danger px-4" id="cancel-confirm">Yes, cancel it</button>
+          <button type="button" class="btn btn-light border px-4" data-bs-dismiss="modal">{{ 'Keep the request' if event.pending else 'Keep the event' }}</button>
+          <button type="button" class="btn btn-danger px-4" id="cancel-confirm">{{ 'Yes, withdraw it' if event.pending else 'Yes, cancel it' }}</button>
         </div>
       </div>
     </div>

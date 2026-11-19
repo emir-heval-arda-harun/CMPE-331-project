@@ -54,6 +54,29 @@ def student_required(view):
     return wrapper
 
 
+def admin_required(view):
+    """Logged in and an admin (UC-12); the service layer checks the role again (NFR-04)."""
+
+    @wraps(view)
+    @login_required
+    def wrapper(user, *args, **kwargs):
+        if user.role != Role.ADMIN:
+            raise exc.PermissionDeniedError("Only admins can use this page.")
+        return view(user, *args, **kwargs)
+
+    return wrapper
+
+
+def home_url(user: User) -> str:
+    """First page after login: students find events, admins review requests, facility staff manage
+    facilities (task 3.6, not part of this UI yet)."""
+    if user.role == Role.ADMIN:
+        return url_for("admin.event_requests")
+    if user.role == Role.FACILITY_STAFF:
+        return "/facilities"
+    return url_for("events.find_events")
+
+
 def parse_date(value: str) -> date | None:
     value = (value or "").strip()
     if not value:
@@ -115,9 +138,45 @@ def free_slots(busy: list[TimeSlot], day: date, min_minutes: int = 60) -> list[T
     return gaps
 
 
+# Time rule of the team: services and the database work in naive UTC; people see and type Istanbul time.
+# The web UI converts at the border: form input -> to_utc before a service call, service output -> to_campus
+# before a page shows it. Turkey is UTC+3 all year (no summer time since 2016); a fixed offset needs no time
+# zone database, which Windows does not ship.
+CAMPUS_TZ = timezone(timedelta(hours=3), "+03")
+
+
+def to_utc(local: datetime) -> datetime:
+    """Campus (Istanbul) time typed by a user -> naive UTC for the services."""
+    return local.replace(tzinfo=CAMPUS_TZ).astimezone(timezone.utc).replace(tzinfo=None)
+
+
+def to_campus(utc: datetime) -> datetime:
+    """Naive UTC from a service -> campus (Istanbul) time for the pages."""
+    return utc.replace(tzinfo=timezone.utc).astimezone(CAMPUS_TZ).replace(tzinfo=None)
+
+
+def slot_to_utc(slot: TimeSlot) -> TimeSlot:
+    return TimeSlot(to_utc(slot.start), to_utc(slot.end))
+
+
+def slot_to_campus(slot: TimeSlot) -> TimeSlot:
+    return TimeSlot(to_campus(slot.start), to_campus(slot.end))
+
+
+def campus_day_in_utc(day: date) -> tuple[datetime, datetime]:
+    """A campus day as a naive UTC range [start, end): 21 Nov in Istanbul is 20 Nov 21:00 to 21 Nov 21:00 UTC."""
+    start = to_utc(datetime.combine(day, time.min))
+    return start, start + timedelta(days=1)
+
+
+def campus_today(now: datetime | None = None) -> date:
+    """Today's date on the campus. ``now`` is an aware datetime, only given by tests."""
+    return (now or datetime.now(timezone.utc)).astimezone(CAMPUS_TZ).date()
+
+
 def relative_day(value: datetime, today: date | None = None) -> str:
     """'Today', 'Tomorrow', 'In 3 days', '2 days ago' ... used as a small label next to dates."""
-    days = (value.date() - (today or date.today())).days
+    days = (value.date() - (today or campus_today())).days
     if days == 0:
         return "Today"
     if days == 1:
@@ -133,12 +192,13 @@ def _ics_text(value: str) -> str:
 
 def ics_for(uid: int, title: str, location: str, start: datetime, end: datetime, description: str = "") -> str:
     """A one-event iCalendar file (RFC 5545) that Google Calendar, Outlook and Apple Calendar can import.
-    Times are written as local times without a time zone, the same way the pages show them."""
+    ``start`` and ``end`` are naive UTC, as the services keep them, and are written in UTC form (with "Z"),
+    so every calendar shows the right moment in its own time zone (17:00 in Istanbul = 14:00Z)."""
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     lines = [
-        "BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//CampusEvent//CMPE 331//EN", "BEGIN:VEVENT",
-        f"UID:event-{uid}@campusevent", f"DTSTAMP:{stamp}",
-        f"DTSTART:{start.strftime('%Y%m%dT%H%M%S')}", f"DTEND:{end.strftime('%Y%m%dT%H%M%S')}",
+        "BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//CampusEvent//CMPE 331//EN", "CALSCALE:GREGORIAN",
+        "BEGIN:VEVENT", f"UID:event-{uid}@campusevent", f"DTSTAMP:{stamp}",
+        f"DTSTART:{start.strftime('%Y%m%dT%H%M%S')}Z", f"DTEND:{end.strftime('%Y%m%dT%H%M%S')}Z",
         f"SUMMARY:{_ics_text(title)}", f"LOCATION:{_ics_text(location)}",
     ]
     if description:

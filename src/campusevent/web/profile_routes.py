@@ -38,7 +38,7 @@ def my_profile(user):
         profile = profiles.get_profile(user.id)
         rows = [
             {"date": s.start.strftime("%Y-%m-%d"), "start": s.start.strftime("%H:%M"), "end": s.end.strftime("%H:%M")}
-            for s in profile.availability
+            for s in map(common.slot_to_campus, profile.availability)  # stored in UTC, shown in Istanbul time
         ]
         return render_template(
             "profile.html", interests="\n".join(profile.interests), rows=rows, categories=common.EVENT_CATEGORIES
@@ -47,7 +47,7 @@ def my_profile(user):
     interests = _interests_from_form()
     rows = _slot_rows_from_form()
     try:
-        slots = [common.parse_slot(r["date"], r["start"], r["end"]) for r in rows]
+        slots = [common.slot_to_utc(common.parse_slot(r["date"], r["start"], r["end"])) for r in rows]
         profiles.update_profile(user.id, interests, slots)
     except exc.CampusEventError as error:
         return render_template(
