@@ -19,7 +19,7 @@ The web tests use in-memory stand-ins for the services (`tests/web/fakes.py`), s
 ## Look of the pages ("Glass Night")
 Every page uses one design: a dark animated background with frosted glass surfaces, the Inter typeface and an indigo-to-violet accent.
 - `templates/_theme_glass.html`: colours, surfaces, buttons, forms, badges and the sign up / log in pages. Text on the glass is at least 4.5:1 against its background (WCAG AA), measured on the brightest part of the background.
-- `templates/_backgrounds.html`: the animated background. `constellation` (default) or `aurora`, chosen with the `BACKGROUND` setting of the app. The animation stops for visitors who ask their system for reduced motion, and the constellation pauses while the tab is hidden.
+- `templates/_backgrounds.html`: the animated background, the campus skyline (clock tower, library dome, stadium) drawn on a canvas. `campus-festival` (default, fireworks over the campus), `campus` (night), `campus-dusk` or `campus-neon`, chosen with the `BACKGROUND` setting of the app. Parts that do not move are drawn once and copied each frame. The animation pauses while the tab is hidden and shows one still picture for visitors who ask their system for reduced motion.
 - Event lists show a coloured date tile (`date_panel` in `_macros.html`); its colour follows the category (`common.accent`), so events of one category look alike.
 
 ## Campus photo on the log in page

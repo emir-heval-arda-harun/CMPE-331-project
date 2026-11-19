@@ -267,12 +267,12 @@ def test_an_event_just_after_midnight_belongs_to_its_istanbul_day(client, studen
 # animated backgrounds ----------------------------------------------------------------------------------------
 
 
-def test_every_page_has_the_animated_background_and_constellation_is_the_default(client, student, services):
+def test_every_page_has_the_campus_background_with_fireworks_by_default(client, student, services):
     page = client.get("/events").data
-    assert b'class="bgfx-layer fx-constellation"' in page and b'data-background="constellation"' in page
-    assert b"bg-switcher" not in page  # the comparison buttons of the demo are gone
+    assert b'class="bgfx-layer fx-campus"' in page and b'data-background="campus-festival"' in page
+    assert b'id="bg-switcher"' not in page  # the comparison buttons of the demo are gone
     client.post("/logout")
-    assert b'class="bgfx-layer fx-constellation"' in client.get("/login").data  # the log in page too
+    assert b'class="bgfx-layer fx-campus"' in client.get("/login").data  # the log in page too
 
-    other = create_web_app(services, {"TESTING": True, "SECRET_KEY": "t", "BACKGROUND": "aurora"})
-    assert b'data-background="aurora"' in other.test_client().get("/login").data  # still selectable by setting
+    other = create_web_app(services, {"TESTING": True, "SECRET_KEY": "t", "BACKGROUND": "campus-dusk"})
+    assert b'data-background="campus-dusk"' in other.test_client().get("/login").data  # another look by setting

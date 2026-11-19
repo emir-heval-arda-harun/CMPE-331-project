@@ -113,6 +113,7 @@
     .status-note svg { flex: none; margin-top: .1rem; }
     .status-note.pending { background: #e8f4fd; color: #0b4a6f; }
     .status-note.rejected { background: #fdecec; color: #7a1c14; }
+    .reject-reason { color: #7a1c14; }
     .empty-state { text-align: center; padding: 3rem 1rem; color: #64748b; }
     .empty-state .empty-icon { display: inline-flex; width: 3.6rem; height: 3.6rem; align-items: center; justify-content: center;
       border-radius: 50%; background: #e8efff; color: var(--ce-blue); margin-bottom: 1rem; }
@@ -229,7 +230,7 @@
   {% import "_theme_glass.html" as glass %}
   {{ glass.head() }}
 </head>
-<body class="{% block body_class %}app theme-glass{% endblock %}" data-background="{{ config.get('BACKGROUND', 'constellation') }}">
+<body class="{% block body_class %}app theme-glass{% endblock %}" data-background="{{ config.get('BACKGROUND', 'campus-festival') }}">
 <div class="bg-orbs" aria-hidden="true"><span></span><span></span><span></span></div>
 {% if 'theme-glass' in self.body_class().split() %}{{ bgfx.layers() }}{% endif %}
 {% from "_macros.html" import csrf, flashes, brand, floating_icons %}

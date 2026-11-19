@@ -21,7 +21,7 @@
         <span>{{ icon('pin', 16) }}{{ item.facility }}</span>
       </div>
       {% if item.rejected and item.rejection_reason %}
-      <div class="small mt-1" style="color: #7a1c14;">Reason: {{ item.rejection_reason }}</div>
+      <div class="small mt-1 reject-reason">Reason: {{ item.rejection_reason }}</div>
       {% endif %}
     </div>
     {% if item.rejected %}
