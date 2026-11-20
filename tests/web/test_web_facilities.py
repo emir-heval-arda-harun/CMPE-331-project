@@ -176,6 +176,24 @@ def test_schedule_shows_blocks_and_bookings_of_the_istanbul_day(client, services
     assert b"Nothing is blocked or booked on this day." in other_day
 
 
+def test_schedule_shows_no_organizer_names_or_e_mails(client, services, staff, court):
+    organizer = make_user(services, "deniz.organizer@bilgiedu.net", name="Deniz Organizer")
+    services.events.create_event(organizer.id, "Pickup game", "basketball", court.id, slot(day=20, hour=18), 6)
+    page = client.get(f"/facilities?facility={court.id}&date=2026-11-20").data.decode()
+    assert "Event: Pickup game" in page
+    assert "Deniz" not in page and "deniz.organizer" not in page  # NFR-05: only the public title
+
+
+
+def test_event_of_the_evening_before_is_not_on_the_next_day(client, services, staff, court):
+    organizer = make_user(services, "organizer@bilgiedu.net")
+    # 19 Nov 18:00 Istanbul is 15:00 UTC on 19 Nov; the page for 20 Nov also asks for UTC day 19 Nov.
+    services.events.create_event(organizer.id, "Evening game", "basketball", court.id, slot(day=19, hour=18), 6)
+    page = client.get(f"/facilities?facility={court.id}&date=2026-11-20").data
+    assert b"Evening game" not in page
+    assert b"Nothing is blocked or booked on this day." in page
+
+
 def test_cancelled_events_do_not_show_in_the_schedule(client, services, staff, court):
     organizer = make_user(services, "organizer@bilgiedu.net")
     event = services.events.create_event(organizer.id, "Pickup game", "basketball", court.id, slot(day=20, hour=18), 6)
