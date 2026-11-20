@@ -60,6 +60,13 @@ def test_interests_are_trimmed_lower_cased_and_kept_once(profiles, deniz):
     assert profiles.get_profile(deniz.id).interests == ["football", "board games", "chess"]
 
 
+def test_turkish_capital_i_becomes_a_plain_i(profiles, deniz):
+    saved = profiles.update_profile(deniz.id, ["İngilizce kulübü", "ingilizce kulübü", "İSTANBUL"], [])
+
+    assert saved.interests == ["ingilizce kulübü", "istanbul"]
+    assert "̇" not in "".join(saved.interests)  # no combining dot
+
+
 @pytest.mark.parametrize("interests", [[], ["", "   "], None])
 def test_at_least_one_interest_is_needed(profiles, deniz, interests):
     with pytest.raises(ValidationError, match="Add at least one interest"):
