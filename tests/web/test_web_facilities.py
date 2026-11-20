@@ -170,8 +170,8 @@ def test_schedule_shows_blocks_and_bookings_of_the_istanbul_day(client, services
     block(client, court, date="2026-11-20", start="01:00", end="02:00", reason="Cleaning")
     page = client.get(f"/facilities?facility={court.id}&date=2026-11-20").data.decode()
     assert "01:00 – 02:00" in page and "Blocked: Cleaning" in page
-    assert "18:00 – 19:00" in page and "Event booking" in page
-    assert page.index("Cleaning") < page.index("Event booking")  # sorted by time
+    assert "18:00 – 19:00" in page and "Event: Pickup game" in page
+    assert page.index("Cleaning") < page.index("Pickup game")  # sorted by time
     other_day = client.get(f"/facilities?facility={court.id}&date=2026-11-19").data
     assert b"Nothing is blocked or booked on this day." in other_day
 
@@ -181,10 +181,66 @@ def test_cancelled_events_do_not_show_in_the_schedule(client, services, staff, c
     event = services.events.create_event(organizer.id, "Pickup game", "basketball", court.id, slot(day=20, hour=18), 6)
     services.events.cancel_event(event.id, organizer.id)
     page = client.get(f"/facilities?facility={court.id}&date=2026-11-20").data
-    assert b"Event booking" not in page
+    assert b"Pickup game" not in page
 
 
 def test_wrong_facility_or_date_in_the_address(client, staff, court):
     assert client.get("/facilities?facility=99").status_code == 404
     assert client.get("/facilities?facility=abc").status_code == 400
     assert client.get(f"/facilities?facility={court.id}&date=yesterday").status_code == 400
+
+
+# UC-08 alt. 2b: remove a block (issue #19) ---------------------------------------------------------
+
+
+def test_each_block_has_a_remove_button_with_a_confirmation(client, staff, court, facilities):
+    block(client, court)
+    added = facilities.get_blocks(court.id, date(2026, 11, 20))[0]
+    page = client.get(f"/facilities?facility={court.id}&date=2026-11-20").data.decode()
+    assert f'action="/facilities/{court.id}/blocks/{added.id}/remove"' in page
+    assert 'data-block="09:00 – 12:00 (Physical education class)"' in page
+    assert "Remove this block?" in page and "Yes, remove it" in page
+
+
+def test_staff_removes_a_block(client, staff, court, facilities):
+    block(client, court)
+    added = facilities.get_blocks(court.id, date(2026, 11, 20))[0]
+    response = client.post(f"/facilities/{court.id}/blocks/{added.id}/remove")
+    assert response.status_code == 302
+    assert response.headers["Location"].endswith(f"/facilities?facility={court.id}&date=2026-11-20")
+    assert facilities.get_blocks(court.id, date(2026, 11, 20)) == []
+    page = client.get(response.headers["Location"]).data.decode()
+    assert "The block 20 Nov 2026, 09:00 – 12:00 (&#34;Physical education class&#34;) is removed." in page
+    assert "Nothing is blocked or booked on this day." in page
+
+
+def test_only_staff_can_remove_a_block(client, services, court, facilities):
+    block(client, court)
+    added = facilities.get_blocks(court.id, date(2026, 11, 20))[0]
+    client.post("/logout")
+    for email, role in (("student@bilgiedu.net", Role.STUDENT), ("admin@bilgi.edu.tr", Role.ADMIN)):
+        make_user(services, email, role)
+        log_in(client, email)
+        assert client.post(f"/facilities/{court.id}/blocks/{added.id}/remove").status_code == 403
+        client.post("/logout")
+    assert facilities.get_blocks(court.id, date(2026, 11, 20)) == [added]
+
+
+def test_removing_an_unknown_block_or_one_of_another_facility(client, staff, court, facilities):
+    other = facilities.add_facility(staff.id, "Tennis Court", 4)
+    block(client, court)
+    added = facilities.get_blocks(court.id, date(2026, 11, 20))[0]
+    assert client.post(f"/facilities/{court.id}/blocks/99/remove").status_code == 404
+    assert client.post(f"/facilities/{other.id}/blocks/{added.id}/remove").status_code == 404
+    assert facilities.get_blocks(court.id, date(2026, 11, 20)) == [added]
+
+
+def test_schedule_shows_event_titles_and_pending_requests(client, services, staff, court):
+    organizer = make_user(services, "organizer@bilgiedu.net")
+    services.events.create_event(organizer.id, "Pickup game", "basketball", court.id, slot(day=20, hour=18), 6)
+    services.events.auto_approve = False
+    services.events.create_event(organizer.id, "Chess club", "chess", court.id, slot(day=20, hour=20), 6)
+    page = client.get(f"/facilities?facility={court.id}&date=2026-11-20").data.decode()
+    assert "Event: Pickup game" in page
+    assert "Event: Chess club" in page and "(waiting for approval)" in page
+    assert "organizer@bilgiedu.net" not in page  # names of events only, never e-mail addresses (NFR-05)
