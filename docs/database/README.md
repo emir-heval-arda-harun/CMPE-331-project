@@ -131,7 +131,11 @@ class SqlFacilityRepository:
           raise FacilityConflictError("The facility is already booked at this time") from error
       raise
   ```
-- **Times.** PostgreSQL returns time-zone-aware datetimes in UTC; the tests build naive datetimes (`tests/helpers.slot`). Agree on one rule in task 3.2, for example: the domain uses naive UTC, and repositories convert read values with `value.astimezone(timezone.utc).replace(tzinfo=None)`.
+- **Times (team rule, agreed in #14).**
+  - **Services and the domain use naive UTC.** That covers models, services, the requirement tests (`tests/helpers.slot`) and every `Sql*Repository` method.
+  - **Repositories convert at the database.** They store `timestamptz` in UTC and turn every value they read back into naive UTC with `value.astimezone(timezone.utc).replace(tzinfo=None)`. See `_to_db` / `_from_db` in `facility_repository.py`.
+  - **Only the web UI uses Istanbul time.** It converts form input with `common.to_utc` before a service call, and service output with `common.to_campus` before a page shows it.
+  - **A `day` argument (`get_schedule`, `active_on`, `blocks_on`, …) means a UTC day.** The web UI asks for both UTC days of an Istanbul day.
 - **Wiring** (composition root `app.py`, task 3.2): `create_db_engine()` once, `create_scoped_session(engine)` once, pass that session to `SqlUnitOfWork` and every `Sql*Repository`, and call `session.remove()` at the end of each request (`teardown_appcontext` in Flask). The requirement tests keep using the in-memory versions and `InMemoryUnitOfWork`.
 
 ## Changing the schema
