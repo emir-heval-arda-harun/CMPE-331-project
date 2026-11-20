@@ -48,7 +48,7 @@ Planned in the design report (class diagram 4.2) and used as they are:
 | `AuthService.get_user` must raise `NotFoundError` for unknown ids | Participant and organizer names | Names are looked up per user id |
 
 **Known gaps (use case text asks for them, the current service interface cannot):**
-- "Send a new code" (UC-01): needs `AuthService.resend_code(email)`. The sign-up page has no resend button yet.
+- "Send a new code" (UC-01 5a, UC-02 3a): `AuthService.resend_code(email)` exists now (task 3.3); the verify and log in pages still need a button for it.
 - Time range filter (UC-05): `search_events` has no time parameter, so Find Events filters by keyword, category and date only.
 - "Upcoming" tab on My Activities (finding F-09 of the design report): needs a service method for events the user has joined that are still open.
 
