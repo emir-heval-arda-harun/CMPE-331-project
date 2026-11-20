@@ -1,4 +1,4 @@
-"""SqlUserRepository and AuthService.require_role against a real PostgreSQL database (task 3.2).
+"""SqlUserRepository and AuthService (UC-01, UC-02, require_role) against a real PostgreSQL database.
 
 Skipped without TEST_DATABASE_URL (see docs/database/README.md). These tests commit, so every user
 they create has an e-mail starting with PREFIX and is deleted again after the test.
@@ -6,15 +6,18 @@ they create has an e-mail starting with PREFIX and is deleted again after the te
 
 from __future__ import annotations
 
+from datetime import datetime, timedelta
+
 import pytest
 from sqlalchemy import delete
 
 from campusevent.auth import AuthService
 from campusevent.exceptions import DuplicateEmailError, NotFoundError, PermissionDeniedError
-from campusevent.models import Role, User
+from campusevent.models import Role, User, VerificationCode
 from campusevent.notifications import InMemoryEmailSender
 from campusevent.repositories.db import create_scoped_session
 from campusevent.repositories.tables import UserRow
+from campusevent.repositories.unit_of_work import SqlUnitOfWork
 from campusevent.repositories.user_repository import SqlUserRepository
 
 PREFIX = "user.test."
@@ -79,3 +82,66 @@ def test_require_role_with_sql_repository(repo, session):
     assert auth.require_role(admin.id, Role.ADMIN) == admin
     with pytest.raises(PermissionDeniedError):
         auth.require_role(student.id, Role.ADMIN)
+
+
+# --------------------------------------------------------------------------- #
+# UC-01 and UC-02
+# --------------------------------------------------------------------------- #
+def test_find_by_email_ignores_case_and_spaces(repo, session):
+    ali = repo.add(new_user("ali"), "argon2-hash")
+    session.commit()
+
+    assert repo.find_by_email(f"  {PREFIX}ALI@Bilgi.edu.tr ") == ali
+    assert repo.find_by_email(f"{PREFIX}nobody@bilgi.edu.tr") is None
+
+
+def test_password_hash_is_read_by_id(repo, session):
+    user = repo.add(new_user("ali"), "argon2-hash")
+    session.commit()
+
+    assert repo.get_password_hash(user.id) == "argon2-hash"
+    with pytest.raises(NotFoundError):
+        repo.get_password_hash(-1)
+
+
+def test_latest_code_is_the_last_one_saved_in_naive_utc(repo, session):
+    user = repo.add(new_user("ali", verified=False), "argon2-hash")
+    assert repo.get_latest_code(user.id) is None
+
+    expires = datetime(2026, 11, 20, 12, 15)
+    repo.save_code(user.id, "old-code-hash", expires)
+    new = repo.save_code(user.id, "new-code-hash", expires + timedelta(minutes=5))
+    session.commit()
+
+    latest = repo.get_latest_code(user.id)
+    assert latest == new == VerificationCode(new.id, user.id, "new-code-hash", datetime(2026, 11, 20, 12, 20), False)
+    assert latest.expires_at.tzinfo is None
+
+
+def test_mark_code_used_and_mark_verified(repo, session):
+    user = repo.add(new_user("ali", verified=False), "argon2-hash")
+    code = repo.save_code(user.id, "code-hash", datetime(2026, 11, 20, 12, 15))
+
+    repo.mark_code_used(code.id)
+    repo.mark_verified(user.id)
+    session.commit()
+
+    assert repo.get_latest_code(user.id).used is True
+    assert repo.get(user.id).is_verified is True
+
+
+def test_register_verify_and_login_with_postgresql(repo, session, fast_hasher):
+    sender = InMemoryEmailSender()
+    auth = AuthService(
+        ("bilgi.edu.tr",), sender, repo, uow=SqlUnitOfWork(session), hasher=fast_hasher, secret_key="test"
+    )
+    email = f"{PREFIX}ayse@bilgi.edu.tr"
+
+    user = auth.register(email, "S3cure-pass!", "Ayse")
+    with pytest.raises(DuplicateEmailError):
+        auth.register(email.upper(), "S3cure-pass!", "Ayse")
+    auth.verify_email(email, sender.codes[email])
+    token = auth.login(email, "S3cure-pass!")
+
+    assert auth.get_user_by_token(token) == User(user.id, email, "Ayse", Role.STUDENT, True)
+    assert session.get(UserRow, user.id).password_hash.startswith("$argon2id$")
