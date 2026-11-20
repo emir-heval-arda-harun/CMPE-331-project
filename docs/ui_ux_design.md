@@ -4,7 +4,7 @@
 |---|---|
 | Task | 2.3 UI/UX Design (owners: E. Arda & Emir; this version written by Emir) |
 | Version | 1.0, 20.11.2026 |
-| Status | Describes the web UI as built (PR #7, #14) with the visual refresh of PR #20 |
+| Status | Describes the web UI as built (PR #7, #14) with the visual refresh of PR #20 (all merged) |
 | Builds on | [Requirements Specification](requirements_specification.md), [use cases](requirements/README.md), [early mockups](analysis/ui/README.md) of the Requirement Analysis Report, [Software Design Report](software_design_report.md) (layer 1) |
 | Code | [`src/campusevent/web/`](../src/campusevent/web/README.md) |
 | Screens | [`docs/design/ui/`](design/ui/) (taken from the demo, `scripts/run_demo.py`, on 19.11.2026) |
@@ -283,6 +283,7 @@ An empty page never stays blank; it explains why and offers the next step:
 - Requests that are waiting or rejected are visible only to their organizer (waiting ones also to the admin on *Event Requests*); for other students they do not exist (404, BR-15).
 - Availability on My Profile is private ("Your availability is private").
 - The screenshots in this document use invented demo accounts and events; no real person's data is shown.
+- **Third-party files.** The Inter typeface is loaded from **Google Fonts** (`fonts.googleapis.com`, `fonts.gstatic.com`) and Bootstrap from **jsDelivr**. To deliver these files, the visitor's browser contacts those servers, so Google and jsDelivr can see the visitor's IP address and the time of the visit (no account data and no page content are sent). Under KVKK (NFR-05) this is a transfer of personal data to a third party. The simplest fix is to serve the font and Bootstrap files from our own `static/` folder; then no request leaves our server. Until then, the privacy notice of the deployed site should mention it. This is listed as an open point in section 12.
 
 ## 10. From the early mockups to the final design
 The [mockups of the analysis](analysis/ui/README.md) were low-fidelity and light. The built UI keeps their structure (same screens, same fields) and changes the following:
@@ -329,7 +330,7 @@ A task-based test with students who did not build the system (for example 5 stud
 | *Upcoming* list on My Activities | No service method for joined, still open events | Backend decision |
 | Remove a facility block | Not in UC-08 and not in the service | Issue #19 (Harun) |
 | Real Safari (Mac, iPhone) | Only WebKit on Windows was available | Check on a team member's device |
-| Inter from Google Fonts | Visitors' browsers contact Google | Serve the font files from `static/` if the team prefers |
+| Inter from Google Fonts, Bootstrap from jsDelivr | Visitors' browsers contact these servers (see 9) | Serve the files from `static/` before the final delivery, or mention it in the privacy notice |
 
 ## 13. Traceability
 | Screen | Use cases | NFR |
