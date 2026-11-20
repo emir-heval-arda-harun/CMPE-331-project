@@ -8,7 +8,7 @@ import secrets
 from flask import Flask, redirect, render_template, url_for
 from flask_wtf.csrf import CSRFError, CSRFProtect
 
-from campusevent.app import CampusEventApp, create_app
+from campusevent.app import CampusEventApp, create_app_from_env
 from campusevent.exceptions import CampusEventError
 from campusevent.web import admin_routes, auth_routes, common, event_routes, facility_routes, profile_routes
 
@@ -30,7 +30,8 @@ def create_web_app(services: CampusEventApp | None = None, config: dict | None =
     """Build the Flask app.
 
     ``services`` is the composition root of the application layer. Tests pass in-memory
-    services; production uses ``campusevent.app.create_app``.
+    services; production (``services`` left out) uses ``campusevent.app.create_app_from_env``, which
+    reads DATABASE_URL, SECRET_KEY and SMTP_* from the environment.
     """
     flask_app = Flask(__name__)
     flask_app.config.update(
@@ -47,7 +48,15 @@ def create_web_app(services: CampusEventApp | None = None, config: dict | None =
             "SECRET_KEY is not set: using a random key for this process only. Sessions will not survive a "
             "restart and break with more than one worker. Set SECRET_KEY in the environment (see .env.example)."
         )
-    flask_app.extensions["campusevent"] = services or create_app()
+    services = services or create_app_from_env()
+    flask_app.extensions["campusevent"] = services
+
+    @flask_app.teardown_appcontext
+    def end_request(error):
+        # One database session per request (Software Design Report 7.1): close it after every request.
+        end = getattr(services, "end_request", None)  # the fakes of the web tests may not have it
+        if end is not None:
+            end()
     csrf.init_app(flask_app)
     flask_app.jinja_env.filters["when"] = common.relative_day
     flask_app.jinja_env.filters["accent"] = common.accent
