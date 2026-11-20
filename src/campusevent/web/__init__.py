@@ -50,6 +50,7 @@ def create_web_app(services: CampusEventApp | None = None, config: dict | None =
     flask_app.extensions["campusevent"] = services or create_app()
     csrf.init_app(flask_app)
     flask_app.jinja_env.filters["when"] = common.relative_day
+    flask_app.jinja_env.filters["accent"] = common.accent
 
     flask_app.register_blueprint(auth_routes.bp)
     flask_app.register_blueprint(profile_routes.bp)

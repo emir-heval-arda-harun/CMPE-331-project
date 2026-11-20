@@ -174,6 +174,14 @@ def campus_today(now: datetime | None = None) -> date:
     return (now or datetime.now(timezone.utc)).astimezone(CAMPUS_TZ).date()
 
 
+ACCENT_COUNT = 6  # colours of the date tiles, see .accent-0 ... .accent-5 in base.html
+
+
+def accent(category: str) -> int:
+    """A stable colour number for a category: the same category always gets the same colour."""
+    return sum(map(ord, (category or "").strip().lower())) % ACCENT_COUNT
+
+
 def relative_day(value: datetime, today: date | None = None) -> str:
     """'Today', 'Tomorrow', 'In 3 days', '2 days ago' ... used as a small label next to dates."""
     days = (value.date() - (today or campus_today())).days

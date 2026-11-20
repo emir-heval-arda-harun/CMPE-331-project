@@ -75,6 +75,27 @@
       text-transform: uppercase; letter-spacing: .06em; padding: .1rem 0; order: -1; }
     .date-badge { display: flex; flex-direction: column; }
     .date-badge .d-day { font-size: 1.5rem; font-weight: 700; line-height: 1.5; color: var(--ce-navy); }
+    /* Date tile of the event lists (macro date_panel). The text column next to it keeps its place
+       instead of wrapping under the tile. */
+    .date-panel { flex: 0 0 6.5rem; align-self: stretch; display: flex; flex-direction: column; align-items: center;
+      justify-content: center; gap: .1rem; padding: .8rem .5rem; border-radius: .9rem; color: #fff; text-align: center;
+      background: var(--accent); box-shadow: 0 6px 16px -8px rgba(15, 23, 42, .45); }
+    .date-panel + div { flex: 1 1 14rem; min-width: 0; }
+    .dp-wd { font-size: .72rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; opacity: .92; }
+    .dp-day { font-size: 2.4rem; font-weight: 800; line-height: 1; letter-spacing: -.02em; }
+    .dp-mon { font-size: .8rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+    .date-panel .dp-when { margin-top: .4rem; background: rgba(255, 255, 255, .22); color: #fff; }
+    .accent-0 { --accent: linear-gradient(155deg, #2563eb, #1e3a8a); }
+    .accent-1 { --accent: linear-gradient(155deg, #0d9488, #134e4a); }
+    .accent-2 { --accent: linear-gradient(155deg, #7c3aed, #4c1d95); }
+    .accent-3 { --accent: linear-gradient(155deg, #ea580c, #7c2d12); }
+    .accent-4 { --accent: linear-gradient(155deg, #db2777, #831843); }
+    .accent-5 { --accent: linear-gradient(155deg, #16a34a, #14532d); }
+    @media (max-width: 575.98px) {
+      .date-panel { flex: 1 0 100%; flex-direction: row; justify-content: flex-start; gap: .55rem; padding: .55rem .9rem; }
+      .dp-day { font-size: 1.5rem; }
+      .date-panel .dp-when { margin: 0 0 0 auto; }
+    }
     .join-col { flex: 0 0 100%; }
     @media (min-width: 768px) { .join-col { flex: 0 0 auto; margin-left: auto; } }
     .fill-wrap { display: inline-flex; align-items: center; gap: .6rem; }
@@ -92,6 +113,7 @@
     .status-note svg { flex: none; margin-top: .1rem; }
     .status-note.pending { background: #e8f4fd; color: #0b4a6f; }
     .status-note.rejected { background: #fdecec; color: #7a1c14; }
+    .reject-reason { color: #7a1c14; }
     .empty-state { text-align: center; padding: 3rem 1rem; color: #64748b; }
     .empty-state .empty-icon { display: inline-flex; width: 3.6rem; height: 3.6rem; align-items: center; justify-content: center;
       border-radius: 50%; background: #e8efff; color: var(--ce-blue); margin-bottom: 1rem; }
@@ -203,9 +225,14 @@
     @media (max-width: 575.98px) { .auth-card { padding: 1.5rem 1.25rem; box-shadow: none; background: transparent; border: 0; }
       .auth-main { align-items: flex-start; padding-top: 2rem; background: rgba(255, 255, 255, .88); } }
   </style>
+  {% import "_backgrounds.html" as bgfx %}
+  {{ bgfx.styles() }}
+  {% import "_theme_glass.html" as glass %}
+  {{ glass.head() }}
 </head>
-<body class="{% block body_class %}app{% endblock %}">
+<body class="{% block body_class %}app theme-glass{% endblock %}" data-background="{{ config.get('BACKGROUND', 'campus-festival') }}">
 <div class="bg-orbs" aria-hidden="true"><span></span><span></span><span></span></div>
+{% if 'theme-glass' in self.body_class().split() %}{{ bgfx.layers() }}{% endif %}
 {% from "_macros.html" import csrf, flashes, brand, floating_icons %}
 {% block hero %}<div class="hero-bg" aria-hidden="true">{{ floating_icons() }}</div>{% endblock %}
 
@@ -256,7 +283,7 @@
 
 {% block footer %}
 <footer class="site-footer container py-4 d-flex flex-wrap justify-content-between gap-2 border-top mt-4">
-  <span>CampusEvent · CMPE 331 project</span>
+  <span>© 2026 CampusEvent</span>
   <span>Organize, find and join events on campus</span>
 </footer>
 {% endblock %}
@@ -289,6 +316,7 @@
     });
   })();
 </script>
+{% if 'theme-glass' in self.body_class().split() %}{{ bgfx.scripts() }}{% endif %}
 {% block scripts %}{% endblock %}
 </body>
 </html>
