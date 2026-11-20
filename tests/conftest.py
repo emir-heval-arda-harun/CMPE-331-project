@@ -2,6 +2,7 @@ import pytest
 
 from campusevent import create_app
 from campusevent.notifications import InMemoryEmailSender
+from campusevent.security import Argon2PasswordHasher
 
 
 @pytest.fixture
@@ -10,5 +11,12 @@ def email_sender():
 
 
 @pytest.fixture
-def app(email_sender):
-    return create_app(email_sender=email_sender)
+def fast_hasher():
+    """Still salted argon2id hashes (NFR-03), but with small cost settings: the tests register hundreds of
+    users, and the production settings take about 50 ms per hash."""
+    return Argon2PasswordHasher(time_cost=1, memory_cost=1024, parallelism=1)
+
+
+@pytest.fixture
+def app(email_sender, fast_hasher):
+    return create_app(email_sender=email_sender, password_hasher=fast_hasher)

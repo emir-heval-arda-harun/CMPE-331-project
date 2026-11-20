@@ -41,6 +41,21 @@ class User:
 
 
 @dataclass
+class VerificationCode:
+    """A one-time e-mail verification code (UC-01). Only its hash is stored; the code itself is only in
+    the e-mail. Only the latest code of a user counts, so sending a new code makes the older ones useless."""
+
+    id: int
+    user_id: int
+    code_hash: str
+    expires_at: datetime  # naive UTC, 15 minutes after sending
+    used: bool = False
+
+    def is_valid(self, now: datetime) -> bool:
+        return not self.used and now < self.expires_at
+
+
+@dataclass
 class Profile:
     user_id: int
     interests: list[str] = field(default_factory=list)  # free-text event categories
