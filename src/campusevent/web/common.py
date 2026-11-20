@@ -234,6 +234,7 @@ _STATUS = {
     exc.FacilityConflictError: 409,
     exc.EventFullError: 409,
     exc.AlreadyJoinedError: 409,
+    exc.EmailDeliveryError: 503,
 }
 
 
