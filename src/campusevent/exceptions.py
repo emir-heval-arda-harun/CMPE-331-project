@@ -47,3 +47,7 @@ class EventFullError(CampusEventError):
 
 class AlreadyJoinedError(CampusEventError):
     """The user is already a participant of the event."""
+
+
+class EmailDeliveryError(CampusEventError):
+    """The mail server could not be reached or refused the e-mail."""

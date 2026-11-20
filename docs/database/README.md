@@ -131,8 +131,12 @@ class SqlFacilityRepository:
           raise FacilityConflictError("The facility is already booked at this time") from error
       raise
   ```
-- **Times.** PostgreSQL returns time-zone-aware datetimes in UTC; the tests build naive datetimes (`tests/helpers.slot`). Agree on one rule in task 3.2, for example: the domain uses naive UTC, and repositories convert read values with `value.astimezone(timezone.utc).replace(tzinfo=None)`.
-- **Wiring** (composition root `app.py`, task 3.2): `create_db_engine()` once, `create_scoped_session(engine)` once, pass that session to `SqlUnitOfWork` and every `Sql*Repository`, and call `session.remove()` at the end of each request (`teardown_appcontext` in Flask). The requirement tests keep using the in-memory versions and `InMemoryUnitOfWork`.
+- **Times (team rule, agreed in #14).**
+  - **Services and the domain use naive UTC.** That covers models, services, the requirement tests (`tests/helpers.slot`) and every `Sql*Repository` method.
+  - **Repositories convert at the database.** They store `timestamptz` in UTC and turn every value they read back into naive UTC with `value.astimezone(timezone.utc).replace(tzinfo=None)`. See `_to_db` / `_from_db` in `facility_repository.py`.
+  - **Only the web UI uses Istanbul time.** It converts form input with `common.to_utc` before a service call, and service output with `common.to_campus` before a page shows it.
+  - **A `day` argument (`get_schedule`, `active_on`, `blocks_on`, …) means a UTC day.** The web UI asks for both UTC days of an Istanbul day.
+- **Wiring** (composition root `app.py`, done in task 3.2): `create_app(database_url=...)` makes the engine and the scoped session once, and passes that session to `SqlUnitOfWork` and every `Sql*Repository`; the web app calls `CampusEventApp.end_request()` (`session.remove()`) after each request (`teardown_appcontext`). Only `create_app_from_env()` (used by `create_web_app()` in production) reads `DATABASE_URL`, so the requirement tests keep using the in-memory versions and `InMemoryUnitOfWork` even if your `.env` has a `DATABASE_URL`. **When you add a `Sql*Repository`** (for example `SqlEventRepository`, task 3.4), create it in the `if database_url:` block of `create_app` with the same `session` and pass it to its service.
 
 ## Changing the schema
 Never change a table by hand and never edit a migration that is already on `main`. Instead:

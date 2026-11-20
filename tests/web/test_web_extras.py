@@ -6,7 +6,7 @@ from datetime import date, datetime
 import pytest
 
 from campusevent.models import TimeSlot
-from campusevent.web import common
+from campusevent.web import common, create_web_app
 from tests.web.conftest import make_user
 from tests.web.fakes import slot
 
@@ -262,3 +262,17 @@ def test_an_event_just_after_midnight_belongs_to_its_istanbul_day(client, studen
     assert b"Busy: 01:00" in client.get(f"/events/schedule?facility_id={hall.id}&date=2026-11-21").data
     assert b"Busy" not in client.get(f"/events/schedule?facility_id={hall.id}&date=2026-11-20").data
     assert b"Saturday, 21 Nov 2026" in client.get(f"/events/{event.id}").data  # the details page shows the campus date
+
+
+# animated backgrounds ----------------------------------------------------------------------------------------
+
+
+def test_every_page_has_the_campus_background_with_fireworks_by_default(client, student, services):
+    page = client.get("/events").data
+    assert b'class="bgfx-layer fx-campus"' in page and b'data-background="campus-festival"' in page
+    assert b'id="bg-switcher"' not in page  # the comparison buttons of the demo are gone
+    client.post("/logout")
+    assert b'class="bgfx-layer fx-campus"' in client.get("/login").data  # the log in page too
+
+    other = create_web_app(services, {"TESTING": True, "SECRET_KEY": "t", "BACKGROUND": "campus-dusk"})
+    assert b'data-background="campus-dusk"' in other.test_client().get("/login").data  # another look by setting

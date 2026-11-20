@@ -17,6 +17,12 @@ python -m pytest tests/web
 ```
 The web tests use in-memory stand-ins for the services (`tests/web/fakes.py`), so they pass before the real backend exists. Once a real service is ready, run the same tests against it by replacing the fake in `make_fake_services`.
 
+## Look of the pages ("Glass Night")
+Every page uses one design: a dark animated background with frosted glass surfaces, the Inter typeface and an indigo-to-violet accent.
+- `templates/_theme_glass.html`: colours, surfaces, buttons, forms, badges and the sign up / log in pages. Text on the glass is at least 4.5:1 against its background (WCAG AA), measured on the brightest part of the background.
+- `templates/_backgrounds.html`: the animated background, the campus skyline (clock tower, library dome, stadium) drawn on a canvas. `campus-festival` (default, fireworks over the campus), `campus` (night), `campus-dusk` or `campus-neon`, chosen with the `BACKGROUND` setting of the app. Parts that do not move are drawn once and copied each frame. The animation pauses while the tab is hidden and shows one still picture for visitors who ask their system for reduced motion.
+- Event lists show a coloured date tile (`date_panel` in `_macros.html`); its colour follows the category (`common.accent`), so events of one category look alike.
+
 ## Campus photo on the log in page
 The left side of the sign up and log in pages shows a drawn campus skyline. To show a photo instead, put one file named `campus.jpg` (or `.jpeg`, `.png`, `.webp`) into `src/campusevent/web/static/img/`. No code change is needed; a dark blue layer is put over it so the text stays readable. Use a landscape photo about 1600 px wide and under 400 KB. Only add a photo that you own or that you are allowed to use: the repository is public.
 
@@ -42,7 +48,7 @@ Planned in the design report (class diagram 4.2) and used as they are:
 | `AuthService.get_user` must raise `NotFoundError` for unknown ids | Participant and organizer names | Names are looked up per user id |
 
 **Known gaps (use case text asks for them, the current service interface cannot):**
-- "Send a new code" (UC-01): needs `AuthService.resend_code(email)`. The sign-up page has no resend button yet.
+- "Send a new code" (UC-01 5a, UC-02 3a): `AuthService.resend_code(email)` exists now (task 3.2); the verify and log in pages still need a button for it.
 - Time range filter (UC-05): `search_events` has no time parameter, so Find Events filters by keyword, category and date only.
 - "Upcoming" tab on My Activities (finding F-09 of the design report): needs a service method for events the user has joined that are still open.
 
