@@ -22,6 +22,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(ROOT))
 
+from campusevent.facilities import FacilityService  # noqa: E402
 from campusevent.models import Role  # noqa: E402
 from campusevent.web import create_web_app  # noqa: E402
 from tests.web.fakes import make_fake_services, slot  # noqa: E402  (slot: Istanbul time in, UTC out)
@@ -51,6 +52,9 @@ DEMO_ACCOUNTS = [
 
 def build_services():
     services = make_fake_services(auto_approve=False)  # new events wait for the admin, as in CR-01
+    # The real FacilityService (task 3.3) with the fake events, so the Facility Management page can add blocks.
+    services.facilities = FacilityService(services.auth, events=services.events)
+    services.events.facilities = services.facilities
     for email, name, role in DEMO_ACCOUNTS:
         services.auth.register(email, DEMO_PASSWORD, name, role)
         services.auth.verify_email(email, "123456")  # the fake e-mail sender always sends 123456
@@ -61,6 +65,7 @@ def build_services():
     hall = services.facilities.add_facility(staff.id, "Santral Event Hall", 50)
     court = services.facilities.add_facility(staff.id, "Main Court", 20)
     services.facilities.add_facility(staff.id, "Indoor Sports Hall", 30)
+    services.facilities.add_block(staff.id, court.id, slot(day=21, hour=9, hours=3), "Physical education class")
     services.facilities.add_facility(staff.id, "Study Room A", 8)
     games = services.events.create_event(
         organizer.id, "Board game night", "board games", hall.id, slot(day=20, hour=18), 8, "Bring your own games."

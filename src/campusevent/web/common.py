@@ -69,11 +69,11 @@ def admin_required(view):
 
 def home_url(user: User) -> str:
     """First page after login: students find events, admins review requests, facility staff manage
-    facilities (task 3.6, not part of this UI yet)."""
+    facilities (task 3.6)."""
     if user.role == Role.ADMIN:
         return url_for("admin.event_requests")
     if user.role == Role.FACILITY_STAFF:
-        return "/facilities"
+        return url_for("facilities.manage")
     return url_for("events.find_events")
 
 
@@ -172,6 +172,14 @@ def campus_day_in_utc(day: date) -> tuple[datetime, datetime]:
 def campus_today(now: datetime | None = None) -> date:
     """Today's date on the campus. ``now`` is an aware datetime, only given by tests."""
     return (now or datetime.now(timezone.utc)).astimezone(CAMPUS_TZ).date()
+
+
+ACCENT_COUNT = 6  # colours of the date tiles, see .accent-0 ... .accent-5 in base.html
+
+
+def accent(category: str) -> int:
+    """A stable colour number for a category: the same category always gets the same colour."""
+    return sum(map(ord, (category or "").strip().lower())) % ACCENT_COUNT
 
 
 def relative_day(value: datetime, today: date | None = None) -> str:

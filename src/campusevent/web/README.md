@@ -1,6 +1,6 @@
-# Web UI (layer 1, task 3.5)
+# Web UI (layer 1, tasks 3.5 and 3.6)
 
-Flask + Jinja2 + Bootstrap 5 pages for **UC-01 to UC-06, UC-09 to UC-11 and UC-12** (admin review of event requests, change request CR-01). The facility pages (UC-07, UC-08, task 3.6) are not part of this package yet; staff are redirected to `/facilities` after login, admins to `/admin/requests`.
+Flask + Jinja2 + Bootstrap 5 pages for **UC-01 to UC-06, UC-09 to UC-11 and UC-12** (admin review of event requests, change request CR-01). Facility staff manage facilities and blocked times on **Facility Management** (UC-07, UC-08, task 3.6). After login students go to `/events`, facility staff to `/facilities`, admins to `/admin/requests`.
 
 | Blueprint | Pages | Use cases |
 |---|---|---|
@@ -8,6 +8,7 @@ Flask + Jinja2 + Bootstrap 5 pages for **UC-01 to UC-06, UC-09 to UC-11 and UC-1
 | `profile_routes` | `/profile` | UC-03 |
 | `event_routes` | `/events`, `/events/new`, `/events/<id>`, `/events/<id>/join`, `/leave`, `/cancel`, `/activities` | UC-04, UC-05, UC-06, UC-09, UC-10, UC-11, organizer view of UC-12 |
 | `admin_routes` | `/admin/requests`, `/admin/requests/<id>/approve`, `/reject` | UC-12 |
+| `facility_routes` | `/facilities` (list, add facility, schedule of a day: `?facility=<id>&date=YYYY-MM-DD`), `/facilities/<id>/blocks` | UC-07, UC-08 (facility staff only) |
 
 ## Run the tests
 ```bash
@@ -15,6 +16,12 @@ pip install -r requirements-dev.txt
 python -m pytest tests/web
 ```
 The web tests use in-memory stand-ins for the services (`tests/web/fakes.py`), so they pass before the real backend exists. Once a real service is ready, run the same tests against it by replacing the fake in `make_fake_services`.
+
+## Look of the pages ("Glass Night")
+Every page uses one design: a dark animated background with frosted glass surfaces, the Inter typeface and an indigo-to-violet accent.
+- `templates/_theme_glass.html`: colours, surfaces, buttons, forms, badges and the sign up / log in pages. Text on the glass is at least 4.5:1 against its background (WCAG AA), measured on the brightest part of the background.
+- `templates/_backgrounds.html`: the animated background, the campus skyline (clock tower, library dome, stadium) drawn on a canvas. `campus-festival` (default, fireworks over the campus), `campus` (night), `campus-dusk` or `campus-neon`, chosen with the `BACKGROUND` setting of the app. Parts that do not move are drawn once and copied each frame. The animation pauses while the tab is hidden and shows one still picture for visitors who ask their system for reduced motion.
+- Event lists show a coloured date tile (`date_panel` in `_macros.html`); its colour follows the category (`common.accent`), so events of one category look alike.
 
 ## Campus photo on the log in page
 The left side of the sign up and log in pages shows a drawn campus skyline. To show a photo instead, put one file named `campus.jpg` (or `.jpeg`, `.png`, `.webp`) into `src/campusevent/web/static/img/`. No code change is needed; a dark blue layer is put over it so the text stays readable. Use a landscape photo about 1600 px wide and under 400 KB. Only add a photo that you own or that you are allowed to use: the repository is public.
