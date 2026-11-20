@@ -60,7 +60,8 @@ def _clean_interests(interests: list[str]) -> list[str]:
     for interest in interests or []:
         if not isinstance(interest, str):
             raise ValidationError("Interests must be text.")
-        interest = " ".join(interest.split()).lower()
+        # Turkish capital İ: str.lower() gives "i" + a combining dot, so map it to a plain "i" first.
+        interest = " ".join(interest.split()).replace("İ", "i").lower()
         if not interest or interest in cleaned:
             continue
         if len(interest) > INTEREST_MAX:
