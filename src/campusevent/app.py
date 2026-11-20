@@ -76,7 +76,7 @@ def create_app(
         secret_key=secret_key,
     )
     profile_service = ProfileService(auth, profiles, uow)
-    # EventRepository (task 3.6) is not written yet: until it is passed here as ``events``, no event
+    # EventRepository (task 3.4) is not written yet: until it is passed here as ``events``, no event
     # occupies a facility slot and EventService keeps its own data.
     facility_service = FacilityService(auth, facilities, uow=uow)
     events = EventService(auth, facility_service)
