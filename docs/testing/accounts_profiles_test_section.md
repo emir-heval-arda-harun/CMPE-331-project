@@ -26,14 +26,14 @@ The parts the instructor asked for on 17.11 are in their own files:
 |---|---|---|---|---|
 | Unit, accounts (`test_auth_accounts.py`) | 35 | 35 | 0 | local and CI |
 | Unit, roles (`test_auth_roles.py`) | 12 | 12 | 0 | local and CI |
-| Unit, profiles (`test_profiles.py`) | 17 | 17 | 0 | CI (the 17th, the Turkish İ test, was added after the local run) |
+| Unit, profiles (`test_profiles.py`) | 17 | 17 | 0 | local and CI |
 | Unit, wiring and mail (`test_wiring.py`, `web/test_web_wiring.py`) | 14 | 14 | 0 | local and CI |
-| Database, this section (`tests/db` without the facility file) | 52 | 52 | 0 | local PostgreSQL 16.16 (skipped in CI) |
+| Database, this section (`tests/db` without the facility file) | 52 | 52 | 0 | PostgreSQL 16.16, local and in the coverage run (skipped in normal CI) |
 | Requirement tests UC-01, UC-02, UC-03, NFR-03 | 12 | 12 | 0 | local and CI, with #23 and #24 |
 
-The whole `tests/db` folder (59 tests, including the 7 facility tests of that day) passed on the local PostgreSQL. The whole suite gave **302 passed, 36 failed**; all 36 failures are `NotImplementedError` from `EventService` (tasks 3.4 / 3.6), the same as in CI. `ruff check .` is clean.
+The whole `tests/db` folder (59 tests, including the 7 facility tests of that day) passed on PostgreSQL. The whole suite gave **303 passed, 36 failed**; all 36 failures are `NotImplementedError` from `EventService` (tasks 3.4 / 3.6), the same as in CI. `ruff check .` is clean.
 
-**Code coverage:** see the [coverage file](../tests/coverage/accounts-profiles.md#code-coverage).
+**Code coverage** of this section's code with all its suites on PostgreSQL: **95 %** (statements and branches). `app.py`, `security.py`, `profile_repository.py` and `unit_of_work.py` 100 %, `auth.py` and `user_repository.py` 96 %, `notifications.py` 93 %, `profiles.py` 90 %. Without a database, as in CI: 87 %. Details and the lines that are not covered: [coverage file](../tests/coverage/accounts-profiles.md#code-coverage).
 
 ## 3. Traceability
 The matrix (requirement → tests → code, with the result of each requirement) is in [`docs/tests/coverage/accounts-profiles.md`](../tests/coverage/accounts-profiles.md#traceability-matrix). Every step and alternative flow of UC-01, UC-02 and UC-03, BR-01, BR-02, BR-03 and BR-14, and the database rules of the design report have at least one passing test.
@@ -60,5 +60,6 @@ The matrix (requirement → tests → code, with the result of each requirement)
 - **Event part:** 36 requirement tests still stop at `EventService` (`NotImplementedError`). When task 3.4 is done, `SqlEventRepository` must be created in the `if database_url:` block of `create_app` with the same session, and the whole suite must be run on PostgreSQL.
 - **Order of interests:** the SQL repository returns interests in alphabetical order (the table has no position column); the in-memory one keeps the order the student typed. Pages must not depend on the order.
 - **Wrong code attempts:** there is no limit on wrong verification codes yet (6 digits, valid 15 minutes). Accepted for the demo; open as an issue for later (Harun's review of #23).
+- **Small coverage gaps:** a non-text interest, a slot that is not a `TimeSlot` and the rollback paths when a repository fails have no automated test yet (see the coverage file).
 - **CI has no database:** `tests/db` runs only on a computer with `TEST_DATABASE_URL`. A PostgreSQL service in CI would run it on every pull request (suggestion for task 3.7).
 - **On Render (task 4.4):** run `alembic upgrade head` (and `scripts/seed_db.py` for the demo users), set `SECRET_KEY` and the `SMTP_*` settings, and check once that a real verification code arrives and that the site is served only over HTTPS (NFR-03).

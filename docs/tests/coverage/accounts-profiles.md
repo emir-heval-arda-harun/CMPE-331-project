@@ -35,26 +35,37 @@ Requirement → rule → tests → code, with the result on 20.11.2026. Acc = `t
 **Requirements coverage:** 24 of 24 rows have passing tests (100 %). All 12 requirement tests of UC-01, UC-02, UC-03 and NFR-03 pass with #23 and #24.
 
 ## Code coverage
-Measured with coverage.py, statements **and** branches, all suites of this section on a local PostgreSQL 16:
+Measured on 20.11.2026 with coverage.py, statements **and** branches, all suites of this section (140 tests: 78 unit, 52 database, 10 requirement) on PostgreSQL 16.16. The run was on GitHub Actions with a PostgreSQL 16 service container, on a temporary branch with `main` + #23 + #24 (with the İ fix) + #25; all 140 tests passed.
 
 | File | Statements | Missed | Branches | Partial | Coverage |
 |---|---|---|---|---|---|
-| `src/campusevent/auth.py` | | | | | |
-| `src/campusevent/profiles.py` | | | | | |
-| `src/campusevent/security.py` | | | | | |
-| `src/campusevent/notifications.py` (`SmtpEmailSender`) | | | | | |
-| `src/campusevent/app.py` | | | | | |
-| `src/campusevent/repositories/user_repository.py` | | | | | |
-| `src/campusevent/repositories/profile_repository.py` | | | | | |
-| `src/campusevent/repositories/unit_of_work.py` | | | | | |
-| `src/campusevent/repositories/db.py` | | | | | |
-| **Total** | | | | | |
+| `src/campusevent/app.py` | 52 | 0 | 8 | 0 | **100 %** |
+| `src/campusevent/auth.py` | 157 | 6 | 42 | 2 | **96 %** |
+| `src/campusevent/security.py` | 17 | 0 | 0 | 0 | **100 %** |
+| `src/campusevent/profiles.py` | 50 | 5 | 18 | 2 | **90 %** |
+| `src/campusevent/notifications.py` | 51 | 3 | 8 | 1 | **93 %** |
+| `src/campusevent/repositories/user_repository.py` | 104 | 2 | 6 | 2 | **96 %** |
+| `src/campusevent/repositories/profile_repository.py` | 32 | 0 | 2 | 0 | **100 %** |
+| `src/campusevent/repositories/unit_of_work.py` | 28 | 0 | 2 | 0 | **100 %** |
+| `src/campusevent/repositories/db.py` | 22 | 4 | 6 | 0 | **79 %** |
+| **Total** | 513 | 20 | 92 | 7 | **95 %** |
+
+**Not covered:**
+- `auth.py`: the check for a role that is not a `Role` value (callers always pass a `Role`); the rollback when the repository fails while a new code is stored; a valid token of an account that was deleted after the log in; the branch that reuses the cached dummy hash.
+- `profiles.py`: the rollback when the repository fails during a save, an interest that is not text and a slot that is not a `TimeSlot`. The page never sends these; Emir checked the non-text case by hand in the review of #24. Tests for them are a small follow-up.
+- `notifications.py`: the e-mail for an approved event and the in-memory `send_event_decision` (event part, task 3.4; the mail for a rejected event is tested).
+- `user_repository.py`: the duplicate check of the in-memory repository (the service checks first) and passing on an `IntegrityError` of another constraint.
+- `repositories/db.py`: `get_database_url`, which only Alembic and `scripts/seed_db.py` use.
+
+**Without a database (like CI):** 87 %. The SQL repositories are then not run (`user_repository.py` 67 %, `profile_repository.py` 79 %, `unit_of_work.py` 77 %); the services and the wiring stay the same.
+
+**Other results of the same run:** all 59 `tests/db` tests and the 2 NFR-03 tests passed; the whole suite gave 303 passed, 36 failed (all `NotImplementedError` from `EventService`, tasks 3.4 / 3.6); `ruff check .` clean.
 
 ### How to measure
-Run on `main` with #23, #24 and #25, with `TEST_DATABASE_URL` set:
+With `main` + #23 + #24 + #25 and `TEST_DATABASE_URL` set (locally in `.env`):
 ```
 pip install coverage
 python -m coverage run --branch --source=src/campusevent -m pytest tests/test_auth_accounts.py tests/test_auth_roles.py tests/test_profiles.py tests/test_wiring.py tests/web/test_web_wiring.py tests/db/test_schema.py tests/db/test_unit_of_work.py tests/db/test_user_repository.py tests/db/test_profile_repository.py tests/db/test_app_with_database.py tests/test_uc01_register_and_verify.py tests/test_uc02_login.py tests/test_uc03_manage_profile.py
-python -m coverage report -m --include="*auth.py,*profiles.py,*security.py,*notifications.py,*app.py,*user_repository.py,*profile_repository.py,*unit_of_work.py,*repositories/db.py"
+python -m coverage report -m --include="*/campusevent/auth.py,*/campusevent/profiles.py,*/campusevent/security.py,*/campusevent/notifications.py,*/campusevent/app.py,*/repositories/user_repository.py,*/repositories/profile_repository.py,*/repositories/unit_of_work.py,*/repositories/db.py"
 ```
 Use `coverage run` as above, not `pytest --cov=<module>`: Harun found that pytest-cov with a module name makes the database tests fail inside SQLAlchemy (see the [facilities coverage file](facilities.md#how-to-measure)).
