@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import time
+
 from flask import Blueprint, flash, redirect, render_template, request, session, url_for
 
 from campusevent import exceptions as exc
@@ -44,6 +46,43 @@ def verify():
         )
     flash("Your e-mail address is verified. You can log in now.", "success")
     return redirect(url_for("auth.login"))
+
+
+RESEND_WAIT = 60  # seconds between two "Send a new code" requests from one browser (against e-mail flooding)
+RESEND_KEY = "resend_at"
+RESEND_SENT = (
+    "If this address belongs to an account that is not verified yet, a new code is on its way. "
+    "Codes sent before no longer work."
+)
+
+
+@bp.post("/verify/resend")
+def resend_code():
+    """UC-01 5a, UC-02 3a: send a new verification code.
+
+    The answer is the same for unknown, verified and unverified addresses (the service tells nothing either),
+    so the page cannot be used to find out who has an account."""
+    email = request.form.get("email", "").strip()
+    if not email:
+        return render_template(
+            "signup.html", step="verify", email="", error="Please enter your university e-mail address."
+        ), 400
+    now = time.time()
+    waited = now - float(session.get(RESEND_KEY, 0))
+    if 0 <= waited < RESEND_WAIT:
+        seconds = int(RESEND_WAIT - waited) + 1
+        return render_template(
+            "signup.html", step="verify", email=email,
+            error=f"A code was sent a moment ago. You can ask for another one in {seconds} seconds.",
+        ), 429
+    try:
+        common.services().auth.resend_code(email)
+    except exc.CampusEventError as error:  # for example the mail server cannot be reached
+        return render_template("signup.html", step="verify", email=email, error=common.message_for(error)), (
+            common.status_for(error)
+        )
+    session[RESEND_KEY] = now
+    return render_template("signup.html", step="verify", email=email, notice=RESEND_SENT)
 
 
 @bp.route("/login", methods=["GET", "POST"])

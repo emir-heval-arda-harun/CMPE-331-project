@@ -55,6 +55,14 @@ class FakeAuth:
         user.is_verified = True
         return user
 
+    def resend_code(self, email):
+        """Like AuthService.resend_code: a new code for an unverified account, nothing (and no error) otherwise."""
+        user = self._by_email(email)
+        if user is None or user.is_verified:
+            return
+        self.resent = getattr(self, "resent", 0) + 1
+        self.email_sender.send_verification_code(email, f"{654320 + self.resent}")  # the old code stops working
+
     def login(self, email, password):
         user = self._by_email(email)
         if user is None or self.passwords[user.id] != password:
