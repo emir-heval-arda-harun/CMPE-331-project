@@ -1,67 +1,69 @@
 # Software Testing Report – Web UI section (task 3.5)
 
-**Status:** draft section for the team's Software Testing Report (task 4.1, due 22.11.2026). It covers only the web UI of UC-01 to UC-06, UC-09 to UC-11 and UC-12 (admin review of event requests, CR-01). The backend, the facility pages (UC-07, UC-08) and the integration tests are written by the other team members and must be added to the full report.
+**Author:** Emir Gül · **Status:** section for the team's Software Testing Report (task 4.1: pull request to Yeşim by 25.11.2026, PDF on Learn by 29.11.2026) · **Date of the results:** 21.11.2026
+
+It covers the web UI (layer 1 of the [Software Design Report](../software_design_report.md), `src/campusevent/web/`) for UC-01 to UC-06, UC-09 to UC-11 and UC-12 (admin review of event requests, change request CR-01), with the design of the [UI/UX document](../ui_ux_design.md). The results below are for `main` together with PR #31 (*Send a new code*) and PR #22 (remove a block). The facility page (UC-07, UC-08) is in the [facilities section](facility_test_section.md); the services behind the pages are in the sections of their owners.
+
+The parts the instructor asked for on 17.11 are in their own files:
+- **Traceability matrix with code and requirements coverage:** [`docs/tests/coverage/web-ui.md`](../tests/coverage/web-ui.md)
+- **Non-functional tests and their results:** [`docs/tests/non-func-tests/web-ui.md`](../tests/non-func-tests/web-ui.md)
 
 ## 1. Scope and approach
-The web UI (`src/campusevent/web/`, layer 1 of the [Software Design Report](../software_design_report.md)) is tested through the Flask test client: each test sends the HTTP requests of a user and checks the status code, the redirect and the text of the page.
+| Level | What is tested | Test doubles | File | Run |
+|---|---|---|---|---|
+| Web UI | Every page through the Flask test client: status code, redirect, the text and the forms of the page, error messages, access rules, Istanbul time, privacy | In-memory stand-ins for the services, [`tests/web/fakes.py`](../../tests/web/fakes.py), that follow the interface of the class diagram (Design Report 4.2) and the rules of the use cases | `tests/web/test_web_accounts.py`, `test_web_events.py`, `test_web_admin.py`, `test_web_extras.py`, `test_web_resend_code.py`, `test_web_error_paths.py` | `python -m pytest tests/web` |
+| Web UI with real services | The pages against the real `AuthService` (task 3.2): sign up, verify, a new code | none for accounts | `test_works_with_the_real_auth_service` in `test_web_resend_code.py` | as above |
+| Browser | The pages in Firefox and WebKit (the engine of Safari) at 1280 px and 360 px: scripts, dialogs, layout, console errors | none (the demo, `scripts/run_demo.py`) | Playwright scripts, results in the [non-functional tests](../tests/non-func-tests/web-ui.md) | by hand |
 
-| Item | Decision |
-|---|---|
-| Test level | UI tests of layer 1 (routes, templates, error handling) |
-| Test doubles | In-memory stand-ins for the services, [`tests/web/fakes.py`](../../tests/web/fakes.py). They follow the planned service interface of the design report and the rules written in the use cases. |
-| Why doubles | On the date of writing the real services still raise `NotImplementedError`. The UI tests are independent of the backend. |
-| Tool | pytest 9, Flask test client |
-| Run | `python -m pytest tests/web` |
+**Why test doubles:** the pages were built before the services (tasks 3.2 to 3.4). The doubles let every page and every error message be tested from the start, and the web tests stay fast and need no database. **Limit:** a passing web test shows that the page works with a service that behaves like the use case text, not that the real service does. Since 20.11 the real `AuthService` and `ProfileService` are on `main`, and the requirement tests of UC-01 to UC-03 pass with them; for the events this check waits for task 3.4 (section 6).
 
-**Limit of this approach:** a passing UI test shows that the pages work with a service that behaves like the use case text. It does not show that the real service behaves that way. This must be checked in the integration tests (task 4.2), see section 5.
+**Tools:** pytest 9.2, Flask 3.1 test client, coverage.py 7.17 (branch coverage), Playwright 1.65 (Firefox, WebKit), ruff. CI (GitHub Actions) runs ruff and pytest on every push and pull request, so the web tests run on every change.
 
-## 2. Result (at the time of writing)
+## 2. Results
 | Suite | Tests | Passed | Failed |
 |---|---|---|---|
-| `tests/web` (this section) | 87 | 87 | 0 |
-| Requirement tests of the team (`tests/test_*.py`) | 51 | 0 | 51 (expected: the services are skeletons) |
+| Web UI tests of this section (6 files) | 116 | 116 | 0 |
+| All web tests (with the facility page, 26, and the composition root, 3) | 145 | 145 | 0 |
+| Requirement tests of UC-01, UC-02, UC-03 (`tests/test_uc01_*` to `test_uc03_*`) | 10 | 10 | 0 |
+| Requirement tests of UC-04 to UC-06, UC-09 to UC-12 and their NFR tests | 33 | 0 | 33, all `NotImplementedError` of `EventService` (task 3.4) |
 
-## 3. Traceability: use case to UI test
-The tests are in [`tests/web/test_web_accounts.py`](../../tests/web/test_web_accounts.py), [`tests/web/test_web_events.py`](../../tests/web/test_web_events.py) and, for UC-12, [`tests/web/test_web_admin.py`](../../tests/web/test_web_admin.py).
+**Code coverage** of the web UI of this section: **99 %** of statements and branches (498 statements, 90 branches); five of the six files are at 100 % or 99 %. Details and the two uncovered lines: [coverage file](../tests/coverage/web-ui.md#code-coverage).
 
-| Use case | Page | Tests |
-|---|---|---|
-| UC-01 Register and verify | `/signup`, `/verify` | `test_signup_shows_code_box_after_registration`, `test_signup_rejects_non_university_email`, `test_signup_rejects_duplicate_email`, `test_verify_with_correct_code_goes_to_login`, `test_verify_with_wrong_code_shows_error_and_keeps_form` |
-| UC-02 Log in | `/login`, `/logout` | `test_student_logs_in_and_lands_on_find_events`, `test_facility_staff_lands_on_facility_management`, `test_wrong_credentials_do_not_say_which_part_is_wrong`, `test_unverified_account_cannot_log_in_and_is_offered_the_code_page`, `test_pages_redirect_to_login_when_logged_out`, `test_logout_ends_the_session`, `test_login_and_signup_pages_have_a_show_password_button_and_no_main_navigation` |
-| UC-03 Manage profile | `/profile` | `test_profile_saves_interests_and_availability`, `test_profile_requires_one_interest`, `test_profile_rejects_slot_that_ends_before_it_starts` |
-| UC-04 Create event | `/events/new` | `test_create_event_redirects_to_its_details_and_adds_the_organizer`, `test_create_form_lists_facilities_with_capacity`, `test_create_form_offers_ready_made_categories_and_an_other_option`, `test_a_category_that_is_not_in_the_list_is_accepted`, `test_create_event_on_busy_slot_shows_message_and_the_busy_times`, `test_create_event_rejects_capacity_below_two_and_above_the_facility`, `test_create_event_rejects_bad_times_and_numbers`, `test_schedule_card_shows_free_facility` |
-| UC-05 Browse and filter | `/events` | `test_find_events_lists_open_events_soonest_first`, `test_find_events_suggests_categories_in_the_filter`, `test_find_events_filters_by_keyword_category_and_date`, `test_find_events_empty_result_offers_create_event`, `test_find_events_rejects_invalid_date`, `test_full_event_is_not_in_the_open_list` |
-| UC-06 Join event | `/events/<id>/join` | `test_join_then_leave`, `test_join_twice_shows_clear_message`, `test_join_full_event_shows_message`, `test_join_buttons_in_list_follow_the_rules` |
-| UC-09 Activity history | `/activities` | `test_activities_empty_state`, `test_activities_list_completed_events_newest_first` |
-| UC-10 Leave event | `/events/<id>/leave` | `test_join_then_leave`, `test_organizer_sees_cancel_but_not_leave_and_can_cancel` |
-| UC-11 Cancel event | `/events/<id>/cancel` | `test_organizer_sees_cancel_but_not_leave_and_can_cancel`, `test_only_the_organizer_can_cancel`, `test_organizer_withdraws_a_pending_request` |
-| UC-12 Review event requests | `/admin/requests`, `/approve`, `/reject`; organizer view on `/events/<id>` and `/activities` | `test_admin_lands_on_event_requests_after_login`, `test_only_admins_can_open_the_requests_page`, `test_a_student_cannot_approve_or_reject`, `test_requests_page_lists_pending_requests_soonest_first_without_e_mails`, `test_admin_approves_a_request_and_it_is_listed`, `test_admin_rejects_a_request_with_a_reason`, `test_rejection_without_a_reason_keeps_the_request_and_says_why`, `test_a_too_long_reason_is_refused_and_kept_in_the_box`, `test_a_request_that_is_no_longer_pending_cannot_be_reviewed_again`, `test_a_new_event_is_sent_for_review_and_not_listed`, `test_other_students_cannot_open_a_pending_or_rejected_request`, `test_organizer_sees_the_rejection_reason_and_can_submit_a_corrected_request`, `test_my_activities_lists_my_requests_in_every_status` |
+**Browser checks** (Firefox and WebKit, 1280 px and 360 px): all passed, no console errors, no horizontal scrolling. Details: [non-functional tests](../tests/non-func-tests/web-ui.md).
 
-The helper features (free time suggestions for UC-04 4a, the facility schedule box, "Add to calendar", pagination, category shortcuts, interest tags, the password guide) are tested in [`tests/web/test_web_extras.py`](../../tests/web/test_web_extras.py). Their scripts (schedule reload, overlap warning, cancel confirmation window, interest tags) were also tried by hand in the built-in browser on 17.11.2026.
+## 3. Traceability
+The [traceability matrix](../tests/coverage/web-ui.md#traceability-matrix) maps every step and alternative flow of the use cases of this section, the business rules (BR-01, BR-03, BR-04, BR-15), the team time rule and the NFRs to their tests and to the code. 30 of 30 rows have passing tests, and each of the 116 tests appears in the matrix.
 
-Every use case of this section has at least one test of the main flow. UC-01 to UC-06, UC-10, UC-11 and UC-12 also have tests of error or alternative flows. The automatic rejection of requests that are not reviewed before their start time (UC-12, BR-18) is done by the backend; the UI only shows the result as *Rejected*. UC-09 has a test for the empty list but no error flow.
+## 4. Test design
+- **One test per rule, named as a sentence** (`test_wrong_credentials_do_not_say_which_part_is_wrong`), so a failing test says which rule is broken.
+- **Main flow and alternative flows:** every use case has a test of its main flow; every alternative flow written in the use cases of this section has its own test, except the automatic expiry of UC-12, which is done by the backend (the page only shows *Rejected*). Three alternative flows (UC-04 1a, UC-10 1a, UC-11 1b) got their test while this matrix was written.
+- **Boundary values:** capacity 1 and a capacity far above the facility (UC-04, BR-04); a reason of 501 characters, one over the limit (UC-12); an event at 01:00 Istanbul time, which is 22:00 of the day before in UTC; a busy slot that lasts until closing time; the one-minute wait of *Send a new code* at 20 and 60 seconds.
+- **Equivalence classes:** for *Send a new code*, unknown, verified and unverified addresses must give the same page (NFR-05); for the *Leave* redirect, five kinds of addresses (another site, `//`, another page, a backslash, empty) must all return to Find Events.
+- **Negative tests for access** (NFR-04): every page of one role is opened with the other roles.
+- **Coverage as a check of the tests:** the coverage run found eight error paths without a test (section 5, defect 10).
 
-## 4. Non-functional requirements checked on the UI
-| NFR | What was checked | How | Result |
+## 5. Defects found while testing
+| # | Found by | Defect | Fix |
 |---|---|---|---|
-| NFR-01 Usability | Layout at phone width | Manual, 360 px wide in the built-in browser (Chromium), with demo data: Log in, Sign up (first step), Find Events, Create Event, My Profile, My Activities, Event Details. The page width was measured with `scrollWidth` and no element reached beyond the screen edge; the Create Event form was also looked at. | Passed for these 7 pages and the error page (404); measured again after the visual redesign of the pages on 17.11.2026 |
-| NFR-01 Usability | Sign-up code step, error pages, long titles and many participants at 360 px | – | **Not checked yet** |
-| NFR-03 Security | CSRF token on forms | `test_forms_are_protected_by_csrf_tokens` | Passed |
-| NFR-03 Security | Session cookie flags (`Secure`, `HttpOnly`, `SameSite=Lax`) | `test_session_cookie_is_secure_by_default` | Passed |
-| NFR-03 Security | HTTPS on the deployed site | – | **Not checked** (deployment is task 4.4) |
-| NFR-04 Access control | Staff cannot open student pages; only the organizer can cancel; only admins review requests; other students cannot see pending or rejected requests | `test_staff_cannot_open_student_pages`, `test_only_the_organizer_can_cancel`, `test_only_admins_can_open_the_requests_page`, `test_a_student_cannot_approve_or_reject`, `test_other_students_cannot_open_a_pending_or_rejected_request` | Passed |
-| NFR-05 Privacy | No e-mail address on event list and details | `test_event_details_never_show_email_addresses` | Passed |
-| Security (XSS) | Text typed by users is escaped | `test_text_in_events_is_escaped` | Passed |
-| NFR-07 Portability | Firefox (Gecko) and WebKit (Safari's engine), desktop 1280 px and phone 360 px | Automated walk-through with Playwright on 17.11.2026 against the demo (`scripts/run_demo.py`): sign up password guide, log in, category shortcut, schedule reload, overlap warning, free slot button, create event, cancel confirmation window, Add to calendar, interest tags; console errors and horizontal scrolling recorded | Passed in both browsers and both sizes; no console errors, no horizontal scrolling |
-| NFR-07 Portability | CR-01 pages (Event Requests, pending and rejected requests, withdraw) in Firefox and WebKit, desktop 1280 px and phone 360 px | Automated walk-through with Playwright on 18.11.2026 against the demo: student sends two requests, admin lands on Event Requests, empty reason is blocked, reject with a reason, approve, organizer sees the reason on My Activities and on the event page, the corrected-request form is prefilled, withdraw through the confirmation window, favicon; console errors and horizontal scrolling recorded | Passed: 31 checks in Firefox, 30 in WebKit (one step needs data that the first size already used); no console errors, no horizontal scrolling |
-| NFR-07 Portability | Chromium (Chrome, Edge) | Built-in browser of the development tool (Chromium) for all pages; Edge only for the log in page | Passed |
-| NFR-07 Portability | Safari itself on macOS and iOS | – | **Not checked.** WebKit on Windows is the closest available test; a check on a Mac or an iPhone is still open. Note: WebKit on Windows shows the empty date filter without a date hint |
+| 1 | Web test of UC-12 | When an admin decided a request that was no longer waiting, the error was attached to a card that was no longer in the list, so it was not shown | Errors for requests that left the list are shown above the list (`general_errors`, PR #14) |
+| 2 | Web test of BR-15 | Joining a waiting or rejected request of someone else gave 400 and showed that it exists | 404, like opening it (`_visible_event`, PR #14) |
+| 3 | Web test with the server clock in UTC | Between 00:00 and 03:00 Istanbul time, "Today" and "Tomorrow" were one day off | "Today" is taken from the Istanbul clock (`campus_today`, PR #14) |
+| 4 | Team review of the time rule | Calendar files had no time zone, so calendars outside Turkey showed the wrong hour | Times are written in UTC with `Z` (PR #14) |
+| 5 | Browser, network log | Typing a date into Create Event loaded the schedule for the years 0002, 0020, 0202 | The schedule loads only for a complete date, with a short pause (PR #14) |
+| 6 | Browser, console | Every page asked for `/favicon.ico` and got 404 | Favicon and a redirect (PR #14) |
+| 7 | Contrast measurement after the Glass Night design | Muted text 4.1:1 and field labels 2.7:1 on the brightest part of the background (WCAG AA needs 4.5:1) | Darker glass and lighter text: every text colour at least 4.5:1 (PR #20) |
+| 8 | Browser check of My Activities | The rejection reason was dark red on dark glass | Own class with a readable colour (PR #20) |
+| 9 | Review of the facility page after the design change | The facility names were dark text on the dark glass | Glass colours for the facility list (PR #28) |
+| 10 | Coverage measurement (97 % at first) | Eight error and edge paths had no test: start page for visitors, unknown address, unexpected error, a refused session token, approving a request that is no longer waiting, a busy slot until closing time, a deleted participant, a calendar file without description | Tests added (`test_web_error_paths.py`); all passed at once, so the code was right; coverage 99 % |
 
-## 5. Open items and risks
+Defects found by this section in the code of others: the Turkish capital *İ* in interests (review of #24, Heval) and the *Remove* button contrast (review of #22, Harun); they are listed in those sections.
+
+## 6. Limits and what integration testing (task 4.2) must check
 | # | Item | Owner of the next step |
 |---|---|---|
-| 1 | Run the UI against the real services as soon as they exist and fix differences (integration test, task 4.2) | All |
-| 2 | The UI needs three service methods that are not in the design report: `EventService.get_event`, `FacilityService.list_facilities`, `AuthService.get_user` raising `NotFoundError` ([details](../../src/campusevent/web/README.md)) | Backend owners (Heval, E. Arda, Harun) |
-| 3 | Missing features because the service interface cannot do them: resend verification code (UC-01), time range filter (UC-05), "Upcoming" tab on My Activities (F-09). Free slot suggestions (UC-04 4a) are now done in the UI, with assumed opening hours 08:00–22:00 | Team decision |
-| 4 | Check the pages on a real Safari (Mac or iPhone) (NFR-07) and the remaining 360 px cases of NFR-01 | Web UI owner |
-| 5 | Add a GitHub Actions run for `tests/web` (CI, task 3.7) | Onur |
+| 1 | Run the event pages (Find Events, Create Event, Event Details, join, leave, cancel, My Activities, Event Requests) against the real `EventService` as soon as task 3.4 is merged, and fix any difference | Emir with E. Arda |
+| 2 | `EventService.get_event(event_id)` is used by the pages but is not in the class diagram ([details](../../src/campusevent/web/README.md)) | E. Arda (task 3.4) |
+| 3 | Check the deployed site on Render (HTTPS, NFR-03; real e-mails for the codes) after the database wiring (#25, #27) | Onur, Emir |
+| 4 | Safari itself on a Mac or an iPhone (NFR-07); WebKit on Windows is the closest test available | Web UI owner, on a team member's device |
+| 5 | Features the service interface cannot do yet: time range filter (UC-05), an *Upcoming* list on My Activities | Team decision |
+| 6 | SonarQube analysis of the whole repository (`docs/tests/quality`) | Team |
