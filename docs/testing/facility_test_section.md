@@ -59,6 +59,8 @@ The matrix (requirement → tests → code, with the result of each requirement)
 | 5 | Manual test at 375 px | On a phone the schedule was below the *Add a facility* form, so choosing a facility seemed to do nothing | Facility links jump to the schedule (`#schedule`) |
 | 6 | Review of the page by Emir (issue #19) | A block added by mistake could not be removed, and the schedule showed only "Booked" without the event | Remove button with confirmation (UC-08 alt. 2b) and event titles in the schedule (PR #22) |
 | 7 | Coverage measurement | `pytest --cov=<module>` broke the database tests (`'InternalTraversal' object is not callable` inside SQLAlchemy) | Tool problem, not code: coverage is measured with `coverage run --source=src/campusevent -m pytest` (see the coverage file) |
+| 8 | Review of #22 by Emir (Firefox and WebKit) | After the Glass Night theme (#20), the *Remove* button on the light yellow block row had a contrast of 1.7:1 (WCAG AA needs 4.5:1) | The button has its own colour `#b91c1c` on the block row: 5.9:1, measured in the demo (PR #22) |
+| 9 | Emir, after the Glass Night theme | The facility names in the list were dark text on the dark glass and could hardly be read | Glass colours for the facility list in `_theme_glass.html` (Emir's PR #28) |
 
 ## 6. Limits and what integration testing (task 4.2) must check
 - The unit tests use stand-ins for `AuthService` and the event repository. After task 3.4: run the 3 waiting requirement tests of section 2 with the real services, and check that the real `EventRepository.active_on` returns pending, open and full events that overlap the UTC day.
