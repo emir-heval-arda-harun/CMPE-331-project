@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, icon %}
+{% block title %}Facility Management{% endblock %}
+{% block content %}
+<style>
+  .facility-list .list-group-item { display: flex; justify-content: space-between; align-items: center; gap: .75rem;
+    border: 0; border-radius: .7rem !important; margin-bottom: .25rem; background: transparent; color: #0f172a; }
+  .facility-list .list-group-item:hover { background: #eef3ff; }
+  .facility-list .list-group-item.active { background: var(--ce-blue); color: #fff; }
+  .facility-list .list-group-item.active .text-muted { color: rgba(255, 255, 255, .8) !important; }
+  .slot-row { display: flex; gap: .75rem; align-items: flex-start; padding: .7rem .9rem; border-radius: .7rem; }
+  .slot-row svg { flex: none; margin-top: .15rem; }
+  .slot-row.block { background: #fff4d6; color: #6b4e00; }
+  .slot-row.event { background: #fdecec; color: #7a1c14; }
+  .slot-time { font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .slot-label { min-width: 0; overflow-wrap: anywhere; }
+</style>
+<div class="page-head mb-3">
+  <h1 class="h3 mb-1">Facility Management</h1>
+  <p class="text-muted mb-0">Add campus facilities and block the times they cannot be booked, for example for classes or maintenance.</p>
+</div>
+
+<div class="row g-3">
+  {# ------------------------------------------------------------------ facilities #}
+  <div class="col-12 col-lg-4">
+    <section class="card-soft p-3 mb-3" aria-labelledby="facilities-title">
+      <h2 class="section-title mb-2" id="facilities-title">Facilities</h2>
+      {% if facilities %}
+      <div class="list-group facility-list">
+        {% for facility in facilities %}
+        <a class="list-group-item list-group-item-action {{ 'active' if selected and facility.id == selected.id }}"
+           href="{{ url_for('facilities.manage', facility=facility.id, date=day.isoformat()) }}#schedule"
+           {{ 'aria-current="true"' | safe if selected and facility.id == selected.id }}>
+          <span class="text-truncate">{{ facility.name }}</span>
+          <span class="small text-muted text-nowrap">{{ icon('users', 14) }} {{ facility.capacity }}</span>
+        </a>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p class="text-muted small mb-0">No facilities yet. Add the first one below.</p>
+      {% endif %}
+    </section>
+
+    <section class="card-soft p-3" aria-labelledby="add-facility-title">
+      <h2 class="section-title mb-2" id="add-facility-title">Add a facility</h2>
+      {% if facility_error %}<div class="alert alert-danger py-2" role="alert">{{ facility_error }}</div>{% endif %}
+      <form method="post" action="{{ url_for('facilities.add_facility') }}" novalidate>
+        {{ csrf() }}
+        <div class="mb-2">
+          <label class="form-label small" for="name">Name</label>
+          <input class="form-control" id="name" name="name" maxlength="{{ name_max }}" required
+                 value="{{ facility_form.get('name', '') }}" placeholder="for example: Dorm Basketball Court">
+        </div>
+        <div class="mb-3">
+          <label class="form-label small" for="capacity">Capacity (people)</label>
+          <input class="form-control" id="capacity" name="capacity" type="number" min="2" step="1" required
+                 value="{{ facility_form.get('capacity', '') }}" placeholder="at least 2">
+        </div>
+        <button class="btn btn-primary d-inline-flex align-items-center gap-1" type="submit">{{ icon('plus', 18) }} Add facility</button>
+      </form>
+    </section>
+  </div>
+
+  {# ------------------------------------------------------------------ schedule of the selected facility #}
+  <div class="col-12 col-lg-8">
+    {% if selected %}
+    <section class="card-soft p-3 mb-3" id="schedule" aria-labelledby="schedule-title" style="scroll-margin-top: 1rem;">
+      <div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-3">
+        <div style="min-width: 0;">
+          <h2 class="h5 mb-0 text-truncate" id="schedule-title">{{ selected.name }}</h2>
+          <span class="small text-muted">Capacity {{ selected.capacity }} · {{ day.strftime('%A, %d %B %Y') }}</span>
+        </div>
+        <form method="get" action="{{ url_for('facilities.manage') }}" class="d-flex gap-2 m-0">
+          <input type="hidden" name="facility" value="{{ selected.id }}">
+          <label class="visually-hidden" for="day">Day</label>
+          <input class="form-control form-control-sm" type="date" id="day" name="date" value="{{ day.isoformat() }}">
+          <button class="btn btn-sm btn-outline-primary" type="submit">Show</button>
+        </form>
+      </div>
+
+      {% if schedule %}
+      <div class="d-grid gap-2">
+        {% for row in schedule %}
+        <div class="slot-row {{ row.kind }}">
+          {{ icon('lock' if row.kind == 'block' else 'calendar', 18) }}
+          <span class="slot-time">{{ row.start.strftime('%H:%M') }} – {{ row.end.strftime('%H:%M') }}</span>
+          <span class="slot-label">{% if row.kind == 'block' %}Blocked: {% endif %}{{ row.label }}</span>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p class="small text-success mb-0 d-flex align-items-center gap-2">{{ icon('check', 18) }}<span>Nothing is blocked or booked on this day.</span></p>
+      {% endif %}
+    </section>
+
+    <section class="card-soft p-3" aria-labelledby="block-title">
+      <h2 class="section-title mb-2" id="block-title">Block a time</h2>
+      <p class="small text-muted">Students cannot create events in a blocked time. A block cannot overlap another block or an event booking.</p>
+      {% if block_error %}<div class="alert alert-danger py-2" role="alert">{{ block_error }}</div>{% endif %}
+      <form method="post" action="{{ url_for('facilities.add_block', facility_id=selected.id) }}" novalidate>
+        {{ csrf() }}
+        <div class="row g-2">
+          <div class="col-12 col-sm-4">
+            <label class="form-label small" for="block-date">Date</label>
+            <input class="form-control" type="date" id="block-date" name="date" required value="{{ block_form.get('date', '') }}">
+          </div>
+          <div class="col-6 col-sm-4">
+            <label class="form-label small" for="block-start">From</label>
+            <input class="form-control" type="time" id="block-start" name="start" required value="{{ block_form.get('start', '') }}">
+          </div>
+          <div class="col-6 col-sm-4">
+            <label class="form-label small" for="block-end">To</label>
+            <input class="form-control" type="time" id="block-end" name="end" required value="{{ block_form.get('end', '') }}">
+          </div>
+          <div class="col-12">
+            <label class="form-label small" for="block-reason">Reason</label>
+            <input class="form-control" id="block-reason" name="reason" maxlength="{{ reason_max }}" required
+                   value="{{ block_form.get('reason', '') }}" placeholder="for example: Physical education class">
+          </div>
+        </div>
+        <button class="btn btn-primary mt-3 d-inline-flex align-items-center gap-1" type="submit">{{ icon('lock', 18) }} Block time</button>
+      </form>
+      <p class="small text-muted mt-3 mb-0">Times are Istanbul time.</p>
+    </section>
+    {% elif block_error %}
+    <div class="alert alert-danger" role="alert">{{ block_error }}</div>
+    {% else %}
+    <div class="card-soft empty-state">
+      <span class="empty-icon">{{ icon('building', 28) }}</span>
+      <p class="h5 text-dark mb-1">No facility yet.</p>
+      <p class="mb-0">Add a hall, court or room on the left. Then you can block its unavailable times here.</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -5,7 +5,7 @@ services exist. They follow the planned service interface of the Software Design
 
 from __future__ import annotations
 
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 from campusevent import exceptions as exc
 from campusevent.app import CampusEventApp
@@ -212,6 +212,17 @@ class FakeEvents:
 
     def list_my_requests(self, organizer_id):
         return [e for e in self.events.values() if e.organizer_id == organizer_id]
+
+    def active_on(self, facility_id, day):
+        """What the real FacilityService (task 3.3) needs from the event repository: pending, open and full
+        events of the facility that overlap the UTC day."""
+        start = datetime.combine(day, datetime.min.time())
+        whole_day = TimeSlot(start, start + timedelta(days=1))
+        active = (EventStatus.PENDING, EventStatus.OPEN, EventStatus.FULL)
+        return [
+            e for e in self.events.values()
+            if e.facility_id == facility_id and e.status in active and e.slot.overlaps(whole_day)
+        ]
 
     def _set_status(self, event):
         if event.status in (EventStatus.OPEN, EventStatus.FULL):

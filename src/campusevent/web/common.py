@@ -69,11 +69,11 @@ def admin_required(view):
 
 def home_url(user: User) -> str:
     """First page after login: students find events, admins review requests, facility staff manage
-    facilities (task 3.6, not part of this UI yet)."""
+    facilities (task 3.6)."""
     if user.role == Role.ADMIN:
         return url_for("admin.event_requests")
     if user.role == Role.FACILITY_STAFF:
-        return "/facilities"
+        return url_for("facilities.manage")
     return url_for("events.find_events")
 
 

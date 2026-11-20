@@ -228,7 +228,7 @@
         {% elif current_user.role.value == 'admin' %}
         <li class="nav-item"><a class="nav-link {{ 'active' if request.endpoint == 'admin.event_requests' }}" href="{{ url_for('admin.event_requests') }}">Event Requests</a></li>
         {% else %}
-        <li class="nav-item"><a class="nav-link" href="/facilities">Facilities</a></li>
+        <li class="nav-item"><a class="nav-link {{ 'active' if request.endpoint == 'facilities.manage' }}" href="{{ url_for('facilities.manage') }}">Facilities</a></li>
         {% endif %}
       </ul>
       <div class="d-flex align-items-center gap-2 text-white">
