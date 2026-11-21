@@ -1,6 +1,6 @@
 name: CI/CD
 
-# Software Design Report §3.4: every push and pull request runs ruff and pytest;
+# Software Design Report §3.4: every push and pull request runs ruff and pytest (with coverage);
 # only a green build on main triggers the Render deploy hook.
 
 on:
@@ -34,6 +34,21 @@ jobs:
   test:
     name: Tests (pytest)
     runs-on: ubuntu-latest
+    # A throwaway PostgreSQL 16 so the database tests (tests/db) run in CI instead of being skipped.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: campusevent
+          POSTGRES_PASSWORD: campusevent-ci
+          POSTGRES_DB: campusevent_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U campusevent"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      # Only a CI test database with a CI-only password, not a secret.
+      TEST_DATABASE_URL: postgresql://campusevent:campusevent-ci@localhost:5432/campusevent_test
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -42,13 +57,24 @@ jobs:
           cache: pip
           cache-dependency-path: requirements-dev.txt
       - run: pip install -r requirements-dev.txt
-      - run: python -m pytest -q --junitxml=pytest-report.xml
-      - name: Upload test report
+      # Coverage settings (source, branch coverage) are in pyproject.toml; see docs/tests/coverage.
+      - run: >-
+          python -m pytest -q --junitxml=pytest-report.xml
+          --cov --cov-report=term --cov-report=xml --cov-report=html
+      - name: Coverage summary
+        if: always()
+        run: |
+          echo "## Code coverage" >> "$GITHUB_STEP_SUMMARY"
+          python -m coverage report --format=markdown >> "$GITHUB_STEP_SUMMARY" || true
+      - name: Upload test and coverage reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: pytest-report
-          path: pytest-report.xml
+          name: test-and-coverage-reports
+          path: |
+            pytest-report.xml
+            coverage.xml
+            htmlcov/
 
   deploy:
     name: Deploy to Render
