@@ -25,6 +25,8 @@ from campusevent.repositories.event_repository import EventRepository, InMemoryE
 from campusevent.repositories.unit_of_work import InMemoryUnitOfWork, UnitOfWork
 
 MIN_CAPACITY = 2  # BR-04
+TITLE_MAX = 120  # event.title is VARCHAR(120)
+CATEGORY_MAX = 60  # event.category is VARCHAR(60), like an interest
 
 
 def _utc_now() -> datetime:
@@ -73,9 +75,13 @@ class EventService:
         not listed until an admin approves it (UC-12)."""
         self.auth.require_role(organizer_id, Role.STUDENT)
         title = (title or "").strip()
-        category = " ".join((category or "").split())
+        category = _fold(category)  # BR-14: stored trimmed and lower case (DB check ck_event_category_normalized)
         if not title or not category:  # UC-04 1a
             raise ValidationError("Please enter a title and a category.")
+        if len(title) > TITLE_MAX:
+            raise ValidationError(f"The title can be at most {TITLE_MAX} characters long.")
+        if len(category) > CATEGORY_MAX:
+            raise ValidationError(f"The category can be at most {CATEGORY_MAX} characters long.")
         if isinstance(capacity, bool) or not isinstance(capacity, int) or capacity < MIN_CAPACITY:
             raise ValidationError(f"The capacity must be a whole number of at least {MIN_CAPACITY}.")  # 3a, BR-04
 
