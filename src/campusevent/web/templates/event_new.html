@@ -17,19 +17,24 @@
         <input class="form-control" id="title" name="title" value="{{ form.get('title', '') }}" required placeholder="for example Friday football match">
       </div>
       <div class="mb-3">
-        <label class="form-label" for="category_choice">Category</label>
+        {# Without JavaScript this label belongs to the text field, the only visible field; the script moves it to the list. #}
+        <label class="form-label" for="category" id="category-label">Category</label>
         {# The list is shown by the script below. Without JavaScript only the text field is visible, and it works alone. #}
         <div class="input-group" id="category-choice-group" hidden>
           <span class="input-group-text bg-white text-muted">{{ icon('tag', 18) }}</span>
-          <select class="form-select border-start-0" id="category_choice">
+          <select class="form-select border-start-0" id="category_choice" aria-label="Category">
             <option value="">Choose a category</option>
             {% for name in categories %}<option value="{{ name }}">{{ name }}</option>{% endfor %}
             <option value="__other__">Other…</option>
           </select>
         </div>
-        <div class="input-group mt-2" id="category-text-group">
-          <span class="input-group-text bg-white text-muted">{{ icon('tag', 18) }}</span>
-          <input class="form-control border-start-0" id="category" name="category" value="{{ form.get('category', '') }}" placeholder="Type a category, for example football" required>
+        <div class="mt-2" id="category-text-group">
+          {# Shown by the script with the list: the text field then needs its own label (WCAG 1.3.1, 3.3.2). #}
+          <label class="form-label small mb-1" for="category" id="category-other-label" hidden>Your own category</label>
+          <div class="input-group">
+            <span class="input-group-text bg-white text-muted">{{ icon('tag', 18) }}</span>
+            <input class="form-control border-start-0" id="category" name="category" value="{{ form.get('category', '') }}" placeholder="Type a category, for example football" required>
+          </div>
         </div>
       </div>
       <div class="mb-4">
@@ -107,6 +112,8 @@
     var textGroup = document.getElementById('category-text-group');
     var field = document.getElementById('category');
     choiceGroup.hidden = false;
+    document.getElementById('category-label').htmlFor = 'category_choice';  // "Category" now names the list
+    document.getElementById('category-other-label').hidden = false;           // and the text field has its own label
     function showText(show) { textGroup.hidden = !show; }
     var current = field.value.trim().toLowerCase();
     if (!current) {

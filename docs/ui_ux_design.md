@@ -271,7 +271,7 @@ An empty page never stays blank; it explains why and offers the next step:
 ## 8. Accessibility, responsiveness and browsers
 - **Contrast (WCAG 2.1 AA).** Every text colour was measured against the glass surface over the brightest part of the background: body text 7.5:1, muted text 5.1:1, labels 4.7:1, pills 5.9:1 (minimum 4.5:1). On the darkest part all values are above 8:1.
 - **Touch targets** at least 40 px high; the *Leave* button was given the same height as the *You joined* label instead of being made smaller.
-- **Forms:** every field has a visible label; icons are decorative and hidden from screen readers; the participant bar has a text alternative ("3 of 8 places taken").
+- **Forms:** every field has a label: a visible one, except the box for a new interest on My Profile (its name is the *Interests* heading above it and a screen-reader label) and the category list on Create Event (a screen-reader label while the script has not shown the list). The *Other…* category box has its own label, *Your own category*. A test checks every field of every form (`test_every_form_field_has_a_label`). Icons are decorative and hidden from screen readers; the participant bar has a text alternative ("3 of 8 places taken").
 - **Colour is never the only signal:** statuses are written words, and the information of a coloured date tile (the date) is written on the tile.
 - **Keyboard:** native links, buttons and form fields; the reject box is a `<details>` element; the focus ring uses the accent colour.
 - **Motion:** the background and floating effects stop when the system asks for reduced motion.
