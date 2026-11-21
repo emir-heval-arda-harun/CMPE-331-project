@@ -1,6 +1,6 @@
 # Coverage – web UI (UC-01 to UC-06, UC-09 to UC-12)
 
-**Author:** Emir Gül · **Date of the results:** 21.11.2026 · **Code:** `main` with PR #31 (*Send a new code*) and PR #22 (remove a block) · Part of the Software Testing Report, see the [web UI section](../../testing/web_ui_test_section.md).
+**Author:** Emir Gül · **Date of the results:** 21.11.2026 · **Code:** `main` with PR #31 (*Send a new code*), PR #22 (remove a block) and the category label fix (branch `feature/category-label-emir`) · Part of the Software Testing Report, see the [web UI section](../../testing/web_ui_test_section.md).
 
 The facility page (UC-07, UC-08, `facility_routes.py`) is in Harun's [facilities coverage](facilities.md); the composition root tests (`tests/web/test_web_wiring.py`) are in Heval's [accounts and profiles coverage](accounts-profiles.md).
 
@@ -38,13 +38,13 @@ Requirement → rule → tests → code, with the result on 21.11.2026. All test
 | Security (XSS) | Text typed by users is escaped | Ev `test_text_in_events_is_escaped`; Adm `test_the_reason_is_escaped_on_every_page` | Jinja auto-escaping | ✅ |
 | Error handling | Unknown address 404; unexpected errors give a friendly page and are logged, without details | Err `test_unknown_address_shows_the_error_page`, `test_unexpected_error_shows_a_friendly_page_and_is_logged` | `handle_not_found`, `handle_unexpected` | ✅ |
 | UI/UX design ([document](../../ui_ux_design.md)) | Glass Night theme and campus background (stops for reduced motion), favicon, footer, *Show password*, password guide | Acc `test_login_and_signup_pages_have_a_show_password_button_and_no_main_navigation`, `test_every_page_has_the_animated_background_that_stops_for_reduced_motion`, `test_pages_after_login_have_the_hero_band_and_auth_pages_do_not`, `test_login_background_is_a_drawn_skyline_until_a_campus_photo_is_added`, `test_login_background_uses_the_campus_photo_when_the_file_exists`; Ext `test_every_page_has_the_campus_background_with_fireworks_by_default`, `test_footer_is_on_the_pages_after_login_only`, `test_signup_has_a_password_strength_guide`; Adm `test_pages_have_a_favicon` | `base.html`, `_theme_glass.html`, `_backgrounds.html` | ✅ |
-| NFR-01, NFR-07 | Phone width and browsers | manual and Playwright, see [non-functional tests](../non-func-tests/web-ui.md) | all templates | ✅ |
+| NFR-01, NFR-07 | Phone width, browsers, a label for every form field | Ext `test_every_form_field_has_a_label`, `test_create_form_category_label_follows_the_visible_field`; manual and Playwright, see [non-functional tests](../non-func-tests/web-ui.md) | all templates, `event_new.html` | ✅ |
 | Test setup | Two apps created in one test run do not share data, so tests cannot affect each other | Acc `test_new_accounts_get_their_own_empty_services` | `tests/web/fakes.py` | ✅ |
 
-**Requirements coverage:** 31 of 31 rows have passing web tests (100 %). Every one of the 116 tests of this section appears in the matrix. Of the requirement tests of the team for these use cases, UC-01, UC-02 and UC-03 pass (10 of 10) since the real `AuthService` and `ProfileService` are on `main`; the tests of UC-04 to UC-06 and UC-09 to UC-12 wait for `EventService` (task 3.4, E. Arda) and still end in `NotImplementedError`.
+**Requirements coverage:** 31 of 31 rows have passing web tests (100 %). Every one of the 118 tests of this section appears in the matrix. Of the requirement tests of the team for these use cases, UC-01, UC-02 and UC-03 pass (10 of 10) since the real `AuthService` and `ProfileService` are on `main`; the tests of UC-04 to UC-06 and UC-09 to UC-12 wait for `EventService` (task 3.4, E. Arda) and still end in `NotImplementedError`.
 
 ## Code coverage
-Measured with coverage.py 7.17, statements **and** branches, all web tests (`tests/web`, 145 tests, of them 116 of this section), without a database (the web tests use in-memory services):
+Measured with coverage.py 7.17, statements **and** branches, all web tests (`tests/web`, 147 tests, of them 118 of this section), without a database (the web tests use in-memory services):
 
 | File | Statements | Missed | Branches | Partial | Coverage |
 |---|---|---|---|---|---|

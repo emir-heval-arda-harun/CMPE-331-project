@@ -2,7 +2,7 @@
 
 **Author:** Emir Gül · **Status:** section for the team's Software Testing Report (task 4.1: pull request to Yeşim by 25.11.2026, PDF on Learn by 29.11.2026) · **Date of the results:** 21.11.2026
 
-It covers the web UI (layer 1 of the [Software Design Report](../software_design_report.md), `src/campusevent/web/`) for UC-01 to UC-06, UC-09 to UC-11 and UC-12 (admin review of event requests, change request CR-01), with the design of the [UI/UX document](../ui_ux_design.md). The results below are for `main` together with PR #31 (*Send a new code*) and PR #22 (remove a block). The facility page (UC-07, UC-08) is in the [facilities section](facility_test_section.md); the services behind the pages are in the sections of their owners.
+It covers the web UI (layer 1 of the [Software Design Report](../software_design_report.md), `src/campusevent/web/`) for UC-01 to UC-06, UC-09 to UC-11 and UC-12 (admin review of event requests, change request CR-01), with the design of the [UI/UX document](../ui_ux_design.md). The results below are for `main` together with PR #31 (*Send a new code*), PR #22 (remove a block) and the category label fix (branch `feature/category-label-emir`). The facility page (UC-07, UC-08) is in the [facilities section](facility_test_section.md); the services behind the pages are in the sections of their owners.
 
 The parts the instructor asked for on 17.11 are in their own files:
 - **Traceability matrix with code and requirements coverage:** [`docs/tests/coverage/web-ui.md`](../tests/coverage/web-ui.md)
@@ -22,8 +22,8 @@ The parts the instructor asked for on 17.11 are in their own files:
 ## 2. Results
 | Suite | Tests | Passed | Failed |
 |---|---|---|---|
-| Web UI tests of this section (6 files) | 116 | 116 | 0 |
-| All web tests (with the facility page, 26, and the composition root, 3) | 145 | 145 | 0 |
+| Web UI tests of this section (6 files) | 118 | 118 | 0 |
+| All web tests (with the facility page, 26, and the composition root, 3) | 147 | 147 | 0 |
 | Requirement tests of UC-01, UC-02, UC-03 (`tests/test_uc01_*` to `test_uc03_*`) | 10 | 10 | 0 |
 | Requirement tests of UC-04 to UC-06, UC-09 to UC-12 and their NFR tests | 33 | 0 | 33, all `NotImplementedError` of `EventService` (task 3.4) |
 
@@ -32,7 +32,7 @@ The parts the instructor asked for on 17.11 are in their own files:
 **Browser checks** (Firefox and WebKit, 1280 px and 360 px): all passed, no console errors, no horizontal scrolling. Details: [non-functional tests](../tests/non-func-tests/web-ui.md).
 
 ## 3. Traceability
-The [traceability matrix](../tests/coverage/web-ui.md#traceability-matrix) maps every step and alternative flow of the use cases of this section, the business rules (BR-01, BR-03, BR-04, BR-15), the team time rule and the NFRs to their tests and to the code. 31 of 31 rows have passing tests, and each of the 116 tests appears in the matrix.
+The [traceability matrix](../tests/coverage/web-ui.md#traceability-matrix) maps every step and alternative flow of the use cases of this section, the business rules (BR-01, BR-03, BR-04, BR-15), the team time rule and the NFRs to their tests and to the code. 31 of 31 rows have passing tests, and each of the 118 tests appears in the matrix.
 
 ## 4. Test design
 - **One test per rule, named as a sentence** (`test_wrong_credentials_do_not_say_which_part_is_wrong`), so a failing test says which rule is broken.
@@ -55,6 +55,7 @@ The [traceability matrix](../tests/coverage/web-ui.md#traceability-matrix) maps 
 | 8 | Browser check of My Activities | The rejection reason was dark red on dark glass | Own class with a readable colour (PR #20) |
 | 9 | Review of the facility page after the design change | The facility names were dark text on the dark glass | Glass colours for the facility list (PR #28) |
 | 10 | Coverage measurement (97 % at first) | Eight error and edge paths had no test: start page for visitors, unknown address, unexpected error, a refused session token, approving a request that is no longer waiting, a busy slot until closing time, a deleted participant, a calendar file without description | Tests added (`test_web_error_paths.py`); all passed at once, so the code was right; coverage 99 % |
+| 11 | Check of the report: every form field searched for a label | The category text box on Create Event had no label: without JavaScript the label *Category* named the hidden list, and the box for *Other…* had only a placeholder (WCAG 1.3.1, 3.3.2) | *Category* names the visible field; the *Other…* box has its own label *Your own category*; a test checks every field of every form (`test_every_form_field_has_a_label`) |
 
 Defects found by this section in the code of others: the Turkish capital *İ* in interests (review of #24, Heval) and the *Remove* button contrast (review of #22, Harun); they are listed in those sections.
 
