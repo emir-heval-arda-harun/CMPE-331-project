@@ -14,17 +14,20 @@ Business rules used here:
 
 from __future__ import annotations
 
+import logging
 from datetime import date, datetime, timezone
 from typing import Callable
 
 from campusevent.auth import AuthService
-from campusevent.exceptions import ValidationError
+from campusevent.exceptions import PermissionDeniedError, ValidationError
 from campusevent.facilities import FacilityService
 from campusevent.models import ActivityRecord, Event, EventStatus, Role, TimeSlot
 from campusevent.repositories.event_repository import EventRepository, InMemoryEventRepository
 from campusevent.repositories.unit_of_work import InMemoryUnitOfWork, UnitOfWork
 
 MIN_CAPACITY = 2  # BR-04
+EXPIRED_REASON = "Not reviewed before the start time"  # BR-18
+log = logging.getLogger(__name__)
 TITLE_MAX = 120  # event.title is VARCHAR(120)
 CATEGORY_MAX = 60  # event.category is VARCHAR(60), like an interest
 
@@ -47,12 +50,16 @@ class EventService:
         events: EventRepository | None = None,
         uow: UnitOfWork | None = None,
         clock: Callable[[], datetime] = _utc_now,
+        notify_decision: Callable[[Event, bool], None] | None = None,
     ) -> None:
         self.auth = auth
         self.facilities = facilities
         self.events = events if events is not None else InMemoryEventRepository()
         self.uow = uow if uow is not None else InMemoryUnitOfWork()
         self.clock = clock
+        # UC-12: called after an admin approved (True) or rejected (False) a request, to e-mail the organizer.
+        # app.py connects it to the notification service; without it no e-mail is sent.
+        self.notify_decision = notify_decision
         # FacilityService finds busy slots through the event repository (UC-07). If it was built
         # without one, give it ours, so a pending/open event really blocks its slot.
         if getattr(facilities, "events", None) is None:
@@ -135,29 +142,100 @@ class EventService:
         return sorted(events, key=lambda e: (e.slot.start, e.slot.end, e.id))
 
     # ------------------------------------------------------------------ #
-    # UC-12 (not part of task 3.4 Events by E.Arda: left as in the skeleton)
+    # UC-12 Review event requests (CR-01)
     # ------------------------------------------------------------------ #
     def list_pending_events(self, admin_id: int) -> list[Event]:
         """UC-12: all PENDING requests, oldest start time first. Admins only."""
-        raise NotImplementedError
+        self.auth.require_role(admin_id, Role.ADMIN)
+        events = self.events.list_by_status((EventStatus.PENDING,))
+        return sorted(events, key=lambda e: (e.slot.start, e.slot.end, e.id))
 
     def approve_event(self, event_id: int, admin_id: int) -> Event:
         """UC-12: PENDING -> OPEN, the event becomes visible; the organizer is e-mailed."""
-        raise NotImplementedError
+        self.auth.require_role(admin_id, Role.ADMIN)  # BR-17
+        self.uow.begin()
+        try:
+            event = self.events.get_for_update(event_id)
+            self._require_pending(event)  # 2b
+            event.status = EventStatus.OPEN
+            event.reviewed_by = admin_id
+            event.reviewed_at = self.clock()
+            event.rejection_reason = ""
+            self.events.save(event)
+            self.uow.commit()
+        except Exception:
+            self.uow.rollback()
+            raise
+        self._notify(event, approved=True)
+        return event
 
     def reject_event(self, event_id: int, admin_id: int, reason: str) -> Event:
         """UC-12: PENDING -> REJECTED with a reason; the facility slot is freed and the
         organizer is e-mailed. The organizer may submit a corrected request (UC-04)."""
-        raise NotImplementedError
+        self.auth.require_role(admin_id, Role.ADMIN)  # BR-17
+        reason = (reason or "").strip()
+        if not reason:  # 2a1
+            raise ValidationError("Please enter a reason for the rejection.")
+        self.uow.begin()
+        try:
+            event = self.events.get_for_update(event_id)
+            self._require_pending(event)  # 2b
+            # REJECTED is not an active status, so the facility slot is free again (BR-16).
+            event.status = EventStatus.REJECTED
+            event.rejection_reason = reason
+            event.reviewed_by = admin_id
+            event.reviewed_at = self.clock()
+            self.events.save(event)
+            self.uow.commit()
+        except Exception:
+            self.uow.rollback()
+            raise
+        self._notify(event, approved=False)
+        return event
 
     def expire_pending_requests(self, now: datetime) -> list[Event]:
-        """UC-12: requests still PENDING at their start time become REJECTED automatically."""
-        raise NotImplementedError
+        """UC-12: requests still PENDING at their start time become REJECTED automatically (BR-18)."""
+        expired: list[Event] = []
+        self.uow.begin()
+        try:
+            for candidate in self.events.list_by_status((EventStatus.PENDING,)):
+                if candidate.slot.start > now:
+                    continue
+                event = self.events.get_for_update(candidate.id)
+                if event.status != EventStatus.PENDING:
+                    continue
+                event.status = EventStatus.REJECTED
+                event.rejection_reason = EXPIRED_REASON  # the database requires a reason (BR-17)
+                event.reviewed_by = None  # no reviewer
+                event.reviewed_at = now
+                self.events.save(event)
+                expired.append(event)
+            self.uow.commit()
+        except Exception:
+            self.uow.rollback()
+            raise
+        return expired
 
     def list_my_requests(self, organizer_id: int) -> list[Event]:
         """UC-12: every event the user organized, in any status, so the organizer can follow
-        pending, approved and rejected requests."""
-        raise NotImplementedError
+        pending, approved and rejected requests. Newest start time first."""
+        self.auth.get_user(organizer_id)
+        events = self.events.list_by_organizer(organizer_id)
+        return sorted(events, key=lambda e: (e.slot.start, e.slot.end, e.id), reverse=True)
+
+    @staticmethod
+    def _require_pending(event: Event) -> None:
+        if event.status != EventStatus.PENDING:
+            raise ValidationError("This request is no longer pending.")
+
+    def _notify(self, event: Event, approved: bool) -> None:
+        """E-mail the decision after the commit. A mail error must not undo the decision."""
+        if self.notify_decision is None:
+            return
+        try:
+            self.notify_decision(event, approved)
+        except Exception:
+            log.exception("Could not send the decision e-mail for event %s", event.id)
 
     # ------------------------------------------------------------------ #
     # UC-06 Join event
@@ -216,7 +294,7 @@ class EventService:
         try:
             event = self.events.get_for_update(event_id)
             if event.organizer_id != user_id:  # 1a
-                raise ValidationError("Only the organizer can cancel this event.")
+                raise PermissionDeniedError("Only the organizer can cancel this event.")
             active = (EventStatus.PENDING, EventStatus.OPEN, EventStatus.FULL)
             if event.status not in active or event.slot.start <= self.clock():  # 1b
                 raise ValidationError("This event can no longer be cancelled.")
