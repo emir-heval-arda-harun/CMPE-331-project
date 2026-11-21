@@ -32,14 +32,14 @@ The parts the instructor asked for on 17.11 are in their own files:
 **Browser checks** (Firefox and WebKit, 1280 px and 360 px): all passed, no console errors, no horizontal scrolling. Details: [non-functional tests](../tests/non-func-tests/web-ui.md).
 
 ## 3. Traceability
-The [traceability matrix](../tests/coverage/web-ui.md#traceability-matrix) maps every step and alternative flow of the use cases of this section, the business rules (BR-01, BR-03, BR-04, BR-15), the team time rule and the NFRs to their tests and to the code. 30 of 30 rows have passing tests, and each of the 116 tests appears in the matrix.
+The [traceability matrix](../tests/coverage/web-ui.md#traceability-matrix) maps every step and alternative flow of the use cases of this section, the business rules (BR-01, BR-03, BR-04, BR-15), the team time rule and the NFRs to their tests and to the code. 31 of 31 rows have passing tests, and each of the 116 tests appears in the matrix.
 
 ## 4. Test design
 - **One test per rule, named as a sentence** (`test_wrong_credentials_do_not_say_which_part_is_wrong`), so a failing test says which rule is broken.
 - **Main flow and alternative flows:** every use case has a test of its main flow; every alternative flow written in the use cases of this section has its own test, except the automatic expiry of UC-12, which is done by the backend (the page only shows *Rejected*). Three alternative flows (UC-04 1a, UC-10 1a, UC-11 1b) got their test while this matrix was written.
 - **Boundary values:** capacity 1 and a capacity far above the facility (UC-04, BR-04); a reason of 501 characters, one over the limit (UC-12); an event at 01:00 Istanbul time, which is 22:00 of the day before in UTC; a busy slot that lasts until closing time; the one-minute wait of *Send a new code* at 20 and 60 seconds.
 - **Equivalence classes:** for *Send a new code*, unknown, verified and unverified addresses must give the same page (NFR-05); for the *Leave* redirect, five kinds of addresses (another site, `//`, another page, a backslash, empty) must all return to Find Events.
-- **Negative tests for access** (NFR-04): every page of one role is opened with the other roles.
+- **Negative tests for access** (NFR-04): the important pages of each role are opened with the other roles: Find Events by facility staff, Event Requests by a student and by facility staff, cancelling by a participant who is not the organizer, waiting and rejected requests by other students.
 - **Coverage as a check of the tests:** the coverage run found eight error paths without a test (section 5, defect 10).
 
 ## 5. Defects found while testing
@@ -47,8 +47,8 @@ The [traceability matrix](../tests/coverage/web-ui.md#traceability-matrix) maps 
 |---|---|---|---|
 | 1 | Web test of UC-12 | When an admin decided a request that was no longer waiting, the error was attached to a card that was no longer in the list, so it was not shown | Errors for requests that left the list are shown above the list (`general_errors`, PR #14) |
 | 2 | Web test of BR-15 | Joining a waiting or rejected request of someone else gave 400 and showed that it exists | 404, like opening it (`_visible_event`, PR #14) |
-| 3 | Web test with the server clock in UTC | Between 00:00 and 03:00 Istanbul time, "Today" and "Tomorrow" were one day off | "Today" is taken from the Istanbul clock (`campus_today`, PR #14) |
-| 4 | Team review of the time rule | Calendar files had no time zone, so calendars outside Turkey showed the wrong hour | Times are written in UTC with `Z` (PR #14) |
+| 3 | Review of the team time rule (the server on Render runs in UTC) | Between 00:00 and 03:00 Istanbul time the server date is still the day before, so today's events were labelled "Tomorrow" | "Today" is taken from the Istanbul clock (`campus_today`, PR #14), with a test that runs the server clock in UTC |
+| 4 | Check of a downloaded calendar file | The times in the `.ics` file had no time zone, so a calendar set to another time zone showed the wrong hour | First the Istanbul time zone was added; after the team time rule the times are written in UTC with `Z` (PR #14) |
 | 5 | Browser, network log | Typing a date into Create Event loaded the schedule for the years 0002, 0020, 0202 | The schedule loads only for a complete date, with a short pause (PR #14) |
 | 6 | Browser, console | Every page asked for `/favicon.ico` and got 404 | Favicon and a redirect (PR #14) |
 | 7 | Contrast measurement after the Glass Night design | Muted text 4.1:1 and field labels 2.7:1 on the brightest part of the background (WCAG AA needs 4.5:1) | Darker glass and lighter text: every text colour at least 4.5:1 (PR #20) |
