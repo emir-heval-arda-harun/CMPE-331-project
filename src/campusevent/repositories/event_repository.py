@@ -44,6 +44,10 @@ class EventRepository(Protocol):
 
     def list_by_participant(self, user_id: int) -> list[Event]: ...
 
+    def list_by_organizer(self, user_id: int) -> list[Event]:
+        """Every event the user organized, in any status."""
+        ...
+
     def active_on(self, facility_id: int, day: date) -> list[Event]:
         """Pending, open and full events of the facility that overlap that day."""
         ...
@@ -80,6 +84,9 @@ class InMemoryEventRepository:
 
     def list_by_participant(self, user_id: int) -> list[Event]:
         return [copy.deepcopy(e) for e in self._events.values() if user_id in e.participant_ids]
+
+    def list_by_organizer(self, user_id: int) -> list[Event]:
+        return [copy.deepcopy(e) for e in self._events.values() if e.organizer_id == user_id]
 
     def active_on(self, facility_id: int, day: date) -> list[Event]:
         whole_day = TimeSlot(datetime.combine(day, time.min), datetime.combine(day, time.min) + timedelta(days=1))
@@ -190,6 +197,10 @@ class SqlEventRepository:
             .where(EventParticipantRow.user_id == user_id)
             .order_by(EventRow.start_time, EventRow.id)
         )
+        return [self._to_domain(row) for row in self.session.scalars(stmt)]
+
+    def list_by_organizer(self, user_id: int) -> list[Event]:
+        stmt = select(EventRow).where(EventRow.organizer_id == user_id).order_by(EventRow.start_time, EventRow.id)
         return [self._to_domain(row) for row in self.session.scalars(stmt)]
 
     def active_on(self, facility_id: int, day: date) -> list[Event]:
