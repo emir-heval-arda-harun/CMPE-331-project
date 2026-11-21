@@ -1,5 +1,6 @@
-"""Error and edge paths of the web UI that the feature tests do not reach (found with the coverage
-measurement of the Software Testing Report, task 4.1)."""
+"""Error and edge paths of the web UI that the feature tests did not reach, found while writing the
+Software Testing Report (task 4.1): eight by the coverage measurement, and three alternative flows of the
+use cases (UC-04 1a, UC-10 1a, UC-11 1b) by the traceability matrix."""
 
 from datetime import date, datetime
 
