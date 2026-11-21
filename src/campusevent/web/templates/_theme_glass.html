@@ -156,6 +156,13 @@
     .theme-glass .auth-main { background: transparent; }
     .theme-glass .auth-card { padding: 1.75rem 1.35rem; background: var(--g-surface); border: 1px solid var(--g-line); } }
 
+  /* Facility Management (task 3.6): the facility list was styled for a light page (dark text on transparent). */
+  .theme-glass .facility-list .list-group-item { color: var(--g-text); }
+  .theme-glass .facility-list .list-group-item:hover { background: rgba(255, 255, 255, .08); color: var(--g-strong); }
+  /* a darker version of the accent: white text stays above 4.5:1 on the whole gradient */
+  .theme-glass .facility-list .list-group-item.active { background: linear-gradient(135deg, #4f46e5, #7c3aed); color: #fff; }
+  .theme-glass .facility-list .list-group-item:focus-visible { outline: 2px solid var(--g-accent-solid); outline-offset: 2px; }
+
   @media (max-width: 767.98px) {
     .theme-glass .navbar-campus .navbar-collapse { background: rgba(8, 13, 36, .9); border: 1px solid var(--g-line); } }
 </style>

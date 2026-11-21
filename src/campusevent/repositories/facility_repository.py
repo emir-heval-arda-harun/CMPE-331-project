@@ -49,7 +49,17 @@ class FacilityRepository(Protocol):
         """All facilities, sorted by name."""
         ...
 
-    def add_block(self, block: FacilityBlock, created_by: int) -> FacilityBlock: ...
+    def add_block(self, block: FacilityBlock, created_by: int) -> FacilityBlock:
+        """Store a new block; returns it with its ``id``."""
+        ...
+
+    def get_block(self, block_id: int) -> FacilityBlock:
+        """Raise ``NotFoundError`` for an unknown id."""
+        ...
+
+    def remove_block(self, block_id: int) -> None:
+        """Delete the block; raise ``NotFoundError`` for an unknown id."""
+        ...
 
     def blocks_on(self, facility_id: int, day: date) -> list[FacilityBlock]:
         """Blocks of the facility that overlap that day, sorted by start time."""
@@ -62,8 +72,9 @@ class InMemoryFacilityRepository:
     def __init__(self) -> None:
         self._facilities: dict[int, Facility] = {}
         self._managers: dict[int, int] = {}
-        self._blocks: list[tuple[FacilityBlock, int]] = []
+        self._blocks: dict[int, tuple[FacilityBlock, int]] = {}  # block id -> (block, created_by)
         self._next_id = 1
+        self._next_block_id = 1
 
     def add(self, facility: Facility, manager_id: int) -> Facility:
         stored = Facility(id=self._next_id, name=facility.name, capacity=facility.capacity)
@@ -90,12 +101,24 @@ class InMemoryFacilityRepository:
 
     def add_block(self, block: FacilityBlock, created_by: int) -> FacilityBlock:
         self.get(block.facility_id)
-        self._blocks.append((block, created_by))
-        return block
+        stored = FacilityBlock(block.facility_id, block.slot, block.reason, id=self._next_block_id)
+        self._next_block_id += 1
+        self._blocks[stored.id] = (stored, created_by)
+        return stored
+
+    def get_block(self, block_id: int) -> FacilityBlock:
+        try:
+            return self._blocks[block_id][0]
+        except KeyError:
+            raise NotFoundError(f"Block {block_id} does not exist") from None
+
+    def remove_block(self, block_id: int) -> None:
+        self.get_block(block_id)
+        del self._blocks[block_id]
 
     def blocks_on(self, facility_id: int, day: date) -> list[FacilityBlock]:
         whole_day = TimeSlot(*day_range(day))
-        found = [b for b, _ in self._blocks if b.facility_id == facility_id and b.slot.overlaps(whole_day)]
+        found = [b for b, _ in self._blocks.values() if b.facility_id == facility_id and b.slot.overlaps(whole_day)]
         return sorted(found, key=lambda b: b.slot.start)
 
 
@@ -128,6 +151,7 @@ class SqlFacilityRepository:
             facility_id=row.facility_id,
             slot=TimeSlot(_from_db(row.start_time), _from_db(row.end_time)),
             reason=row.reason,
+            id=row.id,
         )
 
     def add(self, facility: Facility, manager_id: int) -> Facility:
@@ -186,8 +210,20 @@ class SqlFacilityRepository:
             raise
         return self._block(row)
 
-    def blocks_on(self, facility_id: int, day: date) -> list[FacilityBlock]:
+    def get_block(self, block_id: int) -> FacilityBlock:
+        row = self.session.get(FacilityBlockRow, block_id)
+        if row is None:
+            raise NotFoundError(f"Block {block_id} does not exist")
+        return self._block(row)
 
+    def remove_block(self, block_id: int) -> None:
+        row = self.session.get(FacilityBlockRow, block_id)
+        if row is None:
+            raise NotFoundError(f"Block {block_id} does not exist")
+        self.session.delete(row)
+        self.session.flush()
+
+    def blocks_on(self, facility_id: int, day: date) -> list[FacilityBlock]:
         start, end = (_to_db(value) for value in day_range(day))
         rows = self.session.scalars(
             select(FacilityBlockRow)

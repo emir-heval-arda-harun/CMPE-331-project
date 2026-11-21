@@ -217,3 +217,57 @@ def test_check_bookable_refuses_busy_slots(service, hall, events):
 def test_check_bookable_unknown_facility(service):
     with pytest.raises(NotFoundError):
         service.check_bookable(99, slot(), 6)
+
+
+# ---------------------------------------------------------------- UC-08 alt. 2b: remove a block (issue #19)
+def test_blocks_get_an_id(service, hall):
+    first = service.add_block(STAFF, hall.id, slot(hour=9), "Class")
+    second = service.add_block(STAFF, hall.id, slot(hour=11), "Class")
+
+    assert first.id is not None and second.id is not None and first.id != second.id
+    assert service.get_block(first.id) == first
+
+
+def test_staff_removes_a_block_and_the_time_is_free_again(service, hall, uow):
+    block = service.add_block(STAFF, hall.id, slot(hour=9, hours=3), "Added by mistake")
+
+    removed = service.remove_block(STAFF, block.id)
+
+    assert removed == block
+    assert service.get_blocks(hall.id, date(2026, 11, 2)) == []
+    assert service.is_available(hall.id, slot(hour=10)) is True
+    assert service.check_bookable(hall.id, slot(hour=10), 6) == hall
+    assert uow.commits == 3  # add facility, add block, remove block
+
+
+def test_student_cannot_remove_a_block(service, hall):
+    block = service.add_block(STAFF, hall.id, slot(hour=9), "Class")
+
+    with pytest.raises(PermissionDeniedError):
+        service.remove_block(STUDENT, block.id)
+    assert service.get_blocks(hall.id, date(2026, 11, 2)) == [block]
+
+
+def test_removing_an_unknown_block(service, hall, uow):
+    with pytest.raises(NotFoundError):
+        service.remove_block(STAFF, 99)
+    assert uow.rollbacks == 1
+
+
+def test_a_removed_block_cannot_be_removed_twice(service, hall):
+    block = service.add_block(STAFF, hall.id, slot(hour=9), "Class")
+    service.remove_block(STAFF, block.id)
+
+    with pytest.raises(NotFoundError):
+        service.remove_block(STAFF, block.id)
+
+
+# ---------------------------------------------------------------- bookings with titles (page shows them)
+def test_get_bookings_lists_active_events_of_the_day_sorted(service, hall, events):
+    late = events.book(hall.id, slot(hour=20), EventStatus.PENDING)
+    early = events.book(hall.id, slot(hour=14), EventStatus.OPEN)
+    events.book(hall.id, slot(hour=16), EventStatus.CANCELLED)
+
+    assert service.get_bookings(hall.id, date(2026, 11, 2)) == [early, late]
+    with pytest.raises(NotFoundError):
+        service.get_bookings(99, date(2026, 11, 2))
