@@ -91,7 +91,7 @@ Critical path (orange): 1.1 Project Charter → 1.2 Requirements Definition → 
 | Requirements Definition Report | 11.10.2026 |
 | Requirement Analysis Report | 18.10.2026 |
 | Software Design Report | 15.11.2026 |
-| Software Testing Report | 22.11.2026 |
+| Software Testing Report | pull request 25.11.2026, PDF 29.11.2026 (moved by the instructor on 17.11.2026) |
 | Codebase | 30.11.2026 |
 
 ---

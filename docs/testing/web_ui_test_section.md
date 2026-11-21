@@ -1,6 +1,6 @@
 # Software Testing Report – Web UI section (task 3.5)
 
-**Status:** draft section for the team's Software Testing Report (task 4.1, due 22.11.2026). It covers only the web UI of UC-01 to UC-06, UC-09 to UC-11 and UC-12 (admin review of event requests, CR-01). The backend, the facility pages (UC-07, UC-08) and the integration tests are written by the other team members and must be added to the full report.
+**Status:** draft section for the team's Software Testing Report (task 4.1: pull request due 25.11.2026, PDF due 29.11.2026). It covers only the web UI of UC-01 to UC-06, UC-09 to UC-11 and UC-12 (admin review of event requests, CR-01). The backend, the facility pages (UC-07, UC-08) and the integration tests are written by the other team members and must be added to the full report.
 
 ## 1. Scope and approach
 The web UI (`src/campusevent/web/`, layer 1 of the [Software Design Report](../software_design_report.md)) is tested through the Flask test client: each test sends the HTTP requests of a user and checks the status code, the redirect and the text of the page.
