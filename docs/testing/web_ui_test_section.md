@@ -7,6 +7,7 @@ It covers the web UI (layer 1 of the [Software Design Report](../software_design
 The parts the instructor asked for on 17.11 are in their own files:
 - **Traceability matrix with code and requirements coverage:** [`docs/tests/coverage/web-ui.md`](../tests/coverage/web-ui.md)
 - **Non-functional tests and their results:** [`docs/tests/non-func-tests/web-ui.md`](../tests/non-func-tests/web-ui.md)
+- **TDD evidence (red → green, repeatable):** [`docs/tests/tdd/web-ui.md`](../tests/tdd/web-ui.md)
 
 ## 1. Scope and approach
 | Level | What is tested | Test doubles | File | Run |
