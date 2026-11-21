@@ -4,6 +4,7 @@ Business rules:
 - BR-06: a facility cannot be used by two active events, or by an event and a block, at the same time.
 - BR-09: only facility staff manage facilities and blocks.
 - BR-10: blocks of one facility do not overlap each other.
+- UC-08 alt. 2b (#19): staff remove a block that was added by mistake; its time is free again.
 - BR-16 (CR-01): a pending request holds its slot like an open or full event; rejected, cancelled
   and completed events free it.
 """
@@ -99,6 +100,20 @@ class FacilityService:
             raise
         return block
 
+    def remove_block(self, staff_id: int, block_id: int) -> FacilityBlock:
+        """UC-08 alt. 2b: remove a block; returns the removed block. ``NotFoundError`` for an unknown id."""
+        self.auth.require_role(staff_id, Role.FACILITY_STAFF)  # BR-09
+        self.uow.begin()
+        try:
+            block = self.facilities.get_block(block_id)
+            self.facilities.get_for_update(block.facility_id)  # same lock as add_block and check_bookable
+            self.facilities.remove_block(block_id)
+            self.uow.commit()
+        except Exception:
+            self.uow.rollback()
+            raise
+        return block
+
     # ------------------------------------------------------------------ #
     # UC-07 View facility schedule and check conflicts
     # ------------------------------------------------------------------ #
@@ -110,10 +125,19 @@ class FacilityService:
         """Raises ``NotFoundError`` for an unknown id."""
         return self.facilities.get(facility_id)
 
+    def get_block(self, block_id: int) -> FacilityBlock:
+        """Raises ``NotFoundError`` for an unknown id."""
+        return self.facilities.get_block(block_id)
+
     def get_blocks(self, facility_id: int, day: date) -> list[FacilityBlock]:
         """The blocks of one day with their reasons (Facility Management page)."""
         self.facilities.get(facility_id)
         return self.facilities.blocks_on(facility_id, day)
+
+    def get_bookings(self, facility_id: int, day: date) -> list[Event]:
+        """Pending, open and full events of that day, sorted by start (the Facility Management page shows their titles)."""
+        self.facilities.get(facility_id)
+        return sorted(self._active_events(facility_id, day), key=lambda e: e.slot.start)
 
     def get_schedule(self, facility_id: int, day: date) -> list[TimeSlot]:
         """Return every busy slot (blocks and events) of the facility on that day."""

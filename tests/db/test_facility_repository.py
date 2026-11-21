@@ -143,3 +143,34 @@ def test_service_with_sql_repository_rolls_back_a_refused_block(engine, session,
     with engine.connect() as connection:  # only the committed block is in the database
         count = connection.scalar(text("SELECT count(*) FROM facility_block WHERE facility_id = :id"), {"id": hall.id})
     assert count == 1
+
+
+def test_blocks_get_ids_and_can_be_removed(repo, session, staff_id):
+    hall = add(repo, session, staff_id, "Hall")
+    block = repo.add_block(FacilityBlock(hall.id, TimeSlot(at(2, 9), at(2, 12)), "Mistake"), created_by=staff_id)
+    session.commit()
+
+    assert block.id is not None
+    assert repo.get_block(block.id) == block
+
+    repo.remove_block(block.id)
+    session.commit()
+
+    assert repo.blocks_on(hall.id, date(2026, 11, 2)) == []
+    with pytest.raises(NotFoundError):
+        repo.get_block(block.id)
+    with pytest.raises(NotFoundError):
+        repo.remove_block(block.id)
+
+
+def test_service_removes_a_block_from_the_database(engine, session, staff_id):
+    service = FacilityService(StubAuth(staff_id), SqlFacilityRepository(session), uow=SqlUnitOfWork(session))
+    hall = service.add_facility(staff_id, PREFIX + "Hall", 30)
+    block = service.add_block(staff_id, hall.id, TimeSlot(at(2, 9), at(2, 12)), "Mistake")
+
+    service.remove_block(staff_id, block.id)
+
+    assert service.is_available(hall.id, TimeSlot(at(2, 10), at(2, 11))) is True
+    with engine.connect() as connection:  # really deleted, seen from another connection
+        count = connection.scalar(text("SELECT count(*) FROM facility_block WHERE facility_id = :id"), {"id": hall.id})
+    assert count == 0

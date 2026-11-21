@@ -76,6 +76,7 @@ class FacilityBlock:
     facility_id: int
     slot: TimeSlot
     reason: str
+    id: int | None = None  # given by the repository when the block is stored
 
 
 @dataclass
