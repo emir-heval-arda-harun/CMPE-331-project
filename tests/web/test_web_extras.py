@@ -1,6 +1,7 @@
 """Tests for the helper features of the web UI: free time suggestions (UC-04 4a), the facility schedule box,
 'Add to calendar', pagination and category shortcuts on Find Events, interest tags, the password guide."""
 
+import re
 from datetime import date, datetime
 
 import pytest
@@ -8,7 +9,7 @@ import pytest
 from campusevent.models import TimeSlot
 from campusevent.web import common, create_web_app
 from tests.web.conftest import make_user
-from tests.web.fakes import slot
+from tests.web.fakes import PASSWORD, slot
 
 DAY = date(2026, 11, 20)
 
@@ -276,3 +277,42 @@ def test_every_page_has_the_campus_background_with_fireworks_by_default(client, 
 
     other = create_web_app(services, {"TESTING": True, "SECRET_KEY": "t", "BACKGROUND": "campus-dusk"})
     assert b'data-background="campus-dusk"' in other.test_client().get("/login").data  # another look by setting
+
+
+# accessibility: labels -------------------------------------------------------------------------------------------
+
+
+def _fields_without_a_label(html: str) -> list[str]:
+    """Visible form fields (input, select, textarea) that have neither a <label for=...> nor an aria-label."""
+    labelled = set(re.findall(r'<label[^>]*\bfor="([^"]+)"', html))
+    missing = []
+    for tag in re.findall(r"<(?:input|select|textarea)\b[^>]*>", html):
+        if re.search(r'type="(hidden|submit|button)"', tag):
+            continue
+        field_id = re.search(r'\bid="([^"]+)"', tag)
+        if "aria-label=" in tag or (field_id and field_id.group(1) in labelled):
+            continue
+        missing.append(tag[:80])
+    return missing
+
+
+def test_every_form_field_has_a_label(client, services, hall):
+    """WCAG 1.3.1 and 3.3.2 (NFR-01): screen readers need a name for every field, also without JavaScript."""
+    pages = {}
+    for path in ("/login", "/signup", "/verify"):
+        pages[path] = client.get(path).get_data(as_text=True)
+    make_user(services, "student@bilgiedu.net")
+    client.post("/login", data={"email": "student@bilgiedu.net", "password": PASSWORD})
+    for path in ("/events", "/events/new", "/profile"):
+        pages[path] = client.get(path).get_data(as_text=True)
+    for path, html in pages.items():
+        assert _fields_without_a_label(html) == [], path
+
+
+def test_create_form_category_label_follows_the_visible_field(client, student, hall):
+    page = client.get("/events/new").get_data(as_text=True)
+    # without JavaScript only the text field is visible, so "Category" names it
+    assert '<label class="form-label" for="category" id="category-label">Category</label>' in page
+    # with JavaScript the list is shown: the script moves "Category" to it and shows the text field's own label
+    assert 'id="category-other-label" hidden>Your own category</label>' in page
+    assert "getElementById('category-label').htmlFor = 'category_choice'" in page
