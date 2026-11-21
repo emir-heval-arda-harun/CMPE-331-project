@@ -1,6 +1,6 @@
 # Coverage – web UI (UC-01 to UC-06, UC-09 to UC-12)
 
-**Author:** Emir Gül · **Date of the results:** 21.11.2026 · **Code:** `main` with PR #31 (*Send a new code*), PR #22 (remove a block) and the category label fix (branch `feature/category-label-emir`) · Part of the Software Testing Report, see the [web UI section](../../testing/web_ui_test_section.md).
+**Author:** Emir Gül · **Date of the results:** 21.11.2026 · **Code:** `main` of 21.11.2026 (`c98923c`), with PR #31 (*Send a new code*), PR #22 (remove a block) and PR #32 (category label) merged · Part of the Software Testing Report, see the [web UI section](../../testing/web_ui_test_section.md).
 
 The facility page (UC-07, UC-08, `facility_routes.py`) is in Harun's [facilities coverage](facilities.md); the composition root tests (`tests/web/test_web_wiring.py`) are in Heval's [accounts and profiles coverage](accounts-profiles.md).
 

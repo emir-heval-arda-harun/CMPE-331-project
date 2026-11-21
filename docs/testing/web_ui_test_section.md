@@ -2,7 +2,7 @@
 
 **Author:** Emir Gül · **Status:** section for the team's Software Testing Report (task 4.1: pull request to Yeşim by 25.11.2026, PDF on Learn by 29.11.2026) · **Date of the results:** 21.11.2026
 
-It covers the web UI (layer 1 of the [Software Design Report](../software_design_report.md), `src/campusevent/web/`) for UC-01 to UC-06, UC-09 to UC-11 and UC-12 (admin review of event requests, change request CR-01), with the design of the [UI/UX document](../ui_ux_design.md). The results below are for `main` together with PR #31 (*Send a new code*), PR #22 (remove a block) and the category label fix (branch `feature/category-label-emir`). The facility page (UC-07, UC-08) is in the [facilities section](facility_test_section.md); the services behind the pages are in the sections of their owners.
+It covers the web UI (layer 1 of the [Software Design Report](../software_design_report.md), `src/campusevent/web/`) for UC-01 to UC-06, UC-09 to UC-11 and UC-12 (admin review of event requests, change request CR-01), with the design of the [UI/UX document](../ui_ux_design.md). The results below are for `main` of 21.11.2026 (`c98923c`), after PR #31 (*Send a new code*), PR #22 (remove a block) and PR #32 (category label) were merged. The facility page (UC-07, UC-08) is in the [facilities section](facility_test_section.md); the services behind the pages are in the sections of their owners.
 
 The parts the instructor asked for on 17.11 are in their own files:
 - **Traceability matrix with code and requirements coverage:** [`docs/tests/coverage/web-ui.md`](../tests/coverage/web-ui.md)

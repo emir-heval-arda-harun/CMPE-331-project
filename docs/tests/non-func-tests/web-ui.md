@@ -1,6 +1,6 @@
 # Non-functional tests – web UI (UC-01 to UC-06, UC-09 to UC-12)
 
-**Author:** Emir Gül · **Date of the results:** 21.11.2026 (browser checks from 17.11 to 21.11) · **Code:** `main` with PR #31, PR #22 and the category label fix (branch `feature/category-label-emir`) · Part of the Software Testing Report, see the [web UI section](../../testing/web_ui_test_section.md).
+**Author:** Emir Gül · **Date of the results:** 21.11.2026 (browser checks from 17.11 to 21.11) · **Code:** `main` of 21.11.2026 (`c98923c`), with PR #31, PR #22 and PR #32 merged · Part of the Software Testing Report, see the [web UI section](../../testing/web_ui_test_section.md).
 
 The non-functional requirements are in the [Requirements Specification](../../requirements_specification.md) (NFR-01 to NFR-07). This file lists what was checked on the web pages. The facility page is in the [facilities file](facilities.md); password hashing and log in security are in the [accounts and profiles file](accounts-profiles.md).
 

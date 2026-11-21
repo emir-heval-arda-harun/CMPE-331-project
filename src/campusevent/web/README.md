@@ -37,7 +37,7 @@ The left side of the sign up and log in pages shows a drawn campus skyline. To s
 
 ## What the UI needs from the backend
 Planned in the design report (class diagram 4.2) and used as they are:
-`AuthService.get_user(user_id)`, `register`, `verify_email`, `login`, `get_user_by_token`, `ProfileService.get_profile/update_profile`, `FacilityService.get_schedule`, `EventService.create_event/search_events/join_event/leave_event/cancel_event/get_activity_history`, and from CR-01 `list_pending_events/approve_event/reject_event/list_my_requests`.
+`AuthService.get_user(user_id)`, `register`, `verify_email`, `resend_code`, `login`, `get_user_by_token`, `ProfileService.get_profile/update_profile`, `FacilityService.get_schedule`, `EventService.create_event/search_events/join_event/leave_event/cancel_event/get_activity_history`, and from CR-01 `list_pending_events/approve_event/reject_event/list_my_requests`.
 
 **Not in the design report yet, but needed by the pages (please add):**
 
@@ -48,13 +48,13 @@ Planned in the design report (class diagram 4.2) and used as they are:
 | `AuthService.get_user` must raise `NotFoundError` for unknown ids | Participant and organizer names | Names are looked up per user id |
 
 **Known gaps (use case text asks for them, the current service interface cannot):**
-- "Send a new code" (UC-01 5a, UC-02 3a): `AuthService.resend_code(email)` exists now (task 3.2); the verify and log in pages still need a button for it.
 - Time range filter (UC-05): `search_events` has no time parameter, so Find Events filters by keyword, category and date only.
 - "Upcoming" tab on My Activities (finding F-09 of the design report): needs a service method for events the user has joined that are still open.
 
 ## Helper features of the pages
 | Page | Feature | Note |
 |---|---|---|
+| Verify, Log in | **Send a new code** (`POST /verify/resend`): on the verify page it is a second button of the same form, so the e-mail typed there is sent along (no JavaScript); on the log in page it appears for an unverified account | UC-01 5a, UC-02 3a. The answer is the same for every address, so the page does not tell who has an account. One browser can ask for a new code once a minute (`RESEND_WAIT`), against e-mail flooding; limiting wrong codes is issue #30 |
 | Create Event | Schedule of the chosen facility and day reloads by itself (`/events/schedule`) | UC-07 |
 | Create Event | Free times of the day as one-click suggestions, also after a "slot is busy" error | UC-04 4a. **Assumption:** opening hours 08:00–22:00 and gaps of at least one hour (`DAY_OPENS`, `DAY_CLOSES` in `common.py`), because the requirements do not define opening hours |
 | Create Event | Warning while typing if the time overlaps a busy slot or ends before it starts; capacity limit of the facility | The server checks everything again |
