@@ -7,6 +7,7 @@ It covers UC-07 *View facility schedule and check conflicts* and UC-08 *Manage f
 The parts the instructor asked for on 17.11 are in their own files:
 - **Traceability matrix with code and requirements coverage:** [`docs/tests/coverage/facilities.md`](../tests/coverage/facilities.md)
 - **Non-functional tests and their results:** [`docs/tests/non-func-tests/facilities.md`](../tests/non-func-tests/facilities.md)
+- **TDD evidence (tests first, red → green):** [`docs/tests/tdd/facilities.md`](../tests/tdd/facilities.md)
 
 ## 1. Scope and approach
 The facility part is tested on three levels, from the inside out:
