@@ -19,9 +19,9 @@ def fast_hasher():
     return Argon2PasswordHasher(time_cost=1, memory_cost=1024, parallelism=1)
 
 
-# The requirement tests use fixed event dates (tests/helpers.slot(): 2 Nov 2026 and later), so EventService
+# The requirement tests use fixed event dates (tests/helpers.slot(): 1 Nov 2026 and later), so EventService
 # gets a fixed "now" before them. With the real time, "has not started" (UC-10, UC-11) fails once the date passed.
-NOW = datetime(2026, 11, 1, 12, 0)  # naive UTC, like the services
+NOW = datetime(2026, 10, 31, 12, 0)  # naive UTC, like the services; before the earliest test date
 
 
 @pytest.fixture
