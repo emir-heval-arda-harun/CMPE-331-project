@@ -12,8 +12,15 @@ from datetime import date, datetime
 import pytest
 
 from campusevent.events import EXPIRED_REASON, EventService
-from campusevent.exceptions import FacilityConflictError, PermissionDeniedError, ValidationError
-from campusevent.models import EventStatus, Role
+from campusevent.exceptions import (
+    AlreadyJoinedError,
+    EventFullError,
+    FacilityConflictError,
+    NotFoundError,
+    PermissionDeniedError,
+    ValidationError,
+)
+from campusevent.models import EventStatus, Role, TimeSlot
 
 NOW = datetime(2026, 11, 1, 12, 0)  # fixed "current time"
 ADMIN = 100
@@ -136,11 +143,11 @@ def test_join_twice_is_rejected_and_capacity_is_never_exceeded():
     svc = make_service()
     event = open_event(svc, capacity=3)
     svc.join_event(event.id, 2)
-    with pytest.raises(ValidationError):
-        svc.join_event(event.id, 2)  # BR-07
+    with pytest.raises(AlreadyJoinedError):
+        svc.join_event(event.id, 2)  # UC-06 2a, BR-07
     svc.join_event(event.id, 3)
-    with pytest.raises(ValidationError):
-        svc.join_event(event.id, 4)  # full
+    with pytest.raises(EventFullError):
+        svc.join_event(event.id, 4)  # UC-06 1b
     assert len(svc.events.get(event.id).participant_ids) == 3
 
 
@@ -162,14 +169,57 @@ def test_organizer_cannot_leave_and_non_participant_cannot_leave():
 
 
 def test_cannot_leave_or_cancel_after_the_start_time():
-    svc = EventService(FakeAuth(), FakeFacilities(), clock=lambda: datetime(2026, 12, 1, 10, 30))
+    now = [NOW]
+    svc = EventService(FakeAuth(), FakeFacilities(), clock=lambda: now[0])
     event = svc.create_event(1, "Started", "x", 1, slot(10), 3)
     svc.approve_event(event.id, ADMIN)
     svc.join_event(event.id, 2)
+    now[0] = datetime(2026, 12, 1, 10, 30)  # the event has started
     with pytest.raises(ValidationError):
         svc.leave_event(event.id, 2)
     with pytest.raises(ValidationError):
         svc.cancel_event(event.id, 1)
+    with pytest.raises(ValidationError):
+        svc.join_event(event.id, 3)  # UC-06: only upcoming events can be joined
+
+
+# --------------------------------------------------------------------------- the clock (UC-04, UC-05, UC-09, BR-18)
+def test_event_in_the_past_is_refused():
+    svc = make_service()
+    with pytest.raises(ValidationError):
+        svc.create_event(1, "Last year", "x", 1, TimeSlot(datetime(2025, 1, 10, 18), datetime(2025, 1, 10, 19)), 3)
+
+
+def test_get_event_returns_any_status_and_unknown_id_is_not_found():
+    svc = make_service()
+    pending = create(svc)
+    assert svc.get_event(pending.id).status == EventStatus.PENDING
+    with pytest.raises(NotFoundError):
+        svc.get_event(999)
+
+
+def test_after_the_end_an_event_is_completed_and_in_the_history():
+    now = [NOW]
+    svc = EventService(FakeAuth(), FakeFacilities(), clock=lambda: now[0])
+    event = open_event(svc)
+    svc.join_event(event.id, 2)
+    assert svc.get_activity_history(2) == []
+
+    now[0] = datetime(2026, 12, 2)  # the day after the event
+    assert [record.event_id for record in svc.get_activity_history(2)] == [event.id]  # BR-11
+    assert svc.get_event(event.id).status == EventStatus.COMPLETED
+    assert svc.search_events(only_open=False) == []  # UC-05 lists upcoming events only
+
+
+def test_request_not_reviewed_before_its_start_expires_and_cannot_be_approved():
+    now = [NOW]
+    svc = EventService(FakeAuth(), FakeFacilities(), clock=lambda: now[0])
+    late = create(svc)
+    now[0] = datetime(2026, 12, 1, 11)  # after the start (BR-18)
+    with pytest.raises(ValidationError):
+        svc.approve_event(late.id, ADMIN)
+    assert svc.list_pending_events(ADMIN) == []
+    assert svc.get_event(late.id).status == EventStatus.REJECTED
 
 
 # --------------------------------------------------------------------------- UC-11

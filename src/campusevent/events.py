@@ -19,7 +19,7 @@ from datetime import date, datetime, timezone
 from typing import Callable
 
 from campusevent.auth import AuthService
-from campusevent.exceptions import PermissionDeniedError, ValidationError
+from campusevent.exceptions import AlreadyJoinedError, EventFullError, PermissionDeniedError, ValidationError
 from campusevent.facilities import FacilityService
 from campusevent.models import ActivityRecord, Event, EventStatus, Role, TimeSlot
 from campusevent.repositories.event_repository import EventRepository, InMemoryEventRepository
@@ -91,6 +91,8 @@ class EventService:
             raise ValidationError(f"The category can be at most {CATEGORY_MAX} characters long.")
         if isinstance(capacity, bool) or not isinstance(capacity, int) or capacity < MIN_CAPACITY:
             raise ValidationError(f"The capacity must be a whole number of at least {MIN_CAPACITY}.")  # 3a, BR-04
+        if slot.start <= self.clock():  # UC-04: an event request is for a future time
+            raise ValidationError("The event must start in the future.")
 
         self.uow.begin()
         try:
@@ -129,8 +131,10 @@ class EventService:
         """Listed events ordered by start time. Pending, rejected, cancelled and completed events are
         never listed (BR-15). ``only_open=True`` shows OPEN events only; ``False`` also shows FULL ones.
         All given filters must match."""
+        self._settle()
         statuses = (EventStatus.OPEN,) if only_open else (EventStatus.OPEN, EventStatus.FULL)
-        events = self.events.list_by_status(statuses)
+        now = self.clock()
+        events = [e for e in self.events.list_by_status(statuses) if e.slot.start > now]  # UC-05: upcoming events
         if category is not None and _fold(category):
             wanted = _fold(category)
             events = [e for e in events if _fold(e.category) == wanted]  # BR-14
@@ -147,6 +151,7 @@ class EventService:
     def list_pending_events(self, admin_id: int) -> list[Event]:
         """UC-12: all PENDING requests, oldest start time first. Admins only."""
         self.auth.require_role(admin_id, Role.ADMIN)
+        self._settle()  # requests whose start time has passed are expired first (BR-18)
         events = self.events.list_by_status((EventStatus.PENDING,))
         return sorted(events, key=lambda e: (e.slot.start, e.slot.end, e.id))
 
@@ -157,6 +162,8 @@ class EventService:
         try:
             event = self.events.get_for_update(event_id)
             self._require_pending(event)  # 2b
+            if event.slot.start <= self.clock():  # BR-18: a request not reviewed before its start expires
+                raise ValidationError("This request has expired: its start time has passed.")
             event.status = EventStatus.OPEN
             event.reviewed_by = admin_id
             event.reviewed_at = self.clock()
@@ -220,6 +227,7 @@ class EventService:
         """UC-12: every event the user organized, in any status, so the organizer can follow
         pending, approved and rejected requests. Newest start time first."""
         self.auth.get_user(organizer_id)
+        self._settle()
         events = self.events.list_by_organizer(organizer_id)
         return sorted(events, key=lambda e: (e.slot.start, e.slot.end, e.id), reverse=True)
 
@@ -247,10 +255,12 @@ class EventService:
             event = self.events.get_for_update(event_id)  # lock: two students cannot take the last place
             if event.status not in (EventStatus.OPEN, EventStatus.FULL):  # 1a
                 raise ValidationError("This event is not open for joining.")
-            if len(event.participant_ids) >= event.capacity:  # 1b
-                raise ValidationError("This event is full.")
+            if event.slot.start <= self.clock():  # UC-06: only upcoming events can be joined
+                raise ValidationError("This event has already started.")
             if user_id in event.participant_ids:  # 2a, BR-07
-                raise ValidationError("You have already joined this event.")
+                raise AlreadyJoinedError("You have already joined this event.")
+            if len(event.participant_ids) >= event.capacity:  # 1b
+                raise EventFullError("This event is full.")
             event.participant_ids.append(user_id)
             if len(event.participant_ids) >= event.capacity:  # BR-08
                 event.status = EventStatus.FULL
@@ -322,12 +332,32 @@ class EventService:
             raise
         return event
 
+    def get_event(self, event_id: int) -> Event:
+        """One event by id, in any status (Event Details and the join, leave and cancel pages).
+        ``NotFoundError`` for an unknown id."""
+        return self.events.get(event_id)
+
+    def _settle(self) -> None:
+        """Bring the statuses up to date with the clock before a list is read: requests still pending at their
+        start time are rejected (BR-18), and open or full events that have ended become COMPLETED, so they
+        appear in the activity history (UC-09, BR-11). There is no background job on the free hosting plan,
+        so this runs when the lists are opened."""
+        now = self.clock()
+        self.expire_pending_requests(now)
+        for event in self.events.list_by_status((EventStatus.OPEN, EventStatus.FULL)):
+            if event.slot.end <= now:
+                try:
+                    self.complete_event(event.id)
+                except ValidationError:  # completed or cancelled by another request in the meantime
+                    pass
+
     # ------------------------------------------------------------------ #
     # UC-09 Track activity history
     # ------------------------------------------------------------------ #
     def get_activity_history(self, user_id: int) -> list[ActivityRecord]:
         """Completed events the user took part in, newest first (BR-11). Cancelled ones never appear (BR-13)."""
         self.auth.get_user(user_id)  # NotFoundError for an unknown user
+        self._settle()
         events = [
             e for e in self.events.list_by_participant(user_id) if e.status == EventStatus.COMPLETED
         ]
