@@ -30,7 +30,7 @@ python scripts/run_demo.py        # demo with in-memory data, then open http://l
    ```
    Then open http://localhost:5000 and log in with a demo user of `seed_db.py`.
 
-The live version runs on Render: [CI/CD and deployment](docs/devops/README.md).
+The live version runs on Render: **https://campusevent-86ax.onrender.com** (free plan: the first request after a quiet time takes about a minute). Details: [CI/CD and deployment](docs/devops/README.md#live-deployment-task-44).
 
 ## Tests
 ```bash
