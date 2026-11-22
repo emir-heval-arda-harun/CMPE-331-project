@@ -19,7 +19,7 @@ from datetime import date, datetime, timezone
 from typing import Callable
 
 from campusevent.auth import AuthService
-from campusevent.exceptions import PermissionDeniedError, ValidationError
+from campusevent.exceptions import AlreadyJoinedError, EventFullError, PermissionDeniedError, ValidationError
 from campusevent.facilities import FacilityService
 from campusevent.models import ActivityRecord, Event, EventStatus, Role, TimeSlot
 from campusevent.repositories.event_repository import EventRepository, InMemoryEventRepository
@@ -247,10 +247,10 @@ class EventService:
             event = self.events.get_for_update(event_id)  # lock: two students cannot take the last place
             if event.status not in (EventStatus.OPEN, EventStatus.FULL):  # 1a
                 raise ValidationError("This event is not open for joining.")
-            if len(event.participant_ids) >= event.capacity:  # 1b
-                raise ValidationError("This event is full.")
             if user_id in event.participant_ids:  # 2a, BR-07
-                raise ValidationError("You have already joined this event.")
+                raise AlreadyJoinedError("You have already joined this event.")
+            if len(event.participant_ids) >= event.capacity:  # 1b
+                raise EventFullError("This event is full.")
             event.participant_ids.append(user_id)
             if len(event.participant_ids) >= event.capacity:  # BR-08
                 event.status = EventStatus.FULL

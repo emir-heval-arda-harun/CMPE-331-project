@@ -12,7 +12,13 @@ from datetime import date, datetime
 import pytest
 
 from campusevent.events import EXPIRED_REASON, EventService
-from campusevent.exceptions import FacilityConflictError, PermissionDeniedError, ValidationError
+from campusevent.exceptions import (
+    AlreadyJoinedError,
+    EventFullError,
+    FacilityConflictError,
+    PermissionDeniedError,
+    ValidationError,
+)
 from campusevent.models import EventStatus, Role
 
 NOW = datetime(2026, 11, 1, 12, 0)  # fixed "current time"
@@ -136,11 +142,11 @@ def test_join_twice_is_rejected_and_capacity_is_never_exceeded():
     svc = make_service()
     event = open_event(svc, capacity=3)
     svc.join_event(event.id, 2)
-    with pytest.raises(ValidationError):
-        svc.join_event(event.id, 2)  # BR-07
+    with pytest.raises(AlreadyJoinedError):
+        svc.join_event(event.id, 2)  # UC-06 2a, BR-07
     svc.join_event(event.id, 3)
-    with pytest.raises(ValidationError):
-        svc.join_event(event.id, 4)  # full
+    with pytest.raises(EventFullError):
+        svc.join_event(event.id, 4)  # UC-06 1b
     assert len(svc.events.get(event.id).participant_ids) == 3
 
 
