@@ -71,4 +71,4 @@ python -m pytest tests/test_nfr.py -k nfr03
 ```
 The last command runs the 2 NFR-03 tests on their own; they are not in the coverage figures above.
 
-Use `coverage run` as above, not `pytest --cov=<module>`: Harun found that pytest-cov with a module name makes the database tests fail inside SQLAlchemy (see the [facilities coverage file](facilities.md#how-to-measure)).
+Do not pass a dotted module name to pytest-cov (`pytest --cov=campusevent.auth`): Harun found that this makes the database tests fail inside SQLAlchemy (see the [facilities coverage file](facilities.md#how-to-measure)). `coverage run` as above works, and so does plain `python -m pytest --cov` with the settings in `pyproject.toml`, which CI uses since #36 (see the [coverage README](README.md)).
