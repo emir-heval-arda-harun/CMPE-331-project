@@ -40,15 +40,16 @@ jobs:
         image: postgres:16
         env:
           POSTGRES_USER: campusevent
-          POSTGRES_PASSWORD: campusevent-ci
           POSTGRES_DB: campusevent_test
+          # No password at all: the database only lives for this job and is reachable only from the
+          # runner, so no credential is written in the repository.
+          POSTGRES_HOST_AUTH_METHOD: trust
         ports: ["5432:5432"]
         options: >-
           --health-cmd "pg_isready -U campusevent -d campusevent_test"
           --health-interval 5s --health-timeout 5s --health-retries 10
     env:
-      # Only a CI test database with a CI-only password, not a secret.
-      TEST_DATABASE_URL: postgresql://campusevent:campusevent-ci@localhost:5432/campusevent_test
+      TEST_DATABASE_URL: postgresql://campusevent@localhost:5432/campusevent_test
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
