@@ -46,6 +46,7 @@ Planned in the design report (class diagram 4.2) and used as they are:
 | `EventService.get_event(event_id) -> Event` | Event Details, join/leave/cancel result page | There is no way to read one event; raise `NotFoundError` for an unknown id |
 | `FacilityService.list_facilities() -> list[Facility]` | Create Event dropdown, facility name on every event | The pages show facility names and capacities |
 | `AuthService.get_user` must raise `NotFoundError` for unknown ids | Participant and organizer names | Names are looked up per user id |
+| `EventService.clock() -> datetime` (naive UTC; optional) | *Join*, *Leave* and *Cancel* buttons | They are hidden once the event has started, with the same "now" as the service; without it the page uses the real time |
 
 **Known gaps (use case text asks for them, the current service interface cannot):**
 - Time range filter (UC-05): `search_events` has no time parameter, so Find Events filters by keyword, category and date only.
