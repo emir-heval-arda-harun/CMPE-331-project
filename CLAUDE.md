@@ -9,14 +9,14 @@ python -m pytest                     # all tests; requirement tests of unfinishe
 python -m pytest tests/db            # needs TEST_DATABASE_URL (local PostgreSQL 16), otherwise skipped
 ruff check .                         # must be clean, CI runs it
 python scripts/run_demo.py           # demo with in-memory data on http://localhost:5055
-python -m coverage run --branch --source=src/campusevent -m pytest && python -m coverage report
+python -m pytest --cov               # coverage with branches; settings in pyproject.toml (pytest-cov, #36)
 ```
-Use `coverage run`, not `pytest --cov=<module>`: the second one breaks the database tests.
+Measure the whole package (`--cov` alone, as CI does) or a path (`--cov=src/campusevent`). Do **not** pass a dotted module such as `--cov=campusevent.facilities`: then the database tests fail inside SQLAlchemy with `TypeError: 'InternalTraversal' object is not callable`.
 
 ## Architecture (Software Design Report, section 3)
 - Layers: web (`src/campusevent/web`) → services (`auth.py`, `profiles.py`, `events.py`, `facilities.py`) → repositories (`src/campusevent/repositories`) → PostgreSQL. A layer calls only the layer directly below it.
 - Services depend on `Protocol` interfaces (`*Repository`, `UnitOfWork`, `PasswordHasher`, `EmailSender`), never on Flask, SQLAlchemy or SMTP.
-- `create_app` in `app.py` is the only place that picks concrete classes (`Sql*` in production, `InMemory*` in tests).
+- Only `create_app` in `app.py` picks the `Sql*` classes (when a database URL is given); without one the services use their `InMemory*` defaults.
 - Transactions: the service calls `uow.begin()`, `commit()` or `rollback()`. A repository never commits or rolls back by itself; it translates known constraint errors into domain errors and re-raises the rest.
 - Facility booking: call `FacilityService.check_bookable` **after** `uow.begin()`, so the facility row lock is part of the same transaction.
 - Follow "Writing a Sql*Repository" in `docs/database/README.md` for new SQL repositories.
@@ -31,6 +31,6 @@ Use `coverage run`, not `pytest --cov=<module>`: the second one breaks the datab
 
 ## Workflow
 - Branch from `main` as `<type>/<topic>-<name>` (`feature`, `fix`, `docs`). Never push to `main`; open a pull request, at least one teammate approves, merge with a merge commit.
-- Commits made with the assistant end with `Co-Authored-By: Claude …`; pull request texts end with the "Generated with Claude Code" line.
+- Commits made with the assistant end with `Co-Authored-By: Claude …`; pull request texts end with the "Generated with Claude Code" line. For a commit uploaded through the GitHub web page, say in the pull request which part the assistant made.
 - Documentation and code comments are in plain English; reports are Markdown files under `docs/`, diagrams Mermaid or PlantUML.
 - A team member reads and runs every AI-written change before asking for review. If the assistant was wrong in a way that mattered, note it in the pull request so it can go into the AI section of the reports.
