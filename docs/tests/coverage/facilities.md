@@ -49,4 +49,4 @@ pip install coverage
 python -m coverage run --branch --source=src/campusevent -m pytest tests/test_facility_service.py tests/db/test_facility_repository.py tests/web/test_web_facilities.py
 python -m coverage report -m --include="*facilit*"
 ```
-Use `coverage run` as above. `pytest --cov=campusevent.facilities` (pytest-cov with a module name) makes the database tests fail inside SQLAlchemy (`'InternalTraversal' object is not callable`); this is a tool problem, not a problem of the code.
+Use `coverage run` as above. `pytest --cov=campusevent.facilities` (pytest-cov with a module name) makes the database tests fail inside SQLAlchemy (`'InternalTraversal' object is not callable`); this is a tool problem, not a problem of the code. The project-wide `pytest --cov` of CI (#36, source set in `pyproject.toml`) and `--cov=src/campusevent` work with the database tests (checked on 22 Nov 2026); only the dotted module name breaks them.
