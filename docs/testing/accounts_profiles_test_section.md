@@ -29,7 +29,7 @@ The parts the instructor asked for on 17.11 are in their own files:
 | Unit, profiles (`test_profiles.py`) | 17 | 17 | 0 | local and CI |
 | Unit, wiring and mail (`test_wiring.py`, `web/test_web_wiring.py`) | 14 | 14 | 0 | local and CI |
 | Database, this section (`tests/db` without the facility file) | 52 | 52 | 0 | PostgreSQL 16.16, local and in the coverage run (skipped in normal CI) |
-| Requirement tests UC-01, UC-02, UC-03, NFR-03 | 12 | 12 | 0 | local and CI, with #23 and #24 |
+| Requirement tests UC-01, UC-02, UC-03, NFR-03 | 12 (10 UC + 2 NFR-03) | 12 | 0 | local and CI, with #23 and #24; the coverage run has the 10 UC tests, the 2 NFR-03 tests were run separately |
 
 The whole `tests/db` folder (59 tests, including the 7 facility tests of that day) passed on PostgreSQL. The whole suite gave **303 passed, 36 failed**; all 36 failures are `NotImplementedError` from `EventService` (tasks 3.4 / 3.6), the same as in CI. `ruff check .` is clean.
 

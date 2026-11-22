@@ -35,7 +35,7 @@ Requirement → rule → tests → code, with the result on 20.11.2026. Acc = `t
 **Requirements coverage:** 24 of 24 rows have passing tests (100 %). All 12 requirement tests of UC-01, UC-02, UC-03 and NFR-03 pass with #23 and #24.
 
 ## Code coverage
-Measured on 20.11.2026 with coverage.py, statements **and** branches, all suites of this section (140 tests: 78 unit, 52 database, 10 requirement) on PostgreSQL 16.16. The run was on GitHub Actions with a PostgreSQL 16 service container, on a temporary branch with `main` + #23 + #24 (with the İ fix) + #25; all 140 tests passed.
+Measured on 20.11.2026 with coverage.py, statements **and** branches, all suites of this section (140 tests: 78 unit, 52 database, 10 requirement tests of UC-01 to UC-03) on PostgreSQL 16.16. The 2 NFR-03 requirement tests in `tests/test_nfr.py` were not part of this coverage run; they were run separately in the same session and passed (see below), so the section's 12 requirement tests are 10 + 2. The run was on GitHub Actions with a PostgreSQL 16 service container, on a temporary branch with `main` + #23 + #24 (with the İ fix) + #25; all 140 tests passed.
 
 | File | Statements | Missed | Branches | Partial | Coverage |
 |---|---|---|---|---|---|
@@ -67,5 +67,8 @@ With `main` + #23 + #24 + #25 and `TEST_DATABASE_URL` set (locally in `.env`):
 pip install coverage
 python -m coverage run --branch --source=src/campusevent -m pytest tests/test_auth_accounts.py tests/test_auth_roles.py tests/test_profiles.py tests/test_wiring.py tests/web/test_web_wiring.py tests/db/test_schema.py tests/db/test_unit_of_work.py tests/db/test_user_repository.py tests/db/test_profile_repository.py tests/db/test_app_with_database.py tests/test_uc01_register_and_verify.py tests/test_uc02_login.py tests/test_uc03_manage_profile.py
 python -m coverage report -m --include="*/campusevent/auth.py,*/campusevent/profiles.py,*/campusevent/security.py,*/campusevent/notifications.py,*/campusevent/app.py,*/repositories/user_repository.py,*/repositories/profile_repository.py,*/repositories/unit_of_work.py,*/repositories/db.py"
+python -m pytest tests/test_nfr.py -k nfr03
 ```
+The last command runs the 2 NFR-03 tests on their own; they are not in the coverage figures above.
+
 Use `coverage run` as above, not `pytest --cov=<module>`: Harun found that pytest-cov with a module name makes the database tests fail inside SQLAlchemy (see the [facilities coverage file](facilities.md#how-to-measure)).
