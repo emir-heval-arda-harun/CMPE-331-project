@@ -33,17 +33,20 @@ The web tests of a feature were committed in the **same commit** as the page cod
 | Event Requests in pages of 20, safe page numbers (defect 13, PR #43) | `4a51fc7` | 6 failed, 138 passed | 144 passed | 20 requests per page, a decision returns to the same page, a wrong page number (such as `²`) gives no error page (2 pages), no link behind a greyed-out *Previous* or *Next* (2 pages). The other 2 new tests are guards for behaviour that was already right |
 | Bootstrap and Inter from `static/`, no `autofocus` (defect 15, PR #44) | `656c402` | 4 failed, 136 passed | 140 passed | no field takes the focus by itself, nothing is loaded from other sites, the own copies are served, the Bootstrap file is the published one (SHA-256) |
 | Long words without spaces (defect 14, PR #45) | `00649ed` | 1 failed, 136 passed | 137 passed | long words break instead of widening the page |
+| Security headers on every answer (section 6, item 9, PR #46) | `881fe77` | 2 failed, 148 passed | 150 passed | the headers on pages, a redirect, the 404 page, a static file and log out; the headers on the 500 page |
+| Findings of the penetration test in the web UI (P4, P5, P8, PR #49) | `452dbbb` | 3 failed, 148 passed | 151 passed | `HEAD` never runs the form code; no lines can be added to the calendar file; a form over 1 MB gets 413 |
 
 In every step all tests pass on the commit itself, so the change broke none of the older tests (no regression). Apart from the rows `3c434da` and `0cb56bb`, and one of the seven tests of `178e0c9` (it sets the clock through `auth_routes.time`, which the old code does not have), the red runs fail on the behaviour (a wrong status code, a missing text or form field), not because a name is missing.
 
-Run 21 Nov 2026 (the last four rows 23 Nov 2026), Python 3.14, pytest 9.2.
+Run 21 Nov 2026 (the last six rows 23 Nov 2026), Python 3.14, pytest 9.2.
 
 ## 3. Tests that caught a defect first
 Section 5 of the report lists the defects. These follow the red → green order:
 - **Defects 1 and 2** (PR #14): found by the web tests of UC-12 and BR-15 while the page was written (report, section 5): an error for a request that had left the list was not shown, and joining a waiting or rejected request of someone else gave 400 instead of 404. The fix is in the same commit (`9386a76`), so git does not show these runs; the replay of that commit is in section 2.
 - **Defects 3 and 4:** found by thinking about the time rule and by checking a downloaded calendar file. The test was written for the defect and fails on the code before the fix (rows `0cb56bb` and `e2eae80` above).
 - **Defect 11:** `test_every_form_field_has_a_label` was written while checking the report. It failed on the code of `main` and found exactly one field without a label. The first fix still left the category list without a name; the test failed again, and passed after the list got an `aria-label`.
-- **Defects 12 to 15** (23 Nov): found by the run against the real `EventService`, a re-check, the check of long texts and SonarQube. For each one a test was written that fails on the code before the fix (the last four rows of section 2); for defect 13 the wrong page number `²` itself is one of the test values.
+- **Defects 12 to 15** (23 Nov): found by the run against the real `EventService`, a re-check, the check of long texts and SonarQube. For each one a test was written that fails on the code before the fix (the rows of `3d1628e`, `4a51fc7`, `656c402` and `00649ed` in section 2); for defect 13 the wrong page number `²` itself is one of the test values.
+- **Penetration test** (23 Nov, [report](../security/pentest-web.md)): for the three findings in the web UI (P4, P5, P8) a test was written first and failed on the code before the fix (the row of `452dbbb`); for `HEAD` the old code really signed up, logged in, saved a profile and created an event without a CSRF token.
 
 ## 4. Honest limits
 - The tests sit in the same commit as their code (section 2). The replay shows that the tests describe the new behaviour and fail without it, but not the minute-by-minute order of typing. Code and tests were written with an AI assistant (Claude Code), and a team member ran and checked each commit.
