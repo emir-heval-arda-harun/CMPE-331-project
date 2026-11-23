@@ -1,8 +1,8 @@
 """Composition root: chooses the implementations and wires the services (Software Design Report 4.3).
 
 - ``create_app()`` without a database URL keeps everything in memory (requirement tests, development).
-- ``create_app(database_url=...)`` uses PostgreSQL for the parts that have a SQL repository: users and
-  verification codes, profiles, facilities. Events stay in memory until ``EventRepository`` exists.
+- ``create_app(database_url=...)`` uses PostgreSQL for everything that has a SQL repository: users and
+  verification codes, profiles, facilities and events.
 - ``create_app_from_env()`` is used by the web app in production: it reads ``DATABASE_URL``,
   ``SECRET_KEY`` and ``SMTP_*`` (see .env.example). Only this function reads the environment, so the
   tests never touch a real database or mail server by accident.
@@ -13,15 +13,19 @@ from __future__ import annotations
 import logging
 import os
 from dataclasses import dataclass
+from datetime import datetime
+from typing import Callable
 
 from sqlalchemy.orm import Session, scoped_session
 
 from campusevent.auth import AuthService
 from campusevent.events import EventService
 from campusevent.facilities import FacilityService
+from campusevent.models import Event
 from campusevent.notifications import EmailSender, InMemoryEmailSender, SmtpEmailSender
 from campusevent.profiles import ProfileService
 from campusevent.repositories.db import create_db_engine, create_scoped_session
+from campusevent.repositories.event_repository import EventRepository, InMemoryEventRepository, SqlEventRepository
 from campusevent.repositories.facility_repository import SqlFacilityRepository
 from campusevent.repositories.profile_repository import SqlProfileRepository
 from campusevent.repositories.unit_of_work import SqlUnitOfWork
@@ -55,31 +59,46 @@ def create_app(
     password_hasher: PasswordHasher | None = None,
     secret_key: str | None = None,
     database_url: str | None = None,
+    clock: Callable[[], datetime] | None = None,
 ) -> CampusEventApp:
     """``password_hasher`` defaults to argon2id with the recommended settings. ``secret_key`` signs the session
     tokens; without one a random key is made, so tokens do not survive a restart. ``database_url`` switches
-    users, profiles and facilities to PostgreSQL; the engine does not connect before the first query."""
+    users, profiles, facilities and events to PostgreSQL; the engine does not connect before the first query.
+    ``clock`` (naive UTC) is the current time of EventService; the tests pass a fixed one, because they use
+    fixed event dates. Without it the real time is used."""
     session = users = profiles = facilities = uow = None
+    event_repository: EventRepository = InMemoryEventRepository()
     if database_url:
         session = create_scoped_session(create_db_engine(database_url))  # one session per request
         uow = SqlUnitOfWork(session)  # shared by all services, so a request is one transaction
         users = SqlUserRepository(session)
         profiles = SqlProfileRepository(session)
         facilities = SqlFacilityRepository(session)
+        event_repository = SqlEventRepository(session)
 
+    # One sender for everything: the verification codes and the decisions of UC-12.
+    email_sender = email_sender or InMemoryEmailSender()
     auth = AuthService(
         allowed_email_domains,
-        email_sender or InMemoryEmailSender(),
+        email_sender,
         users,
         uow=uow,
         hasher=password_hasher,
         secret_key=secret_key,
     )
     profile_service = ProfileService(auth, profiles, uow)
-    # EventRepository (task 3.4) is not written yet: until it is passed here as ``events``, no event
-    # occupies a facility slot and EventService keeps its own data.
-    facility_service = FacilityService(auth, facilities, uow=uow)
-    events = EventService(auth, facility_service)
+    # FacilityService finds the busy slots (UC-07) in the same event repository as EventService.
+    facility_service = FacilityService(auth, facilities, event_repository, uow=uow)
+
+    def notify_decision(event: Event, approved: bool) -> None:
+        """UC-12 step 5 / 2a3: e-mail the organizer the decision (and the reason of a rejection)."""
+        organizer = auth.get_user(event.organizer_id)
+        email_sender.send_event_decision(organizer.email, event.title, approved, event.rejection_reason)
+
+    clock_options = {"clock": clock} if clock is not None else {}
+    events = EventService(
+        auth, facility_service, event_repository, uow, notify_decision=notify_decision, **clock_options
+    )
     return CampusEventApp(
         auth=auth,
         profiles=profile_service,
