@@ -6,8 +6,6 @@ The templates only get view models (plain dicts) with names, never e-mail addres
 
 from __future__ import annotations
 
-import math
-
 from flask import Blueprint, Response, flash, redirect, render_template, request, url_for
 
 from campusevent import exceptions as exc
@@ -34,7 +32,6 @@ def _status_label(status) -> str:
 
 EVENT_CATEGORIES = common.EVENT_CATEGORIES
 CATEGORY_SHORTCUTS = 8  # how many categories are shown as one-click filters on Find Events
-PAGE_SIZE = 20  # events per page on Find Events (design report, NFR-02)
 
 
 class _Names:
@@ -64,6 +61,7 @@ def _event_view(event: Event, names: _Names, viewer_id: int) -> dict:
     is_organizer = viewer_id == event.organizer_id
     active = event.status in (EventStatus.OPEN, EventStatus.FULL)
     pending = event.status == EventStatus.PENDING
+    started = event.slot.start <= common.service_now()  # the service refuses join, leave and cancel then
     return {
         "id": event.id,
         "title": event.title,
@@ -81,9 +79,10 @@ def _event_view(event: Event, names: _Names, viewer_id: int) -> dict:
             {"name": names.user(uid), "role": "Organizer" if uid == event.organizer_id else "Participant"}
             for uid in event.participant_ids
         ],
-        "can_join": event.status == EventStatus.OPEN and not joined,
-        "can_leave": active and joined and not is_organizer,
-        "can_cancel": (active or pending) and is_organizer,  # a pending request is withdrawn (UC-11)
+        "can_join": event.status == EventStatus.OPEN and not joined and not started,
+        "can_leave": active and joined and not is_organizer and not started,
+        "can_cancel": (active or pending) and is_organizer and not started,  # a pending request is withdrawn (UC-11)
+        "started": started,
         "active": active,
         "pending": pending,
         "rejected": event.status == EventStatus.REJECTED,
@@ -112,10 +111,6 @@ def resubmit_args(view: dict) -> dict:
     }
 
 
-def _page_number(text: str) -> int:
-    return int(text) if text.isdigit() and int(text) > 0 else 1
-
-
 @bp.get("/events")
 @common.student_required
 def find_events(user):
@@ -136,10 +131,9 @@ def find_events(user):
         error = common.message_for(error_)
 
     events = sorted(events, key=lambda e: e.slot.start)
-    pages = max(1, math.ceil(len(events) / PAGE_SIZE))
-    page = min(_page_number(request.args.get("page", "1")), pages)
+    shown, page, pages = common.paginate(events, request.args.get("page", "1"))
     names = _Names()
-    views = [_event_view(e, names, user.id) for e in events[(page - 1) * PAGE_SIZE : page * PAGE_SIZE]]
+    views = [_event_view(e, names, user.id) for e in shown]
     filters = {"keyword": keyword, "category": category, "date": day_text}
     return render_template(
         "events.html",

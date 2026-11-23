@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from datetime import date, datetime, time, timedelta, timezone
 from functools import wraps
 
@@ -12,6 +13,23 @@ from campusevent.app import CampusEventApp
 from campusevent.models import Role, TimeSlot, User
 
 TOKEN_KEY = "token"
+PAGE_SIZE = 20  # items per page on Find Events and Event Requests (design report, NFR-02)
+
+
+def page_number(text: str) -> int:
+    """A page number from a link or a form; anything else is page 1. Only ASCII digits and at most six of
+    them: "²" passes str.isdigit() but int() refuses it, and so does a number of more than 4,300 digits."""
+    if text.isascii() and text.isdigit() and len(text) <= 6 and int(text) > 0:
+        return int(text)
+    return 1
+
+
+def paginate(items: list, page_text: str) -> tuple[list, int, int]:
+    """The items of one page, the page number and the number of pages. A missing, wrong or too high page
+    number gives the first or the last page instead of an error."""
+    pages = max(1, math.ceil(len(items) / PAGE_SIZE))
+    page = min(page_number(page_text), pages)
+    return items[(page - 1) * PAGE_SIZE : page * PAGE_SIZE], page, pages
 
 
 def services() -> CampusEventApp:
@@ -167,6 +185,13 @@ def campus_day_in_utc(day: date) -> tuple[datetime, datetime]:
     """A campus day as a naive UTC range [start, end): 21 Nov in Istanbul is 20 Nov 21:00 to 21 Nov 21:00 UTC."""
     start = to_utc(datetime.combine(day, time.min))
     return start, start + timedelta(days=1)
+
+
+def service_now() -> datetime:
+    """'Now' in naive UTC as the event service sees it, so a page offers only what the service allows
+    (e.g. no Join once an event has started). Falls back to the real time if the service has no clock."""
+    clock = getattr(services().events, "clock", None)
+    return clock() if callable(clock) else datetime.now(timezone.utc).replace(tzinfo=None)
 
 
 def campus_today(now: datetime | None = None) -> date:
