@@ -1,6 +1,6 @@
 # AI mistakes caught
 
-Part of the instructor's review (#34, E. Serious AI mistakes caught). The team uses Claude Code to draft code, tests, reviews and report text (see the README, section *AI tools*, and `CLAUDE.md`). Every AI-written change is read and run by a team member and reviewed by a teammate before it is merged. This file lists the cases where that review found a real mistake made by the assistant, with the evidence.
+Part of the instructor's review (#34, E. Serious AI mistakes caught). The team uses Claude Code to draft code, tests, reviews and report text (see the README, section *AI tools*, and `CLAUDE.md`). Every AI-written change is read and run by a team member and reviewed by a teammate before it is merged (case 8 is the one time this did not happen). This file lists the cases where a team member found a real mistake made by the assistant, with the evidence.
 
 Each entry gives: what the assistant got wrong, who caught it and how, why it mattered, the fix, and what we changed so it does not happen again.
 
