@@ -42,6 +42,7 @@ Section 5 of the report lists the defects. These follow the red → green order:
 ## 4. Honest limits
 - The tests sit in the same commit as their code (section 2). The replay shows that the tests describe the new behaviour and fail without it, but not the minute-by-minute order of typing. Code and tests were written with an AI assistant (Claude Code), and a team member ran and checked each commit.
 - The 11 tests of [`test_web_error_paths.py`](../../../tests/web/test_web_error_paths.py) (`4e3d0c0`, 21 Nov) were written **after** the code: eight because the coverage run showed untested paths, three because the traceability matrix showed alternative flows without a test. All passed at once: replayed like section 2, they pass on the code before `4e3d0c0` too (131 of 131), because no code changed. They are test-after, not TDD, and are listed here so the evidence above is not overstated.
+- The 15 tests of [`test_web_performance.py`](../../../tests/web/test_web_performance.py) (23 Nov) are measurements of NFR-02, also written after the code. No code changed for them.
 - The visual commits (Glass Night design, backgrounds: `1622a15`, `d3271d4`, `3fbc33e`, `1b74298`, `39d6cd6`) were checked mainly in the browser and by measuring contrast; their few web tests check that the right background or band is on the page, not how it looks.
 
 ## 5. How to repeat section 2
