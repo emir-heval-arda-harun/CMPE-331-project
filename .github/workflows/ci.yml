@@ -103,9 +103,14 @@ jobs:
         run: bandit -r src -ll
       # Known vulnerabilities (PyPI advisory and OSV databases) in the packages installed on Render.
       - name: pip-audit (fail on known vulnerabilities)
+        # "shell: bash" runs with -o pipefail. Without it the step's result is the result of tee, and a vulnerable
+        # package would still pass (found while adding the lock file; the gate in #36 had this gap).
+        shell: bash
         run: |
-          echo "## pip-audit (requirements.txt)" >> "$GITHUB_STEP_SUMMARY"
+          echo "## pip-audit (requirements.txt: Render)" >> "$GITHUB_STEP_SUMMARY"
           pip-audit -r requirements.txt --progress-spinner off -f markdown | tee -a "$GITHUB_STEP_SUMMARY"
+          echo "## pip-audit (requirements-lock.txt: CI)" >> "$GITHUB_STEP_SUMMARY"
+          pip-audit -r requirements-lock.txt --require-hashes --progress-spinner off -f markdown | tee -a "$GITHUB_STEP_SUMMARY"
       - name: Upload security report
         if: always()
         uses: actions/upload-artifact@v4
