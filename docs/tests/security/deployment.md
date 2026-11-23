@@ -1,6 +1,6 @@
 # Penetration Test: Deployment and CI
 
-Owner: Onur Alioğlu (tasks 3.7 CI/CD, 4.4 Deployment). This is the deployment part of the penetration tests for review item D (#34). Emir tests the application itself through the web UI. The automated scans are described in [`../non-func-tests/security_scans.md`](../non-func-tests/security_scans.md).
+Owner: Onur Alioğlu (tasks 3.7 CI/CD, 4.4 Deployment). This is the deployment part of the penetration tests for review item D (#34). Emir tests the application itself through the web UI: [pentest-web.md](pentest-web.md) (#48). The automated scans are described in [`../non-func-tests/security_scans.md`](../non-func-tests/security_scans.md).
 
 **Date:** 23.11.2026 · **Code:** `main` at `cf68ee0` plus #36
 
@@ -23,10 +23,10 @@ Rules: only our own code and a local copy of the app were attacked. The live sit
 | D3 | Deploy secret could be read from another branch if the `production` environment is not limited to `main` | Medium | ✅ Checked 23.11: limited to `main` |
 | D4 | Third-party GitHub Actions were referenced by tag (`@v4`), not by commit SHA | Low | ✅ Fixed in this PR |
 | D5 | Production app: no debug console, no stack traces, sensitive paths not served, CSRF enforced, cookie `Secure; HttpOnly; SameSite=Lax` | — | ✅ Pass |
-| D6 | No security headers (HSTS, `Content-Security-Policy`, `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`) | Medium | ⏳ Open PR #46 |
+| D6 | No security headers (HSTS, `Content-Security-Policy`, `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`) | Medium | ✅ Fixed in #46 (checked 23.11) |
 | D7 | Free Render PostgreSQL accepts connections from the whole internet by default (password protected) | Low | ⚠️ Check on Render (owner: Harun) |
 | D8 | Demo accounts on the live site use publicly documented e-mail addresses. A demo password once committed in `scripts/run_demo.py` (removed on 18.11) must not be used on the live site | Low | ⚠️ Check on Render (owner: Harun) |
-| D9 | `Server: gunicorn` response header (no version number) | Info | Accepted |
+| D9 | Server software visible: live site sends `Server: cloudflare` and `x-render-origin-server: gunicorn` (no version number) | Info | Accepted |
 
 No High or Critical findings.
 
@@ -75,8 +75,11 @@ Started exactly like on Render, `gunicorn --chdir src "campusevent.web:create_we
 
 `SECRET_KEY` is created by Render (`generateValue: true`) and stays the same across restarts. Without one, the app warns in the log and uses a random key. In `render.yaml`, the `SMTP_*` values are `sync: false`, so they are entered on Render and never kept in the repository. `DATABASE_URL` comes from the database resource (`fromDatabase`). `autoDeploy: false`, so only a green CI build on `main` reaches the live site.
 
-### D6 Security headers: open
-No response sets HSTS, `Content-Security-Policy`, `X-Frame-Options`/`frame-ancestors`, `X-Content-Type-Options` or `Referrer-Policy`. Without them, the pages can be framed (clickjacking), and HTTPS is not pinned in the browser. PR #46 adds these headers. After it is merged, check them on the live site with the commands below.
+### D6 Security headers: fixed in #46
+Before #46, no response set HSTS, `Content-Security-Policy`, `X-Frame-Options`, `X-Content-Type-Options` or `Referrer-Policy`, so the pages could be framed (clickjacking) and HTTPS was not pinned in the browser. With #46 merged, the app started with the production command now sends on every response:
+`Strict-Transport-Security: max-age=31536000`, `X-Frame-Options: DENY`, `Content-Security-Policy: frame-ancestors 'none'`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: same-origin`.
+
+The CSP only covers framing. It does not restrict scripts and styles, because the templates still use inline `<script>` and `<style>` blocks. Since #44, Bootstrap and the Inter font are served by the app, so a full `'self'` policy would be possible once the inline blocks move to files. That is not needed for the delivery.
 
 ## Checks for the account owners
 The owner of this report has no Render access, so these items are for the people who have it.
@@ -93,18 +96,28 @@ The owner of this report has no Render access, so these items are for the people
 - [ ] Every admin uses two-factor authentication on GitHub.
 
 ## Live site
-The live site could not be reached from the environment where this report was made. Run these from any computer and paste the output here:
+Checked by Emir on 23.11.2026, with harmless `GET` requests only, from outside:
+
+| Check | Result |
+|---|---|
+| `http://…/login` | `301` to `https://…/login` |
+| Session cookie | `Secure; HttpOnly; Path=/; SameSite=Lax` |
+| `/console`, `/.env`, `/.git/config` | `404` |
+| Server headers | `Server: cloudflare`, `x-render-origin-server: gunicorn`, no version number |
+| Security headers | Not yet there when checked, before #46 was deployed. Check again with the commands below |
+
+To repeat the checks after a deploy:
 ```bash
 # HTTP must redirect to HTTPS
-curl -sI http://campusevent-86ax.onrender.com/login | head -3
-# Cookie flags and security headers (after #46)
-curl -sI https://campusevent-86ax.onrender.com/login
+curl -s -o /dev/null -w "%{http_code} %{redirect_url}\n" http://campusevent-86ax.onrender.com/login
+# Cookie flags and security headers (a GET request; curl -I would send HEAD)
+curl -s -D - -o /dev/null https://campusevent-86ax.onrender.com/login
 # No debug console, no files outside static/
 curl -s -o /dev/null -w "%{http_code}\n" https://campusevent-86ax.onrender.com/console
 curl -s -o /dev/null -w "%{http_code}\n" https://campusevent-86ax.onrender.com/.env
 ```
 Expected results:
-- The HTTP request redirects to `https://` with status 301 or 308.
-- The `Set-Cookie` header has `Secure; HttpOnly; SameSite=Lax`.
-- After #46, the response has `Strict-Transport-Security` and `Content-Security-Policy`.
+- The first command prints `301` with an `https://` address.
+- `Set-Cookie` ends with `Secure; HttpOnly; Path=/; SameSite=Lax`.
+- The response has `Strict-Transport-Security`, `X-Frame-Options: DENY` and `Content-Security-Policy: frame-ancestors 'none'`.
 - `/console` and `/.env` return 404.
