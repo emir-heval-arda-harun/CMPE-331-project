@@ -19,6 +19,20 @@ csrf = CSRFProtect()
 # log in pages. Without a photo a drawn campus skyline is shown instead.
 CAMPUS_PHOTO_NAMES = ("campus.jpg", "campus.jpeg", "campus.png", "campus.webp")
 
+# Sent with every answer (NFR-03). A route that sets one of them itself keeps its own value.
+SECURITY_HEADERS = {
+    # After one visit over HTTPS the browser uses HTTPS only for a year, even if http:// is typed.
+    # Browsers ignore it on plain HTTP, so the local demo is not affected.
+    "Strict-Transport-Security": "max-age=31536000",
+    # No other site may show our pages in a frame (clickjacking); the CSP line is the newer form of the same rule.
+    "X-Frame-Options": "DENY",
+    "Content-Security-Policy": "frame-ancestors 'none'",
+    # The browser must not guess another type than the one the server sends.
+    "X-Content-Type-Options": "nosniff",
+    # Links to other sites do not tell them which of our pages the visitor came from (NFR-05).
+    "Referrer-Policy": "same-origin",
+}
+
 
 def _campus_photo_url(flask_app: Flask) -> str | None:
     for name in CAMPUS_PHOTO_NAMES:
@@ -61,6 +75,13 @@ def create_web_app(services: CampusEventApp | None = None, config: dict | None =
         end = getattr(services, "end_request", None)  # the fakes of the web tests may not have it
         if end is not None:
             end()
+
+    @flask_app.after_request
+    def add_security_headers(response):
+        for name, value in SECURITY_HEADERS.items():
+            response.headers.setdefault(name, value)
+        return response
+
     csrf.init_app(flask_app)
     flask_app.jinja_env.filters["when"] = common.relative_day
     flask_app.jinja_env.filters["accent"] = common.accent

@@ -156,6 +156,52 @@ def test_session_cookie_is_secure_by_default(services):
     assert app.config["SESSION_COOKIE_SAMESITE"] == "Lax"
 
 
+# NFR-03: the live site sent none of these headers (checked on 23.11.2026).
+SECURITY_HEADERS = {
+    "Strict-Transport-Security": "max-age=31536000",  # browsers use HTTPS only, also when typed without it
+    "X-Frame-Options": "DENY",  # no other site can show our pages in a frame (clickjacking)
+    "Content-Security-Policy": "frame-ancestors 'none'",  # the same rule for browsers that read CSP
+    "X-Content-Type-Options": "nosniff",
+    "Referrer-Policy": "same-origin",  # other sites never see which page of ours a visitor came from
+}
+
+
+def assert_security_headers(response, what):
+    for name, value in SECURITY_HEADERS.items():
+        assert response.headers.get(name) == value, (what, name, response.headers.get(name))
+
+
+def test_every_kind_of_answer_has_the_security_headers(client, student):
+    answers = {  # path: status, so that each kind of answer is really checked
+        "/login": 200, "/signup": 200, "/events": 200, "/profile": 200,  # pages
+        "/": 302,  # redirect
+        "/no-such-page": 404,  # error page
+        "/static/favicon.svg": 200,  # static file
+    }
+    for path, status in answers.items():
+        response = client.get(path)
+        assert response.status_code == status, path
+        assert_security_headers(response, path)
+    response = client.post("/logout")
+    assert response.status_code == 302
+    assert_security_headers(response, "POST /logout")
+
+
+def test_the_error_page_of_an_unexpected_error_has_the_security_headers(services):
+    app = create_web_app(services, {"WTF_CSRF_ENABLED": False, "SESSION_COOKIE_SECURE": False, "SECRET_KEY": "t"})
+    make_user(services, "student@bilgiedu.net")
+    client = app.test_client()
+    log_in(client, "student@bilgiedu.net")
+
+    def broken(*args, **kwargs):
+        raise RuntimeError("database is down")
+
+    services.events.search_events = broken
+    response = client.get("/events")
+    assert response.status_code == 500
+    assert_security_headers(response, "500")
+
+
 # UC-03 -------------------------------------------------------------------------------------------
 
 
