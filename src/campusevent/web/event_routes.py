@@ -64,6 +64,7 @@ def _event_view(event: Event, names: _Names, viewer_id: int) -> dict:
     is_organizer = viewer_id == event.organizer_id
     active = event.status in (EventStatus.OPEN, EventStatus.FULL)
     pending = event.status == EventStatus.PENDING
+    started = event.slot.start <= common.service_now()  # the service refuses join, leave and cancel then
     return {
         "id": event.id,
         "title": event.title,
@@ -81,9 +82,10 @@ def _event_view(event: Event, names: _Names, viewer_id: int) -> dict:
             {"name": names.user(uid), "role": "Organizer" if uid == event.organizer_id else "Participant"}
             for uid in event.participant_ids
         ],
-        "can_join": event.status == EventStatus.OPEN and not joined,
-        "can_leave": active and joined and not is_organizer,
-        "can_cancel": (active or pending) and is_organizer,  # a pending request is withdrawn (UC-11)
+        "can_join": event.status == EventStatus.OPEN and not joined and not started,
+        "can_leave": active and joined and not is_organizer and not started,
+        "can_cancel": (active or pending) and is_organizer and not started,  # a pending request is withdrawn (UC-11)
+        "started": started,
         "active": active,
         "pending": pending,
         "rejected": event.status == EventStatus.REJECTED,

@@ -169,6 +169,13 @@ def campus_day_in_utc(day: date) -> tuple[datetime, datetime]:
     return start, start + timedelta(days=1)
 
 
+def service_now() -> datetime:
+    """'Now' in naive UTC as the event service sees it, so a page offers only what the service allows
+    (e.g. no Join once an event has started). Falls back to the real time if the service has no clock."""
+    clock = getattr(services().events, "clock", None)
+    return clock() if callable(clock) else datetime.now(timezone.utc).replace(tzinfo=None)
+
+
 def campus_today(now: datetime | None = None) -> date:
     """Today's date on the campus. ``now`` is an aware datetime, only given by tests."""
     return (now or datetime.now(timezone.utc)).astimezone(CAMPUS_TZ).date()
