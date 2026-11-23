@@ -3,9 +3,8 @@
     Only colours, surfaces and type change here; the layout of the pages stays in base.html and the pages.
     Contrast: body text on the glass surfaces is at least 7:1, muted text at least 4.5:1 (WCAG AA). -#}
 {% macro head() %}
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+{# Inter from the app itself, not from Google Fonts (privacy, NFR-05; SonarQube Web:S5725). #}
+<link rel="stylesheet" href="{{ url_for('static', filename='vendor/inter/inter.css') }}">
 <style>
   .theme-glass {
     --g-text: #e8edf7; --g-strong: #ffffff; --g-muted: #bcc7dc; --g-faint: #b2bfd7;

@@ -1,4 +1,5 @@
 pytest>=8
+pytest-cov>=6
 flask>=3,<4
 flask-wtf>=1.2
 # Database (same as requirements.txt; CI installs only this file)

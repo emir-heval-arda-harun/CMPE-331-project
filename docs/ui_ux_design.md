@@ -284,7 +284,7 @@ An empty page never stays blank; it explains why and offers the next step:
 - Availability on My Profile is private ("Your availability is private").
 - *Send a new code* answers the same for every address ("If this address belongs to an account that is not verified yet, a new code is on its way"), so it cannot be used to find out who has an account. The address is sent in the form, never in a link.
 - The screenshots in this document use invented demo accounts and events; no real person's data is shown.
-- **Third-party files.** The Inter typeface is loaded from **Google Fonts** (`fonts.googleapis.com`, `fonts.gstatic.com`) and Bootstrap from **jsDelivr**. To deliver these files, the visitor's browser contacts those servers, so Google and jsDelivr can see the visitor's IP address and the time of the visit (no account data and no page content are sent). Under KVKK (NFR-05) this is a transfer of personal data to a third party. The simplest fix is to serve the font and Bootstrap files from our own `static/` folder; then no request leaves our server. Until then, the privacy notice of the deployed site should mention it. This is listed as an open point in section 12.
+- **Third-party files.** At first the Inter typeface was loaded from **Google Fonts** and Bootstrap from **jsDelivr**, so the visitor's browser contacted those servers and Google and jsDelivr could see the visitor's IP address and the time of the visit; under KVKK (NFR-05) that is a transfer of personal data to a third party. Since 23.11.2026 both are served by the app itself from `static/vendor/` (Bootstrap 5.3.3, checked against the SHA-256 hashes published by jsDelivr; Inter as two WOFF2 files, latin and latin-ext for the Turkish letters), with their licences (MIT, SIL Open Font License) next to them. No request of a page leaves our server; `test_pages_load_nothing_from_other_sites` checks this on the pages of every role and on the error page (all pages use `base.html`). This also closes SonarQube finding S3 (#39).
 
 ## 10. From the early mockups to the final design
 The [mockups of the analysis](analysis/ui/README.md) were low-fidelity and light. The built UI keeps their structure (same screens, same fields) and changes the following:
@@ -331,7 +331,7 @@ A task-based test with students who did not build the system (for example 5 stud
 | *Upcoming* list on My Activities | No service method for joined, still open events | Backend decision |
 | Remove a facility block | Was not in UC-08 and not in the service | Being added in #22 (Harun, issue #19) |
 | Real Safari (Mac, iPhone) | Only WebKit on Windows was available | Check on a team member's device |
-| Inter from Google Fonts, Bootstrap from jsDelivr | Visitors' browsers contact these servers (see 9) | Serve the files from `static/` before the final delivery, or mention it in the privacy notice |
+| ~~Inter from Google Fonts, Bootstrap from jsDelivr~~ | Visitors' browsers contacted these servers (see 9) | **Done 23.11:** both are served from `static/vendor/` |
 
 ## 13. Traceability
 | Screen | Use cases | NFR |
