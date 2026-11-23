@@ -12,6 +12,7 @@ This page shows, with commits and test runs that anyone can repeat, that the fac
 | 17 Oct 2026 | `333c49a` (PR #5) | Heval | Requirement Analysis Report: use cases renumbered and the scope widened from sports matches to all campus events. The tests became [`tests/test_uc07_facility_availability.py`](../../../tests/test_uc07_facility_availability.py) and [`tests/test_uc08_manage_facility_schedule.py`](../../../tests/test_uc08_manage_facility_schedule.py) with the same rules (the schedule shows existing bookings, an overlapping booking is rejected, only staff manage facilities). Still red. |
 | 18 Nov 2026 | `446ebf8` | Harun | First real `FacilityService` and `FacilityRepository` (task 3.3), written against these rules. |
 | 20 Nov 2026 | PR #23 merged | Heval | `AuthService.register` works, so the requirement tests reach the facility code for the first time: 3 of the 6 facility requirement tests pass (section 2 of the report). The other 3 stop earlier, at `EventService.create_event` (task 3.4), and are run again in integration testing (task 4.2). |
+| 23 Nov 2026 | PR #33 merged | Arda | `EventService.create_event` works: all 6 facility requirement tests pass on `main`. |
 
 So the tests that describe UC-07 and UC-08 are about **six weeks older** than the code that satisfies them.
 
