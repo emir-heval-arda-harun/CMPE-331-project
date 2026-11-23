@@ -20,7 +20,7 @@ Rules: only our own code and a local copy of the app were attacked. The live sit
 |---|---|---|---|
 | D1 | No secrets in the repository or in its history | — | ✅ Pass |
 | D2 | Deploy secret is stored as an *environment* secret and used in one job only | — | ✅ Pass |
-| D3 | Deploy secret could be read from another branch if the `production` environment is not limited to `main` | Medium | ⚠️ Check in GitHub settings (owner: Onur) |
+| D3 | Deploy secret could be read from another branch if the `production` environment is not limited to `main` | Medium | ✅ Checked 23.11: limited to `main` |
 | D4 | Third-party GitHub Actions were referenced by tag (`@v4`), not by commit SHA | Low | ✅ Fixed in this PR |
 | D5 | Production app: no debug console, no stack traces, sensitive paths not served, CSRF enforced, cookie `Secure; HttpOnly; SameSite=Lax` | — | ✅ Pass |
 | D6 | No security headers (HSTS, `Content-Security-Policy`, `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`) | Medium | ⏳ Open PR #46 |
@@ -48,7 +48,7 @@ No High or Critical findings.
 - `deploy` runs only on `push` to `main`, after lint, tests and the security scan pass.
 - The workflow has `permissions: contents: read` and no `pull_request_target`. Pull requests from forks therefore get no secrets and only a read-only token.
 - The secret is only passed to `curl` through an environment variable. It is never printed, and GitHub masks it in logs.
-- **D3 (Medium):** `if: github.ref == 'refs/heads/main'` is part of the workflow file, and anyone who can push a branch can edit that file. Without a *deployment branch rule*, a changed workflow on another branch could use `environment: production` and send the hook URL elsewhere. The protection must be in the repository settings, not in the file. **To check:** *Settings → Environments → production → Deployment branches and tags* must be **Selected branches and tags: `main`**. The hook URL can only start a deploy of `main` and cannot change code, so the impact is limited.
+- **D3 (Medium):** `if: github.ref == 'refs/heads/main'` is part of the workflow file, and anyone who can push a branch can edit that file. Without a *deployment branch rule*, a changed workflow on another branch could use `environment: production` and send the hook URL elsewhere. The protection must be in the repository settings, not in the file. **Checked on 23.11.2026 (Onur):** *Settings → Environments → production → Deployment branches and tags* is **Selected branches and tags**, with one rule, `main`. A job from any other branch cannot use the `production` environment or its secret. Even before this, the hook URL could only start a deploy of `main` and could not change code, so the impact was limited. Note: *Allow administrators to bypass configured protection rules* is on, so repository admins can still override the rule.
 
 ### D4 Actions pinned to commit SHAs: fixed
 A tag such as `actions/checkout@v4` can be moved to different code by whoever controls the action. All three actions now use the commit that the tag points to today, with the tag kept as a comment:
@@ -88,7 +88,7 @@ The owner of this report has no Render access, so these items are for the people
 - [ ] Account security: only team members are in the Render workspace, and two-factor authentication is on.
 
 **GitHub (Onur, repository admin):**
-- [ ] **D3:** *Settings → Environments → production → Deployment branches and tags* is set to **`main` only**.
+- [x] **D3:** *Settings → Environments → production → Deployment branches and tags* is set to **`main` only** (checked 23.11.2026).
 - [ ] *Settings → Secrets and variables → Actions*: no repository-level copy of `RENDER_DEPLOY_HOOK_URL`, only the environment secret.
 - [ ] Every admin uses two-factor authentication on GitHub.
 
