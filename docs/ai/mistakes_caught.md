@@ -1,6 +1,6 @@
 # AI mistakes caught
 
-Part of the instructor's review (#34, E. Serious AI mistakes caught). The team uses Claude Code to draft code, tests, reviews and report text (see the README, section *AI tools*, and `CLAUDE.md`). Every AI-written change is read and run by a team member and reviewed by a teammate before it is merged. This file lists the cases where that review found a real mistake made by the assistant, with the evidence.
+Part of the instructor's review (#34, E. Serious AI mistakes caught). The team uses Claude Code to draft code, tests, reviews and report text (see the README, section *AI tools*, and `CLAUDE.md`). Every AI-written change is read and run by a team member and reviewed by a teammate before it is merged (case 8 is the one time this did not happen). This file lists the cases where a team member found a real mistake made by the assistant, with the evidence.
 
 Each entry gives: what the assistant got wrong, who caught it and how, why it mattered, the fix, and what we changed so it does not happen again.
 
@@ -16,8 +16,12 @@ Each entry gives: what the assistant got wrong, who caught it and how, why it ma
 | 4 | 20.11.2026 | Planning (#26) | The assistant gave 22.11 as the test report deadline, from the charter; the instructor had moved it to 25.11 / 29.11 | Heval, while planning | Wrong deadline in the plan for the whole team | #26 |
 | 5 | 20.11.2026 | #23–#25 | Task number 3.3 instead of 3.2 in titles and commits, from an outdated plan | Heval, while reading the PRs | Pull requests not traceable to the right WBS task | PR titles corrected |
 | 6 | 20.11.2026 | #29, test report | Coverage file said 10 requirement tests where the section said 12 | Harun, report review | Numbers in the report do not add up | `38379ec` |
+| 7 | 17.11.2026 | #7, `scripts/run_demo.py` | Demo password and session key written in the code of the public repository | Emir, own question before the merge | A pattern that puts real secrets on GitHub once real accounts exist | `d7da9f3`, before the merge |
+| 8 | 18.11.2026 | #7 | Merged the pull request into `main` without an approving review | Emir, the next morning | `main` holds code nobody else has read; the team rule is broken | Review asked afterwards, approved the same day |
+| 9 | 18.11.2026 | #14, web UI | Times sent to the services in Istanbul time, not in UTC; calendar file without a time zone | Emir, own questions while checking | Every event and booking 3 hours off with the real services, with no error | `e2eae80`, `0cb56bb`, `3c434da` |
+| 10 | 19.11.2026 | #21, UI/UX document | Wrote "every field has a visible label"; one field on Create Event had no label at all | Emir, checking the test report | A screen reader cannot name the field (WCAG 1.3.1, 3.3.2); a false claim in a delivered document | #32 (`c66359c`) + a test for every form field |
 
-Cases 1 to 3 would have reached users or the demo. Cases 4 to 6 are about planning and the reports.
+Cases 1 to 3 and 9 would have reached users or the demo, and case 10 users of screen readers. Cases 4 to 6 are about planning and the reports. Cases 7 and 8 are about how the repository is used.
 
 ## Details
 
@@ -61,8 +65,38 @@ Cases 1 to 3 would have reached users or the demo. Cases 4 to 6 are about planni
 - **Fix:** `38379ec` says 12 = 10 UC + 2 NFR-03 in both files and adds the NFR-03 command to "How to measure".
 - **Lesson:** Numbers in the report come from one run, and the report says which command produced them.
 
+### 7. Demo password in the code
+- **What the assistant wrote:** The first demo runner (`2f16124` in #7) had the password of the demo accounts and the Flask session key written in `scripts/run_demo.py`, in a public repository.
+- **Effect:** The demo accounts exist only in memory on one's own computer, so nothing could be opened with them. But the pattern was wrong: the same habit with the real database or e-mail settings would publish them on GitHub.
+- **How it was caught:** Emir asked whether passwords should be in `.env` instead of the code, while #7 was still open.
+- **Fix:** `d7da9f3`, still before #7 was merged: `.env` and key files in `.gitignore`, `.env.example` with names and no values, the demo password from `CAMPUSEVENT_DEMO_PASSWORD` or random at every start, a random session key. The old demo password is still in the history of `2f16124`; it opens nothing.
+- **Lesson:** No secret in the code, also not a "harmless" one; only `.env.example` is committed. This rule is in `CLAUDE.md`.
+
+### 8. Merged without a review
+- **What the assistant did:** On 18.11 Emir said "merge" for #7, and the assistant merged it into `main` at once. It did not check that the team needs an approving review first.
+- **Effect:** The web UI reached `main` without anyone else reading it. Nothing broke (the tests ran on `main`), but the rule that every change is reviewed was broken.
+- **How it was caught:** Emir noticed it the next morning.
+- **Fix:** Emir explained it on #7 and asked Heval for a review ([comment](https://github.com/emir-heval-arda-harun/CMPE-331-project/pull/7#issuecomment-6976518591)); Heval approved it the same day ([review](https://github.com/emir-heval-arda-harun/CMPE-331-project/pull/7#pullrequestreview-5959021944)).
+- **Lesson:** The assistant merges only after an approving review and the explicit OK of its user, with a merge commit. `main` is protected with one approving review.
+
+### 9. Times not in UTC
+- **What the assistant wrote:** The web UI passed the times typed on the pages to the services as they were, in Istanbul time. The database guide already said that the database keeps naive UTC (`e5c6cba`). The *Add to calendar* file also had no time zone.
+- **Effect:** With the test doubles all tests passed. With the real services, every event and every facility booking would have been 3 hours off, without any error message. A calendar set to another time zone would have shown the wrong hour.
+- **How it was caught:** Emir asked what the downloaded calendar file contains, and later how Harun's facility backend (#13) affects the web UI; the second question made the assistant compare the pages with the database guide.
+- **Fix:** In #14: `e2eae80` (time zone in the calendar file), `0cb56bb` ("Today" from the Istanbul clock, since the server on Render runs in UTC), then the team time rule (`012a0fc`) and `3c434da`, which converts only in the web layer. The tests now give the times in UTC, as the real services keep them.
+- **Lesson:** Test doubles have to follow the same rules as the real services, or the tests pass for the wrong reason. The time rule (UTC in the services, Istanbul time only on the pages) is in `docs/database/README.md` and `CLAUDE.md`.
+
+### 10. "Every field has a visible label"
+- **What the assistant wrote:** Section 8 of the UI/UX document (`82b2111`, #21) said "every field has a visible label". On Create Event, the category text box had no label: without JavaScript the label *Category* named the hidden list, and the box for *Other…* had only a placeholder.
+- **Effect:** A screen reader could not say what the field is for (WCAG 1.3.1, 3.3.2; NFR-01), and a delivered document said the opposite.
+- **How it was caught:** While checking the web UI part of the testing report, Emir had every form field searched for a label, instead of trusting the sentence in the document. The search found this box.
+- **Fix:** #32 (`c66359c`): *Category* names the visible field and the *Other…* box has its own label. `test_every_form_field_has_a_label` opens every form and checks every field; it found this box and nothing else. Section 8 now gives the exact rule. Heval reviewed it ([review](https://github.com/emir-heval-arda-harun/CMPE-331-project/pull/32#pullrequestreview-6004504201)).
+- **Lesson:** A claim like "every field" is checked against every field, by a test where possible, not by re-reading the text.
+
 ## What we changed in the way we work
-- **Peer review on every pull request** (branch protection on `main`, one approving review). All six cases were caught in a review or while reading the assistant's output, not by the assistant itself.
+- **Peer review on every pull request** (branch protection on `main`, one approving review). All ten cases were caught by a person, in a review, while reading the assistant's output or by asking it a question, not by the assistant on its own.
+- **The assistant merges nothing without an approving review** and the explicit OK of the team member who works with it (case 8). It shows a review or a comment to that person before posting it.
+- **Claims are checked against the code:** every number, test name and "every …" in a report or document is compared with the code or a test, not only re-read (cases 6 and 10).
 - **`CLAUDE.md`** (#35) writes down the project rules the assistant got wrong or could easily get wrong: UTC in the services, where settings are read, transactions, roles, CSRF, secrets.
 - **Reviewers test like users:** real Turkish input, the real database, the live deployment, not only the assistant's tests.
 - **Primary sources first:** dates come from the instructor's announcements copied into the plan, platform limits from the provider's documentation, and behaviour from the code itself.

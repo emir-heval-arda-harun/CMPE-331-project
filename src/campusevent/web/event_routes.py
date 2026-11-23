@@ -222,7 +222,7 @@ def facility_schedule(user):
 @bp.route("/events/new", methods=["GET", "POST"])
 @common.student_required
 def create_event(user):
-    if request.method == "GET":
+    if request.method != "POST":  # also HEAD: it must never run the form code (no CSRF check on HEAD)
         return _render_create_form(user, request.args.to_dict())
 
     form = request.form.to_dict()

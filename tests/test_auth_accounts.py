@@ -9,8 +9,18 @@ from datetime import datetime, timedelta
 
 import pytest
 
-from campusevent.auth import CODE_LIFETIME, SESSION_LIFETIME, AuthService
+from campusevent.auth import (
+    CODE_LIFETIME,
+    LOGIN_PAUSE,
+    LOGIN_PAUSE_MAX,
+    MAX_CODE_ATTEMPTS,
+    MAX_FAILED_LOGINS,
+    RESEND_INTERVAL,
+    SESSION_LIFETIME,
+    AuthService,
+)
 from campusevent.exceptions import (
+    TooManyAttemptsError,
     AuthenticationError,
     DuplicateEmailError,
     EmailNotVerifiedError,
@@ -173,12 +183,16 @@ def test_unknown_email_gets_the_same_error_as_a_wrong_code(auth):
         auth.verify_email("nobody@bilgiedu.net", "123456")
 
 
-def test_verifying_twice_says_the_account_is_already_verified(auth, sender):
+def test_verifying_twice_gets_the_same_answer_as_a_wrong_code(auth, sender):
+    """Pentest P6: the verify step must not tell that an address has a verified account."""
     _, code = registered(auth, sender)
     auth.verify_email(EMAIL, code)
 
-    with pytest.raises(ValidationError, match="already verified"):
+    with pytest.raises(InvalidVerificationCodeError) as verified_twice:
         auth.verify_email(EMAIL, code)
+    with pytest.raises(InvalidVerificationCodeError) as unknown:
+        auth.verify_email("nobody@bilgiedu.net", code)
+    assert str(verified_twice.value) == str(unknown.value)
 
 
 def test_new_code_replaces_the_old_one(auth, sender, clock):
@@ -247,10 +261,12 @@ def test_empty_password_is_a_failed_login(auth, sender, password):
 def test_changed_or_made_up_tokens_are_rejected(auth, sender):
     user = verified(auth, sender)
     token = auth.login(EMAIL, PASSWORD)
-    user_id, issued, signature = token.split(".")
+    user_id, issued, version, signature = token.split(".")
 
-    for bad in ["", "garbage", f"{user_id + '0'}.{issued}.{signature}", f"{user_id}.{int(issued) + 60}.{signature}",
-                f"{user_id}.{issued}.{signature[:-2]}", f"{user.id + 1}.{issued}.{signature}", token + ".x"]:
+    for bad in ["", "garbage", f"{user_id + '0'}.{issued}.{version}.{signature}",
+                f"{user_id}.{int(issued) + 60}.{version}.{signature}", f"{user_id}.{issued}.{version}.{signature[:-2]}",
+                f"{user.id + 1}.{issued}.{version}.{signature}", f"{user_id}.{issued}.{int(version) + 1}.{signature}",
+                token + ".x"]:
         with pytest.raises(AuthenticationError):
             auth.get_user_by_token(bad)
 
@@ -280,3 +296,134 @@ def test_token_survives_a_restart_with_the_same_secret_key(auth, sender, users, 
     restarted = AuthService(("bilgiedu.net",), sender, users, hasher=fast_hasher, secret_key="test", clock=clock)
 
     assert restarted.get_user_by_token(token) == user
+
+
+# --------------------------------------------------------------------------- #
+# Limits from the penetration test (docs/tests/security/pentest-web.md) and #30
+# --------------------------------------------------------------------------- #
+def wrong_codes(auth, count, code):
+    wrong = f"{(int(code) + 1) % 1_000_000:06d}"
+    for _ in range(count):
+        with pytest.raises(InvalidVerificationCodeError):
+            auth.verify_email(EMAIL, wrong)
+
+
+def test_p2_a_code_stops_working_after_five_wrong_tries(auth, sender, users):
+    """#30: 5 wrong codes, then the right one: refused, with the same message as a wrong code."""
+    user, code = registered(auth, sender)
+    wrong_codes(auth, MAX_CODE_ATTEMPTS, code)
+
+    with pytest.raises(InvalidVerificationCodeError, match="wrong or has expired"):
+        auth.verify_email(EMAIL, code)
+    assert users.get(user.id).is_verified is False
+    assert users.get_latest_code(user.id).attempts == MAX_CODE_ATTEMPTS
+
+
+def test_p2_the_right_code_still_works_after_four_wrong_tries(auth, sender):
+    _, code = registered(auth, sender)
+    wrong_codes(auth, MAX_CODE_ATTEMPTS - 1, code)
+
+    assert auth.verify_email(EMAIL, code).is_verified is True
+
+
+def test_p2_a_new_code_gets_new_tries(auth, sender, clock):
+    _, code = registered(auth, sender)
+    wrong_codes(auth, MAX_CODE_ATTEMPTS, code)
+    clock.now += RESEND_INTERVAL
+
+    auth.resend_code(EMAIL)
+    assert auth.verify_email(EMAIL, sender.codes[EMAIL]).is_verified is True
+
+
+def test_p2_at_most_one_new_code_per_minute(auth, sender, clock):
+    """Review of #31: the wait of the page holds for one browser only, so the service limits it too."""
+    _, first = registered(auth, sender)
+    clock.now += RESEND_INTERVAL - timedelta(seconds=1)
+    auth.resend_code(EMAIL)  # too soon: nothing is sent, and the caller is not told
+    assert sender.codes[EMAIL] == first
+
+    clock.now += timedelta(seconds=1)
+    auth.resend_code(EMAIL)
+    assert sender.codes[EMAIL] != first
+
+
+def wrong_logins(auth, count):
+    for _ in range(count):
+        with pytest.raises(AuthenticationError) as error:
+            auth.login(EMAIL, "wrong-password")
+    return error.value if count else None
+
+
+def test_p1_log_in_pauses_after_five_wrong_passwords(auth, sender, clock):
+    verified(auth, sender)
+    last = wrong_logins(auth, MAX_FAILED_LOGINS)
+    assert type(last) is AuthenticationError  # the 5th still says only "wrong", it starts the pause
+
+    with pytest.raises(TooManyAttemptsError):
+        auth.login(EMAIL, PASSWORD)  # even the right password waits
+    clock.now += LOGIN_PAUSE - timedelta(seconds=1)
+    with pytest.raises(TooManyAttemptsError):
+        auth.login(EMAIL, PASSWORD)
+    clock.now += timedelta(seconds=1)
+    assert auth.login(EMAIL, PASSWORD)  # the pause is over
+
+
+def test_p1_the_pause_doubles_up_to_fifteen_minutes(auth, sender, clock, users):
+    user = verified(auth, sender)
+    wrong_logins(auth, MAX_FAILED_LOGINS)
+    pauses = []
+    for _ in range(6):
+        _, paused_until = users.get_login_failures(user.id)
+        pauses.append(paused_until - clock.now)
+        clock.now = paused_until
+        wrong_logins(auth, 1)
+    assert pauses == [timedelta(minutes=m) for m in (1, 2, 4, 8, 15, 15)]
+    assert LOGIN_PAUSE_MAX == timedelta(minutes=15)
+
+
+def test_p1_the_right_password_sets_the_count_back(auth, sender, users):
+    user = verified(auth, sender)
+    wrong_logins(auth, MAX_FAILED_LOGINS - 1)
+    auth.login(EMAIL, PASSWORD)
+    assert users.get_login_failures(user.id) == (0, None)
+
+    wrong_logins(auth, MAX_FAILED_LOGINS - 1)  # 4 more do not pause, because the count started again
+    assert auth.login(EMAIL, PASSWORD)
+
+
+def test_p1_an_unknown_address_is_never_paused(auth):
+    for _ in range(MAX_FAILED_LOGINS + 2):
+        with pytest.raises(AuthenticationError) as error:
+            auth.login("nobody@bilgiedu.net", "wrong-password")
+        assert type(error.value) is AuthenticationError
+
+
+def test_p3_log_out_ends_the_token_and_every_copy_of_it(auth, sender):
+    user = verified(auth, sender)
+    token = auth.login(EMAIL, PASSWORD)
+    other_device = auth.login(EMAIL, PASSWORD)
+    copy = str(token)
+
+    auth.logout(token)
+    for old in (token, copy, other_device):
+        with pytest.raises(AuthenticationError):
+            auth.get_user_by_token(old)
+    assert auth.get_user_by_token(auth.login(EMAIL, PASSWORD)) == user  # logging in again works
+
+
+def test_p3_log_out_with_an_invalid_token_does_nothing(auth, sender):
+    verified(auth, sender)
+    token = auth.login(EMAIL, PASSWORD)
+    auth.logout("garbage")
+    auth.logout("")
+    assert auth.get_user_by_token(token).email == EMAIL
+
+
+@pytest.mark.parametrize("password", ["12345678", "password", "PassWord123", "qwertyuiop", "aaaaaaaa", "!!!!!!!!!!"])
+def test_p7_very_common_or_repeated_passwords_are_refused(auth, password):
+    with pytest.raises(ValidationError, match="too easy to guess"):
+        auth.register(EMAIL, password, "Ayse Yilmaz")
+
+
+def test_p7_ordinary_passwords_are_still_accepted(auth):
+    assert auth.register(EMAIL, "Kampus-gunu-7", "Ayse Yilmaz").email == EMAIL
