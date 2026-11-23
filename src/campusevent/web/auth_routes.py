@@ -107,5 +107,8 @@ def login():
 
 @bp.post("/logout")
 def logout():
+    token = session.get(common.TOKEN_KEY)
+    if token:
+        common.services().auth.logout(token)  # ends every copy of the session cookie too (pentest P3)
     session.clear()
     return redirect(url_for("auth.login"))

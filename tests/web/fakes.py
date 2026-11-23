@@ -73,6 +73,10 @@ class FakeAuth:
         self.tokens[token] = user.id
         return token
 
+    def logout(self, token):
+        """Like AuthService.logout: the token (and every copy of it) stops working."""
+        self.tokens.pop(token, None)
+
     def get_user_by_token(self, token):
         if token not in self.tokens:
             raise exc.AuthenticationError()
