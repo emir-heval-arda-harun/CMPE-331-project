@@ -6,8 +6,6 @@ The templates only get view models (plain dicts) with names, never e-mail addres
 
 from __future__ import annotations
 
-import math
-
 from flask import Blueprint, Response, flash, redirect, render_template, request, url_for
 
 from campusevent import exceptions as exc
@@ -34,7 +32,6 @@ def _status_label(status) -> str:
 
 EVENT_CATEGORIES = common.EVENT_CATEGORIES
 CATEGORY_SHORTCUTS = 8  # how many categories are shown as one-click filters on Find Events
-PAGE_SIZE = 20  # events per page on Find Events (design report, NFR-02)
 
 
 class _Names:
@@ -114,10 +111,6 @@ def resubmit_args(view: dict) -> dict:
     }
 
 
-def _page_number(text: str) -> int:
-    return int(text) if text.isdigit() and int(text) > 0 else 1
-
-
 @bp.get("/events")
 @common.student_required
 def find_events(user):
@@ -138,10 +131,9 @@ def find_events(user):
         error = common.message_for(error_)
 
     events = sorted(events, key=lambda e: e.slot.start)
-    pages = max(1, math.ceil(len(events) / PAGE_SIZE))
-    page = min(_page_number(request.args.get("page", "1")), pages)
+    shown, page, pages = common.paginate(events, request.args.get("page", "1"))
     names = _Names()
-    views = [_event_view(e, names, user.id) for e in events[(page - 1) * PAGE_SIZE : page * PAGE_SIZE]]
+    views = [_event_view(e, names, user.id) for e in shown]
     filters = {"keyword": keyword, "category": category, "date": day_text}
     return render_template(
         "events.html",

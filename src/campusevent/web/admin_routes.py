@@ -30,26 +30,41 @@ def _request_view(event, names: _Names) -> dict:
     }
 
 
-def _render_requests(user, errors: dict | None = None, reasons: dict | None = None, status: int = 200):
-    pending = common.services().events.list_pending_events(user.id)
+def _render_requests(
+    user, page_text: str, errors: dict | None = None, reasons: dict | None = None, status: int = 200
+):
+    pending = sorted(common.services().events.list_pending_events(user.id), key=lambda e: e.slot.start)
+    shown, page, pages = common.paginate(pending, page_text)  # 20 per page (NFR-02)
     names = _Names()
     errors = errors or {}
-    listed = {e.id for e in pending}
+    listed = {e.id for e in shown}
     return render_template(
         "admin_requests.html",
-        requests=[_request_view(e, names) for e in sorted(pending, key=lambda e: e.slot.start)],
+        requests=[_request_view(e, names) for e in shown],
+        total=len(pending),
+        page=page,
+        pages=pages,
         errors=errors,
-        # an error about a request that is no longer in the list (reviewed meanwhile, withdrawn, expired)
+        # an error about a request that is not on this page (reviewed meanwhile, withdrawn, expired, or moved
+        # to another page because a request before it was decided)
         general_errors=[message for event_id, message in errors.items() if event_id not in listed],
         reasons=reasons or {},
         reason_max=REASON_MAX,
     ), status
 
 
+def _back_to_page() -> str:
+    """After a decision the admin comes back to the page the form was on (the hidden field ``page``)."""
+    page = common.page_number(request.form.get("page", ""))
+    if page > 1:
+        return url_for("admin.event_requests", page=page)  # a page after the last shows the last one
+    return url_for("admin.event_requests")
+
+
 @bp.get("/admin/requests")
 @common.admin_required
 def event_requests(user):
-    return _render_requests(user)
+    return _render_requests(user, request.args.get("page", "1"))
 
 
 @bp.post("/admin/requests/<int:event_id>/approve")
@@ -58,9 +73,10 @@ def approve_request(user, event_id: int):
     try:
         event = common.services().events.approve_event(event_id, user.id)
     except exc.ValidationError as error:
-        return _render_requests(user, {event_id: common.message_for(error)}, status=409)
+        page_text = request.form.get("page", "1")
+        return _render_requests(user, page_text, {event_id: common.message_for(error)}, status=409)
     flash(f'"{event.title}" is approved. It is now listed and students can join it.', "success")
-    return redirect(url_for("admin.event_requests"))
+    return redirect(_back_to_page())
 
 
 @bp.post("/admin/requests/<int:event_id>/reject")
@@ -73,6 +89,7 @@ def reject_request(user, event_id: int):
         event = common.services().events.reject_event(event_id, user.id, reason)
     except exc.ValidationError as error:
         status = 400 if not reason or len(reason) > REASON_MAX else 409
-        return _render_requests(user, {event_id: common.message_for(error)}, {event_id: reason}, status)
+        page_text = request.form.get("page", "1")
+        return _render_requests(user, page_text, {event_id: common.message_for(error)}, {event_id: reason}, status)
     flash(f'"{event.title}" is rejected. The organizer gets the reason by e-mail.', "success")
-    return redirect(url_for("admin.event_requests"))
+    return redirect(_back_to_page())
