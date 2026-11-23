@@ -1,8 +1,10 @@
 """UC-01 5a and UC-02 3a: "Send a new code" on the verify page and on the log in page."""
 
 import re
+from datetime import timedelta
 
 from campusevent.app import create_app
+from campusevent.auth import RESEND_INTERVAL, utc_now
 from campusevent.notifications import InMemoryEmailSender
 from campusevent.web import auth_routes, create_web_app
 from tests.web.fakes import PASSWORD
@@ -88,13 +90,16 @@ def test_unverified_log_in_offers_a_new_code_without_the_address_in_a_link(clien
 def test_works_with_the_real_auth_service():
     """The route against AuthService (task 3.2): the old code stops working, the new one verifies."""
     mail = InMemoryEmailSender()
+    services = create_app(email_sender=mail, secret_key="k" * 32)
     app = create_web_app(
-        create_app(email_sender=mail, secret_key="k" * 32),
+        services,
         {"TESTING": True, "WTF_CSRF_ENABLED": False, "SESSION_COOKIE_SECURE": False, "SECRET_KEY": "test"},
     )
     client = app.test_client()
     client.post("/signup", data={"full_name": "Test Student", "email": EMAIL, "password": "Campus-2026!x"})
     old = mail.codes[EMAIL]
+    later = utc_now() + RESEND_INTERVAL + timedelta(seconds=1)  # the service sends one code per minute (#30)
+    services.auth.clock = lambda: later
     assert SENT in resend(client).data
     new = mail.codes[EMAIL]
     assert re.fullmatch(r"\d{6}", new) and new != old

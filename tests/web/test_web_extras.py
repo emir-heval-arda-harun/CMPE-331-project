@@ -1,12 +1,15 @@
 """Tests for the helper features of the web UI: free time suggestions (UC-04 4a), the facility schedule box,
 'Add to calendar', pagination and category shortcuts on Find Events, interest tags, the password guide."""
 
+import base64
+import hashlib
 import re
 from datetime import date, datetime
 
 import pytest
 
-from campusevent.models import TimeSlot
+from campusevent.facilities import FacilityService
+from campusevent.models import Role, TimeSlot
 from campusevent.web import common, create_web_app
 from tests.web.conftest import make_user
 from tests.web.fakes import PASSWORD, slot
@@ -115,6 +118,38 @@ def test_add_to_calendar_downloads_an_ics_file(client, student, hall, services):
     assert "DESCRIPTION:Bring snacks\\; and games" in text
     assert "LOCATION:Santral Event Hall" in text
     assert "@bilgiedu.net" not in text  # no e-mail addresses (NFR-05)
+
+
+def test_line_breaks_and_control_characters_cannot_add_lines_to_the_calendar_file(client, student, hall, services):
+    """Penetration test P4: a lone carriage return in the title or description started a new line in calendars
+    that read it as one, so an organizer could add an attendee or a second, made-up event to the file."""
+    organizer = make_user(services, "organizer@bilgiedu.net")
+    event = services.events.create_event(
+        organizer.id, "Party\rATTENDEE:mailto:x@evil.example", "music", hall.id, slot(day=20), 6,
+        "Line one\r\nline two\nline three\rEND:VEVENT\rBEGIN:VEVENT\x0bSUMMARY:Fake\x00",
+    )
+    text = client.get(f"/events/{event.id}/calendar.ics").data.decode()
+    assert "\r" not in text.replace("\r\n", "")  # every carriage return ends a line, as RFC 5545 asks
+    lines = text.split("\r\n")
+    assert [line.split(":")[0] for line in lines if line] == [
+        "BEGIN", "VERSION", "PRODID", "CALSCALE", "BEGIN", "UID", "DTSTAMP", "DTSTART", "DTEND",
+        "SUMMARY", "LOCATION", "DESCRIPTION", "END", "END",
+    ]  # no extra line: no ATTENDEE, no second BEGIN:VEVENT
+    assert "SUMMARY:Party\\nATTENDEE:mailto:x@evil.example" in lines
+    assert "DESCRIPTION:Line one\\nline two\\nline three\\nEND:VEVENT\\nBEGIN:VEVENTSUMMARY:Fake" in lines
+    assert not any(ord(ch) < 32 for line in lines for ch in line)  # no control characters are left
+
+
+def test_a_form_larger_than_one_megabyte_is_refused_with_a_friendly_page(client, student, hall, services):
+    """Penetration test P5: a 5 MB description was read and stored. Forms are now limited to 1 MB."""
+    form = {"title": "Big", "category": "chess", "facility_id": str(hall.id), "date": "2026-11-21",
+            "start": "10:00", "end": "11:00", "capacity": "4"}
+    response = client.post("/events/new", data={**form, "description": "B" * (1024 * 1024 + 1)})
+    assert response.status_code == 413
+    assert b"too large" in response.data and b"Traceback" not in response.data
+    assert not services.events.events  # nothing was stored
+    response = client.post("/events/new", data={**form, "description": "B" * 100_000})  # a long text is fine
+    assert response.status_code == 302
 
 
 def test_event_page_links_to_the_calendar_file(client, student, hall, services):
@@ -307,6 +342,78 @@ def test_every_form_field_has_a_label(client, services, hall):
         pages[path] = client.get(path).get_data(as_text=True)
     for path, html in pages.items():
         assert _fields_without_a_label(html) == [], path
+
+
+def test_no_field_takes_the_focus_by_itself(client):
+    """SonarQube Web:S9379 (#39, C2): `autofocus` makes screen readers skip the heading of the page, and on some
+    phones it opens the keyboard over the page. Log in, sign up and the code step start at the top."""
+    pages = {path: client.get(path).get_data(as_text=True) for path in ("/login", "/signup", "/verify")}
+    pages["code step"] = client.post(
+        "/signup", data={"full_name": "Test Student", "email": "student@bilgiedu.net", "password": PASSWORD}
+    ).get_data(as_text=True)
+    assert 'name="code"' in pages["code step"]
+    for name, html in pages.items():
+        assert "autofocus" not in html, name
+
+
+OTHER_SITES = ("cdn.jsdelivr.net", "fonts.googleapis.com", "fonts.gstatic.com")
+
+
+def test_pages_load_nothing_from_other_sites(client, services, hall):
+    """SonarQube Web:S5725 (#39, S3) and privacy (NFR-05): Bootstrap and the Inter font come from the app itself,
+    so no other site sees the visitor's IP address and no file from another site can be changed under us."""
+    pages = {path: client.get(path).get_data(as_text=True) for path in ("/login", "/signup", "/no-such-page")}
+    make_user(services, "student@bilgiedu.net")
+    client.post("/login", data={"email": "student@bilgiedu.net", "password": PASSWORD})
+    for path in ("/events", "/events/new", "/profile", "/activities"):
+        pages[path] = client.get(path).get_data(as_text=True)
+    make_user(services, "admin@bilgi.edu.tr", Role.ADMIN)  # the staff account comes with the hall fixture
+    services.facilities = FacilityService(services.auth, events=services.events)  # the facility page needs it
+    for email, path in (("admin@bilgi.edu.tr", "/admin/requests"), ("staff@bilgi.edu.tr", "/facilities")):
+        client.post("/logout")
+        client.post("/login", data={"email": email, "password": PASSWORD})
+        pages[path] = client.get(path).get_data(as_text=True)
+    for path, html in pages.items():
+        for site in OTHER_SITES:
+            assert site not in html, (path, site)
+        assert "/static/vendor/bootstrap/bootstrap.min.css" in html and "/static/vendor/inter/inter.css" in html, path
+        assert "/static/vendor/bootstrap/bootstrap.bundle.min.js" in html, path
+
+
+def test_the_own_copies_of_bootstrap_and_inter_are_served(client):
+    files = {
+        "/static/vendor/bootstrap/bootstrap.min.css": "text/css",
+        "/static/vendor/bootstrap/bootstrap.bundle.min.js": ("text/javascript", "application/javascript"),
+        "/static/vendor/inter/inter.css": "text/css",
+        "/static/vendor/inter/inter-latin.woff2": "font/woff2",
+        "/static/vendor/inter/inter-latin-ext.woff2": "font/woff2",  # ğ, ş, ı, İ of Turkish names
+    }
+    for path, kind in files.items():
+        response = client.get(path)
+        # both names of the JavaScript type are in use, depending on the system's list of file types
+        assert response.status_code == 200 and response.mimetype in (kind if isinstance(kind, tuple) else (kind,)), (
+            path, response.mimetype)
+        assert len(response.data) > 1000, path
+    font_css = client.get("/static/vendor/inter/inter.css").get_data(as_text=True)
+    assert "inter-latin.woff2" in font_css and "inter-latin-ext.woff2" in font_css
+    assert "U+0100-02BA" in font_css  # the latin-ext range has the Turkish letters
+    for licence in ("/static/vendor/bootstrap/LICENSE", "/static/vendor/inter/LICENSE.txt"):
+        assert client.get(licence).status_code == 200, licence  # MIT and SIL Open Font License
+
+
+# SHA-256 (base64) of Bootstrap 5.3.3 as published by jsDelivr (data.jsdelivr.com/v1/packages/npm/bootstrap@5.3.3)
+BOOTSTRAP_SHA256 = {
+    "bootstrap.min.css": "PI8n5gCcz9cQqQXm3PEtDuPG8qx9oFsFctPg0S5zb8g=",
+    "bootstrap.bundle.min.js": "CDOy6cOibCWEdsRiZuaHf8dSGGJRYuBGC+mjoJimHGw=",
+}
+
+
+def test_the_own_copy_of_bootstrap_is_the_published_one(client):
+    """The copy in static/vendor must stay byte for byte the published file: a changed file (also one where git
+    added Windows line endings) would fail here. static/vendor/.gitattributes keeps git from converting them."""
+    for name, expected in BOOTSTRAP_SHA256.items():
+        data = client.get(f"/static/vendor/bootstrap/{name}").data
+        assert base64.b64encode(hashlib.sha256(data).digest()).decode() == expected, name
 
 
 def test_create_form_category_label_follows_the_visible_field(client, student, hall):
