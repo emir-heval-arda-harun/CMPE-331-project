@@ -1,6 +1,6 @@
 # Coverage – web UI (UC-01 to UC-06, UC-09 to UC-12)
 
-**Author:** Emir Gül · **Date of the results:** 23.11.2026 (first measured on 21.11.2026) · **Code:** `main` of 23.11.2026 (`cf68ee0`), with the events backend (task 3.4, #33 with #38) and PR #42, #43 and #45 merged · Part of the Software Testing Report, see the [web UI section](../../testing/web_ui_test_section.md).
+**Author:** Emir Gül · **Date of the results:** 23.11.2026 (first measured on 21.11.2026) · **Code:** `main` of 23.11.2026 (`5387fc6`), with the events backend (task 3.4, #33 with #38) and PR #42, #43, #44 and #45 merged · Part of the Software Testing Report, see the [web UI section](../../testing/web_ui_test_section.md).
 
 The facility page (UC-07, UC-08, `facility_routes.py`) is in Harun's [facilities coverage](facilities.md); the composition root tests (`tests/web/test_web_wiring.py`) are in Heval's [accounts and profiles coverage](accounts-profiles.md).
 
@@ -36,27 +36,27 @@ Requirement → rule → tests → code, with the result on 23.11.2026. All test
 | Add to calendar | A UTC `.ics` file that every calendar reads | Ext `test_add_to_calendar_downloads_an_ics_file`, `test_event_page_links_to_the_calendar_file`; Err `test_calendar_file_of_an_event_without_description_has_no_empty_description_line` | `common.ics_for`, `event_calendar` | ✅ |
 | Team time rule (#14, #16) | Services keep naive UTC; the pages show and take Istanbul time; "Today" is the Istanbul day | Ext `test_time_conversion_helpers_round_trip`, `test_an_event_just_after_midnight_belongs_to_its_istanbul_day`, `test_today_is_the_istanbul_date_even_when_the_server_runs_in_utc`, `test_relative_day_labels`, `test_event_cards_show_how_far_away_the_event_is` | `common.to_utc`, `to_campus`, `campus_today` | ✅ |
 | NFR-03, NFR-04 | CSRF tokens on every form; secure session cookie; staff cannot open student pages; a missing `SECRET_KEY` is logged | Acc `test_forms_are_protected_by_csrf_tokens`, `test_session_cookie_is_secure_by_default`, `test_staff_cannot_open_student_pages`; Adm `test_missing_secret_key_is_logged_as_a_warning`; HTTPS of the live site checked by hand, see [non-functional tests](../non-func-tests/web-ui.md) | `create_web_app`, `common.login_required` | ✅ (no security headers on the live site yet: section 6, item 9 of the report) |
-| NFR-05 | No e-mail addresses on pages; *Send a new code* does not tell who has an account | Ev `test_event_details_never_show_email_addresses`; Adm `test_requests_page_lists_pending_requests_soonest_first_without_e_mails`; Res `test_answer_is_the_same_for_unknown_and_verified_addresses` | templates, `resend_code` | ✅ |
+| NFR-05 | No e-mail addresses on pages; *Send a new code* does not tell who has an account | Ev `test_event_details_never_show_email_addresses`; Adm `test_requests_page_lists_pending_requests_soonest_first_without_e_mails`; Res `test_answer_is_the_same_for_unknown_and_verified_addresses`; Ext `test_pages_load_nothing_from_other_sites`, `test_the_own_copies_of_bootstrap_and_inter_are_served`, `test_the_own_copy_of_bootstrap_is_the_published_one` | templates, `resend_code`, `static/vendor/` | ✅ (Bootstrap and Inter from our own server: defect 15, PR #44) |
 | Security (XSS) | Text typed by users is escaped | Ev `test_text_in_events_is_escaped`; Adm `test_the_reason_is_escaped_on_every_page` | Jinja auto-escaping | ✅ |
 | Error handling | Unknown address 404; unexpected errors give a friendly page and are logged, without details | Err `test_unknown_address_shows_the_error_page`, `test_unexpected_error_shows_a_friendly_page_and_is_logged` | `handle_not_found`, `handle_unexpected` | ✅ |
 | UI/UX design ([document](../../ui_ux_design.md)) | Glass Night theme and campus background (stops for reduced motion), favicon, footer, *Show password*, password guide | Acc `test_login_and_signup_pages_have_a_show_password_button_and_no_main_navigation`, `test_every_page_has_the_animated_background_that_stops_for_reduced_motion`, `test_pages_after_login_have_the_hero_band_and_auth_pages_do_not`, `test_login_background_is_a_drawn_skyline_until_a_campus_photo_is_added`, `test_login_background_uses_the_campus_photo_when_the_file_exists`; Ext `test_every_page_has_the_campus_background_with_fireworks_by_default`, `test_footer_is_on_the_pages_after_login_only`, `test_signup_has_a_password_strength_guide`; Adm `test_pages_have_a_favicon` | `base.html`, `_theme_glass.html`, `_backgrounds.html` | ✅ |
-| NFR-01, NFR-07 | Phone width, browsers, a label for every form field | Ext `test_every_form_field_has_a_label`, `test_create_form_category_label_follows_the_visible_field`; Ev `test_long_words_without_spaces_break_instead_of_widening_the_page`; manual, Playwright and (23.11, long texts) Chromium, see [non-functional tests](../non-func-tests/web-ui.md) | all templates, `event_new.html`, `base.html` | ✅ (long words without spaces: defect 14, fixed in PR #45) |
+| NFR-01, NFR-07 | Phone width, browsers, a label for every form field | Ext `test_every_form_field_has_a_label`, `test_create_form_category_label_follows_the_visible_field`, `test_no_field_takes_the_focus_by_itself`; Ev `test_long_words_without_spaces_break_instead_of_widening_the_page`; manual, Playwright and (23.11, long texts) Chromium, see [non-functional tests](../non-func-tests/web-ui.md) | all templates, `event_new.html`, `base.html` | ✅ (long words without spaces: defect 14, fixed in PR #45) |
 | Test setup | Two apps created in one test run do not share data, so tests cannot affect each other | Acc `test_new_accounts_get_their_own_empty_services` | `tests/web/fakes.py` | ✅ |
 
-**Requirements coverage:** 33 of 33 rows have passing web tests (100 %). Every one of the 145 tests of this section appears in the matrix, and all of them pass on `main`. The requirement tests of the team for these use cases pass as well: UC-01, UC-02 and UC-03 (10 of 10) with the real `AuthService` and `ProfileService` since 20.11, and UC-04 to UC-06, UC-09 to UC-12 with their NFR tests (33 of 33) with the real `EventService` since task 3.4 (#33) was merged on 23.11.
+**Requirements coverage:** 33 of 33 rows have passing web tests (100 %). Every one of the 149 tests of this section appears in the matrix, and all of them pass on `main`. The requirement tests of the team for these use cases pass as well: UC-01, UC-02 and UC-03 (10 of 10) with the real `AuthService` and `ProfileService` since 20.11, and UC-04 to UC-06, UC-09 to UC-12 with their NFR tests (33 of 33) with the real `EventService` since task 3.4 (#33) was merged on 23.11.
 
 ## Code coverage
-Measured with coverage.py 7.17, statements **and** branches, all web tests (`tests/web`, 174 tests, of them 145 of this section; 23.11, `main` with #33, #42, #43 and #45), without a database (the web tests use in-memory services):
+Measured with coverage.py 7.17, statements **and** branches, all web tests (`tests/web`, 178 tests, of them 149 of this section; 23.11, `main` with #33, #42, #43, #44 and #45), without a database (the web tests use in-memory services):
 
 | File | Statements | Missed | Branches | Partial | Coverage |
 |---|---|---|---|---|---|
-| `src/campusevent/web/__init__.py` | 63 | 0 | 10 | 1 | **99 %** |
+| `src/campusevent/web/__init__.py` | 65 | 0 | 10 | 1 | **99 %** |
 | `src/campusevent/web/admin_routes.py` | 49 | 0 | 4 | 0 | **100 %** |
 | `src/campusevent/web/auth_routes.py` | 68 | 2 | 8 | 0 | **97 %** |
 | `src/campusevent/web/common.py` | 152 | 0 | 46 | 0 | **100 %** |
 | `src/campusevent/web/event_routes.py` | 147 | 0 | 20 | 0 | **100 %** |
 | `src/campusevent/web/profile_routes.py` | 36 | 0 | 6 | 0 | **100 %** |
-| **Total (this section)** | 515 | 2 | 94 | 1 | **99 %** |
+| **Total (this section)** | 517 | 2 | 94 | 1 | **99 %** |
 
 With `facility_routes.py` (Harun, 100 %) the whole web package is also 99 %.
 
@@ -64,7 +64,7 @@ With `facility_routes.py` (Harun, 100 %) the whole web package is also 99 %.
 
 **Not covered:**
 - `auth_routes.py` lines 80–81 (from PR #31): the message when the service refuses to send a new code, for example because the mail server cannot be reached. It is not tested yet; a test with an e-mail sender that fails would cover it. The page uses the same `common.message_for` as every other error.
-- `__init__.py` line 58: the branch for services without `end_request`. All service objects have it now (`CampusEventApp.end_request`), so the branch is only a guard for older test doubles.
+- `__init__.py` line 62: the branch for services without `end_request`. All service objects have it now (`CampusEventApp.end_request`), so the branch is only a guard for older test doubles.
 
 ### How to measure
 ```

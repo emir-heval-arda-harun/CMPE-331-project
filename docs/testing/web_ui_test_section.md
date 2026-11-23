@@ -2,7 +2,7 @@
 
 **Author:** Emir Gül · **Status:** section for the team's Software Testing Report (task 4.1: pull request to Yeşim by 25.11.2026, PDF on Learn by 29.11.2026) · **Date of the results:** 21.11.2026; performance, long texts, HTTPS of the live site and defects 12 to 15 on 23.11.2026; tests, coverage, the event pages with the real services and the timing of Event Requests run again on `main` on 23.11.2026; performance on PostgreSQL on 23.11.2026
 
-It covers the web UI (layer 1 of the [Software Design Report](../software_design_report.md), `src/campusevent/web/`) for UC-01 to UC-06, UC-09 to UC-11 and UC-12 (admin review of event requests, change request CR-01), with the design of the [UI/UX document](../ui_ux_design.md). The test results, the coverage and the checks with the real services below are for `main` of 23.11.2026 (`cf68ee0`), after the events backend (task 3.4, #33 with #38) and PR #42, #43 and #45 were merged. The browser checks of 17.11 to 21.11 used `main` of those days, and the checks of 23.11 (long texts, HTTPS) say in their row which code they used. One fix is still open: PR #44 (defect 15). The facility page (UC-07, UC-08) is in the [facilities section](facility_test_section.md); the services behind the pages are in the sections of their owners.
+It covers the web UI (layer 1 of the [Software Design Report](../software_design_report.md), `src/campusevent/web/`) for UC-01 to UC-06, UC-09 to UC-11 and UC-12 (admin review of event requests, change request CR-01), with the design of the [UI/UX document](../ui_ux_design.md). The test results and the coverage below are for `main` of 23.11.2026 (`5387fc6`), after the events backend (task 3.4, #33 with #38) and PR #42, #43, #44 and #45 were merged. The checks with the real services and the timings were made on `cf68ee0`, the same code without #44 (which only changes how Bootstrap and Inter are loaded). The browser checks of 17.11 to 21.11 used `main` of those days, and the checks of 23.11 (long texts, HTTPS, PostgreSQL) say in their row which code they used. The facility page (UC-07, UC-08) is in the [facilities section](facility_test_section.md); the services behind the pages are in the sections of their owners.
 
 The parts the instructor asked for on 17.11 are in their own files:
 - **Traceability matrix with code and requirements coverage:** [`docs/tests/coverage/web-ui.md`](../tests/coverage/web-ui.md)
@@ -24,13 +24,13 @@ The parts the instructor asked for on 17.11 are in their own files:
 ## 2. Results
 | Suite | Tests | Passed | Failed |
 |---|---|---|---|
-| Web UI tests of this section (7 files) | 145 | 145 | 0 |
-| All web tests (with the facility page, 26, and the composition root, 3) | 174 | 174 | 0 |
+| Web UI tests of this section (7 files) | 149 | 149 | 0 |
+| All web tests (with the facility page, 26, and the composition root, 3) | 178 | 178 | 0 |
 | Requirement tests of UC-01, UC-02, UC-03 (`tests/test_uc01_*` to `test_uc03_*`) | 10 | 10 | 0 |
 | Requirement tests of UC-04 to UC-06, UC-09 to UC-12 and their NFR tests | 33 | 33 | 0 (with the real `EventService`, task 3.4, on `main` since 23.11) |
-| The whole repository (`python -m pytest`, without a database) | 435 | 367 | 0; the 68 database tests are skipped without `TEST_DATABASE_URL` (PostgreSQL) |
+| The whole repository (`python -m pytest`, without a database) | 439 | 371 | 0; the 68 database tests are skipped without `TEST_DATABASE_URL` (PostgreSQL) |
 
-**Code coverage** of the web UI of this section: **99 %** of statements and branches (515 statements, 94 branches); five of the six files are at 100 % or 99 %. Details and the two uncovered lines: [coverage file](../tests/coverage/web-ui.md#code-coverage).
+**Code coverage** of the web UI of this section: **99 %** of statements and branches (517 statements, 94 branches); five of the six files are at 100 % or 99 %. Details and the two uncovered lines: [coverage file](../tests/coverage/web-ui.md#code-coverage).
 
 **Browser checks** (Firefox and WebKit, 1280 px and 360 px): all passed, no console errors, no horizontal scrolling with the demo data. With every text at its maximum length, a word without spaces made the pages wider than the screen (defect 14, fixed in PR #45). Details: [non-functional tests](../tests/non-func-tests/web-ui.md).
 
@@ -41,7 +41,7 @@ The parts the instructor asked for on 17.11 are in their own files:
 **Penetration test** (23.11, all attacks through the pages, in memory and on PostgreSQL): 46 checks, 33 secure, 8 findings (3 medium, 5 low). The three in the web UI (the calendar file, the size of a form, `HEAD` requests that skipped the CSRF check) are fixed in #49 (open); the others are in the services (#30, #50, #51). Report: [`docs/tests/security/pentest-web.md`](../tests/security/pentest-web.md) (#48).
 
 ## 3. Traceability
-The [traceability matrix](../tests/coverage/web-ui.md#traceability-matrix) maps every step and alternative flow of the use cases of this section, the business rules (BR-01, BR-03, BR-04, BR-15), the team time rule and the NFRs to their tests and to the code. 33 of 33 rows have passing tests, and each of the 145 tests appears in the matrix.
+The [traceability matrix](../tests/coverage/web-ui.md#traceability-matrix) maps every step and alternative flow of the use cases of this section, the business rules (BR-01, BR-03, BR-04, BR-15), the team time rule and the NFRs to their tests and to the code. 33 of 33 rows have passing tests, and each of the 149 tests appears in the matrix.
 
 ## 4. Test design
 - **One test per rule, named as a sentence** (`test_wrong_credentials_do_not_say_which_part_is_wrong`), so a failing test says which rule is broken.
@@ -69,7 +69,7 @@ The [traceability matrix](../tests/coverage/web-ui.md#traceability-matrix) maps 
 | 12 | The event pages against the real `EventService` (review of #38) | Event Details and the Find Events cards still showed *Join*, *Leave* and *Cancel* after the event had started; the service refuses them then, so a click gave an error page (400) | The buttons are hidden from the start time on, with the clock of the service; three tests (PR #42) |
 | 13 | Re-check of the pages of 20 on Event Requests (PR #43) | A page number like `²` (accepted by `str.isdigit()`, refused by `int()`) or one of more than 4,300 digits gave a server error (500) on Find Events | Page numbers are read by one function that accepts at most six ASCII digits; any other value shows the first page; tests with eight wrong values on both pages (PR #43) |
 | 14 | NFR-01 check at 360 px with every text at its maximum length (non-functional tests) | A word without spaces (a long name, title, category or link) made the pages wider than the screen: up to 4,267 px on a phone and 1,935 px at 1280 px | Such words break where they have to (`overflow-wrap: anywhere`), buttons keep their labels, and the role next to a long participant name keeps its width; 38 page and width checks without overflow (PR #45) |
-| 15 | SonarQube analysis of the repository (#39, findings S3 and C2) | Bootstrap and the Inter font came from jsDelivr and Google Fonts without an integrity check, so those servers saw every visitor's IP address (NFR-05); `autofocus` on log in, sign up and the code step made screen readers skip the page heading | Bootstrap and Inter are served from `static/vendor/` (the Bootstrap files checked against the published SHA-256); `autofocus` removed; four tests (PR #44, open) |
+| 15 | SonarQube analysis of the repository (#39, findings S3 and C2) | Bootstrap and the Inter font came from jsDelivr and Google Fonts without an integrity check, so those servers saw every visitor's IP address (NFR-05); `autofocus` on log in, sign up and the code step made screen readers skip the page heading | Bootstrap and Inter are served from `static/vendor/` (the Bootstrap files checked against the published SHA-256); `autofocus` removed; four tests (PR #44) |
 
 Defects found by this section in the code of others: the Turkish capital *İ* in interests (review of #24, Heval), the *Remove* button contrast (review of #22, Harun), and the participants loaded one event at a time on PostgreSQL (N+1, over the 2 s of NFR-02; #52, E. Arda). The first two are listed in those sections.
 
@@ -81,7 +81,7 @@ Defects found by this section in the code of others: the Turkish capital *İ* in
 | 3 | Check the deployed site on Render (HTTPS, NFR-03; real e-mails for the codes) after the database wiring (#25, #27). **HTTPS checked on 23.11:** the redirect, TLS 1.2 and 1.3, the certificate, the refused TLS 1.0 and 1.1 and the cookie are fine; the security headers are missing (item 9). Real e-mails: the live site runs without SMTP on purpose, because Render's free plan blocks the SMTP ports (#35, #40); a relay on port 2525 would be needed for real codes | Onur, Emir |
 | 4 | Safari itself on a Mac or an iPhone (NFR-07); WebKit on Windows is the closest test available | Web UI owner, on a team member's device |
 | 5 | Features the service interface cannot do yet: time range filter (UC-05), an *Upcoming* list on My Activities | Team decision |
-| 6 | SonarQube analysis of the whole repository (`docs/tests/quality`). Set up and analysed by Heval in #39; its two findings in the web UI (S3, C2) are defect 15, fixed in #44 (open). SonarCloud, set up by Heval, now analyses every pull request (#44: no new issues) | Heval; Emir for S3 and C2 |
+| 6 | SonarQube analysis of the whole repository (`docs/tests/quality`). Set up and analysed by Heval in #39; its two findings in the web UI (S3, C2) are defect 15, fixed in #44 (merged 23.11). SonarCloud, set up by Heval, now analyses every pull request (#44: no new issues) | Heval; Emir for S3 and C2 |
 | 7 | Event Requests showed every waiting request on one page: with 1,000 requests 3.6 MB and 1.0–1.3 s in the browser (NFR-02). **Pages of 20 since PR #43:** on `main` (23.11) 136 KB and 0.24–0.33 s (4 runs, page 1 and page 50) | Emir (done) |
 | 8 | Performance with PostgreSQL. **Measured on 23.11** with a temporary local PostgreSQL 18 and the same data as the performance tests: on `main` Find Events, My Activities and Event Requests take 2.1–3.4 s, over the 2 s of NFR-02 (N+1 in `SqlEventRepository`). The fix proposed in #52 gives 0.22–0.38 s. To be measured again on `main` once #52 is merged | E. Arda (#52); Emir measures again |
 | 9 | The live site sends no security headers (checked 23.11, NFR-03 in the non-functional tests): without `X-Frame-Options` / `frame-ancestors` another site could show our pages in a frame (clickjacking), and without `Strict-Transport-Security` the first visit by plain HTTP is not protected. **Fixed in #46 (open):** every answer gets these headers, with two tests; to be checked again on the live site after the merge | Emir |
