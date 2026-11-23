@@ -1,6 +1,6 @@
 # Software Testing Report – Web UI section (task 3.5)
 
-**Author:** Emir Gül · **Status:** section for the team's Software Testing Report (task 4.1: pull request to Yeşim by 25.11.2026, PDF on Learn by 29.11.2026) · **Date of the results:** 21.11.2026; performance, long texts and defects 12 to 15 on 23.11.2026
+**Author:** Emir Gül · **Status:** section for the team's Software Testing Report (task 4.1: pull request to Yeşim by 25.11.2026, PDF on Learn by 29.11.2026) · **Date of the results:** 21.11.2026; performance, long texts, HTTPS of the live site and defects 12 to 15 on 23.11.2026
 
 It covers the web UI (layer 1 of the [Software Design Report](../software_design_report.md), `src/campusevent/web/`) for UC-01 to UC-06, UC-09 to UC-11 and UC-12 (admin review of event requests, change request CR-01), with the design of the [UI/UX document](../ui_ux_design.md). The results below are for `main` of 21.11.2026 (`c98923c`), after PR #31 (*Send a new code*), PR #22 (remove a block) and PR #32 (category label) were merged. The checks of 23.11 (performance, long texts, defects 12 to 15) also used the open pull requests; each row says which. The facility page (UC-07, UC-08) is in the [facilities section](facility_test_section.md); the services behind the pages are in the sections of their owners.
 
@@ -19,7 +19,7 @@ The parts the instructor asked for on 17.11 are in their own files:
 
 **Why test doubles:** the pages were built before the services (tasks 3.2 to 3.4). The doubles let every page and every error message be tested from the start, and the web tests stay fast and need no database. **Limit:** a passing web test shows that the page works with a service that behaves like the use case text, not that the real service does. Since 20.11 the real `AuthService` and `ProfileService` are on `main`, and the requirement tests of UC-01 to UC-03 pass with them; for the events it was done on the branch of task 3.4 (#33) and is repeated on `main` after the merge (section 6, item 1).
 
-**Tools:** pytest 9.2, Flask 3.1 test client, coverage.py 7.17 (branch coverage), Playwright 1.65 (Firefox, WebKit), Chromium 156 (the built-in browser of the development tool, 23.11), ruff. CI (GitHub Actions) runs ruff and pytest on every push and pull request, so the web tests run on every change.
+**Tools:** pytest 9.2, Flask 3.1 test client, coverage.py 7.17 (branch coverage), Playwright 1.65 (Firefox, WebKit), Chromium 156 (the built-in browser of the development tool, 23.11), `curl` and OpenSSL 3.5 (the live site, 23.11), ruff. CI (GitHub Actions) runs ruff and pytest on every push and pull request, so the web tests run on every change.
 
 ## 2. Results
 | Suite | Tests | Passed | Failed |
@@ -34,6 +34,8 @@ The parts the instructor asked for on 17.11 are in their own files:
 **Browser checks** (Firefox and WebKit, 1280 px and 360 px): all passed, no console errors, no horizontal scrolling with the demo data. With every text at its maximum length, a word without spaces made the pages wider than the screen (defect 14, fixed in PR #45, open). Details: [non-functional tests](../tests/non-func-tests/web-ui.md).
 
 **Performance** (NFR-02, 1,000 open events): every page answers in under 2 s. Slowest in the tests 0.31 s; on the branch of #33 the 7 tests with the real services pass as well (Find Events 0.14–0.17 s). In the browser the slowest page was Event Requests with 1,000 waiting requests, 1.0–1.3 s, because it showed all of them on one page; with pages of 20 (PR #43, open) it takes 0.26–0.34 s (section 6, item 7). Details: [non-functional tests](../tests/non-func-tests/web-ui.md).
+
+**Live site** (NFR-03, 23.11, from outside): HTTP is redirected to HTTPS, TLS 1.2 and 1.3 with a valid certificate, TLS 1.0 and 1.1 refused, the session cookie is `Secure` and `HttpOnly`. The site sends no security headers (section 6, item 9). Details: [non-functional tests](../tests/non-func-tests/web-ui.md).
 
 ## 3. Traceability
 The [traceability matrix](../tests/coverage/web-ui.md#traceability-matrix) maps every step and alternative flow of the use cases of this section, the business rules (BR-01, BR-03, BR-04, BR-15), the team time rule and the NFRs to their tests and to the code. 32 of 32 rows have passing tests, and each of the 133 tests appears in the matrix.
@@ -73,9 +75,10 @@ Defects found by this section in the code of others: the Turkish capital *İ* in
 |---|---|---|
 | 1 | Run the event pages (Find Events, Create Event, Event Details, join, leave, cancel, My Activities, Event Requests) against the real `EventService` as soon as task 3.4 is merged, and fix any difference. Done on the branch of #33 on 23.11 (with #38): 36 of 36 page checks pass, and the one difference found is defect 12. To be repeated on `main` after the merge | Emir with E. Arda |
 | 2 | `EventService.get_event(event_id)` is used by the pages but is not in the class diagram ([details](../../src/campusevent/web/README.md)) | E. Arda (task 3.4) |
-| 3 | Check the deployed site on Render (HTTPS, NFR-03; real e-mails for the codes) after the database wiring (#25, #27) | Onur, Emir |
+| 3 | Check the deployed site on Render (HTTPS, NFR-03; real e-mails for the codes) after the database wiring (#25, #27). **HTTPS checked on 23.11:** the redirect, TLS 1.2 and 1.3, the certificate, the refused TLS 1.0 and 1.1 and the cookie are fine; the security headers are missing (item 9). Real e-mails: the live site runs without SMTP on purpose, because Render's free plan blocks the SMTP ports (#35, #40); a relay on port 2525 would be needed for real codes | Onur, Emir |
 | 4 | Safari itself on a Mac or an iPhone (NFR-07); WebKit on Windows is the closest test available | Web UI owner, on a team member's device |
 | 5 | Features the service interface cannot do yet: time range filter (UC-05), an *Upcoming* list on My Activities | Team decision |
 | 6 | SonarQube analysis of the whole repository (`docs/tests/quality`). Set up and analysed by Heval in #39; its two findings in the web UI (S3, C2) are defect 15, fixed in #44 (open). To be run again after #33 is merged | Heval; Emir for S3 and C2 |
 | 7 | Event Requests showed every waiting request on one page: with 1,000 requests 3.6 MB and 1.0–1.3 s in the browser (NFR-02). **Pages of 20 in PR #43 (open):** 136 KB and 0.26–0.34 s; repeat the timing on `main` after the merge | Emir |
 | 8 | Performance with PostgreSQL: the web tests and the browser timing keep the data in memory | Integration tests (task 4.2) |
+| 9 | The live site sends no security headers (checked 23.11, NFR-03 in the non-functional tests): without `X-Frame-Options` / `frame-ancestors` another site could show our pages in a frame (clickjacking), and without `Strict-Transport-Security` the first visit by plain HTTP is not protected. To be added in the web app after #44 is merged | Emir |
