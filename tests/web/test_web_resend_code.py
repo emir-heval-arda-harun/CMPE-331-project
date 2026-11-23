@@ -48,7 +48,8 @@ def test_answer_is_the_same_for_unknown_and_verified_addresses(web_app, services
         response = resend(web_app.test_client(), email)  # a new browser each time, so the wait does not apply
         assert response.status_code == 200
         page = response.get_data(as_text=True).replace(email, "ADDRESS")
-        pages.append(re.sub(r'name="csrf_token"[^>]*', "", page))  # the form token differs per browser
+        page = re.sub(r'name="csrf_token"[^>]*', "", page)  # the form token differs per browser
+        pages.append(re.sub(r'nonce="[^"]*"', "", page))  # and the script nonce per answer
     assert pages[0] == pages[1] == pages[2]  # nothing tells which addresses have accounts
     assert "nobody@bilgiedu.net" not in services.auth.email_sender.codes
 

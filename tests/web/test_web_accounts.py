@@ -2,10 +2,11 @@
 
 import re
 
+from campusevent.facilities import FacilityService
 from campusevent.models import Role
 from campusevent.web import create_web_app
 from tests.web.conftest import log_in, make_user
-from tests.web.fakes import PASSWORD, make_fake_services
+from tests.web.fakes import PASSWORD, make_fake_services, slot
 
 
 def test_signup_shows_code_box_after_registration(client):
@@ -189,7 +190,6 @@ def test_session_cookie_is_secure_by_default(services):
 SECURITY_HEADERS = {
     "Strict-Transport-Security": "max-age=31536000",  # browsers use HTTPS only, also when typed without it
     "X-Frame-Options": "DENY",  # no other site can show our pages in a frame (clickjacking)
-    "Content-Security-Policy": "frame-ancestors 'none'",  # the same rule for browsers that read CSP
     "X-Content-Type-Options": "nosniff",
     "Referrer-Policy": "same-origin",  # other sites never see which page of ours a visitor came from
 }
@@ -198,6 +198,8 @@ SECURITY_HEADERS = {
 def assert_security_headers(response, what):
     for name, value in SECURITY_HEADERS.items():
         assert response.headers.get(name) == value, (what, name, response.headers.get(name))
+    # the same rule against framing for browsers that read CSP; the whole policy is checked below
+    assert "frame-ancestors 'none'" in response.headers.get("Content-Security-Policy", ""), what
 
 
 def test_every_kind_of_answer_has_the_security_headers(client, student):
@@ -229,6 +231,56 @@ def test_the_error_page_of_an_unexpected_error_has_the_security_headers(services
     response = client.get("/events")
     assert response.status_code == 500
     assert_security_headers(response, "500")
+
+
+def csp_of(response):
+    """The Content-Security-Policy header as {directive: [values]}."""
+    policy = {}
+    for part in response.headers.get("Content-Security-Policy", "").split(";"):
+        if part.strip():
+            name, *values = part.split()
+            policy[name] = values
+    return policy
+
+
+def test_the_content_security_policy_allows_only_our_own_site_and_no_injected_script(client, student):
+    """NFR-03: even if text typed by a user reached a page unescaped, the browser would not run it."""
+    policy = csp_of(client.get("/events"))
+    assert policy["default-src"] == ["'self'"]
+    script = policy["script-src"]
+    assert "'self'" in script and len([v for v in script if v.startswith("'nonce-")]) == 1
+    assert "'unsafe-inline'" not in script and "'unsafe-eval'" not in script
+    assert policy["object-src"] == ["'none'"] and policy["base-uri"] == ["'self'"]
+    assert policy["form-action"] == ["'self'"] and policy["frame-ancestors"] == ["'none'"]
+    values = [v for vs in policy.values() for v in vs]
+    assert not any(v.startswith(("http", "*")) or v == "https:" for v in values)  # nothing from other sites
+
+
+def test_every_script_on_every_page_carries_the_nonce_of_its_answer(web_app, services, hall):
+    services.facilities = FacilityService(services.auth, events=services.events)  # the page needs the real one
+    hall = services.facilities.add_facility(services.auth._by_email("staff@bilgi.edu.tr").id, "Hall", 50)
+    organizer = make_user(services, "organizer@bilgiedu.net")
+    make_user(services, "admin@bilgi.edu.tr", Role.ADMIN)
+    event = services.events.create_event(organizer.id, "Game night", "board games", hall.id, slot(day=20), 6)
+    pages = {
+        None: ["/login", "/signup", "/verify", "/no-such-page"],
+        "organizer@bilgiedu.net": ["/events", "/events/new", f"/events/{event.id}", "/activities", "/profile"],
+        "admin@bilgi.edu.tr": ["/admin/requests"],
+        "staff@bilgi.edu.tr": ["/facilities"],
+    }
+    nonces = set()
+    for email, paths in pages.items():
+        client = web_app.test_client()
+        if email:
+            log_in(client, email)
+        for path in paths:
+            response = client.get(path)
+            nonce = [v for v in csp_of(response)["script-src"] if v.startswith("'nonce-")][0][7:-1]
+            scripts = re.findall(r"<script\b[^>]*>", response.data.decode())
+            assert scripts, path
+            assert all(f'nonce="{nonce}"' in tag for tag in scripts), (path, scripts)
+            nonces.add(nonce)
+    assert len(nonces) == sum(len(paths) for paths in pages.values())  # a new nonce for every answer
 
 
 # UC-03 -------------------------------------------------------------------------------------------

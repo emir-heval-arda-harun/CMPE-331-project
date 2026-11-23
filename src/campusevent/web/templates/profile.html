@@ -59,7 +59,7 @@
 </form>
 {% endblock %}
 {% block scripts %}
-<script>
+<script nonce="{{ csp_nonce }}">
   // Interests as tags. The list is kept in the hidden text field (one per line), which the form sends.
   (function () {
     var field = document.getElementById('interests');

@@ -103,7 +103,7 @@
 </div>
 {% endblock %}
 {% block scripts %}
-<script>
+<script nonce="{{ csp_nonce }}">
   // Category: pick from the list, or choose "Other" and type your own. The form always sends the
   // text field named "category", so the page also works without JavaScript.
   (function () {

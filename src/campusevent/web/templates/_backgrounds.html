@@ -28,7 +28,7 @@
 {% endmacro %}
 
 {% macro scripts() %}
-<script>
+<script nonce="{{ csp_nonce }}">
   (function () {
     var NAMES = ['campus-festival', 'campus', 'campus-dusk', 'campus-neon'];
     var body = document.body;
