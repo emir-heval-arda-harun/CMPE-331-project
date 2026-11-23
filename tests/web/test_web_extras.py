@@ -1,12 +1,15 @@
 """Tests for the helper features of the web UI: free time suggestions (UC-04 4a), the facility schedule box,
 'Add to calendar', pagination and category shortcuts on Find Events, interest tags, the password guide."""
 
+import base64
+import hashlib
 import re
 from datetime import date, datetime
 
 import pytest
 
-from campusevent.models import TimeSlot
+from campusevent.facilities import FacilityService
+from campusevent.models import Role, TimeSlot
 from campusevent.web import common, create_web_app
 from tests.web.conftest import make_user
 from tests.web.fakes import PASSWORD, slot
@@ -307,6 +310,78 @@ def test_every_form_field_has_a_label(client, services, hall):
         pages[path] = client.get(path).get_data(as_text=True)
     for path, html in pages.items():
         assert _fields_without_a_label(html) == [], path
+
+
+def test_no_field_takes_the_focus_by_itself(client):
+    """SonarQube Web:S9379 (#39, C2): `autofocus` makes screen readers skip the heading of the page, and on some
+    phones it opens the keyboard over the page. Log in, sign up and the code step start at the top."""
+    pages = {path: client.get(path).get_data(as_text=True) for path in ("/login", "/signup", "/verify")}
+    pages["code step"] = client.post(
+        "/signup", data={"full_name": "Test Student", "email": "student@bilgiedu.net", "password": PASSWORD}
+    ).get_data(as_text=True)
+    assert 'name="code"' in pages["code step"]
+    for name, html in pages.items():
+        assert "autofocus" not in html, name
+
+
+OTHER_SITES = ("cdn.jsdelivr.net", "fonts.googleapis.com", "fonts.gstatic.com")
+
+
+def test_pages_load_nothing_from_other_sites(client, services, hall):
+    """SonarQube Web:S5725 (#39, S3) and privacy (NFR-05): Bootstrap and the Inter font come from the app itself,
+    so no other site sees the visitor's IP address and no file from another site can be changed under us."""
+    pages = {path: client.get(path).get_data(as_text=True) for path in ("/login", "/signup", "/no-such-page")}
+    make_user(services, "student@bilgiedu.net")
+    client.post("/login", data={"email": "student@bilgiedu.net", "password": PASSWORD})
+    for path in ("/events", "/events/new", "/profile", "/activities"):
+        pages[path] = client.get(path).get_data(as_text=True)
+    make_user(services, "admin@bilgi.edu.tr", Role.ADMIN)  # the staff account comes with the hall fixture
+    services.facilities = FacilityService(services.auth, events=services.events)  # the facility page needs it
+    for email, path in (("admin@bilgi.edu.tr", "/admin/requests"), ("staff@bilgi.edu.tr", "/facilities")):
+        client.post("/logout")
+        client.post("/login", data={"email": email, "password": PASSWORD})
+        pages[path] = client.get(path).get_data(as_text=True)
+    for path, html in pages.items():
+        for site in OTHER_SITES:
+            assert site not in html, (path, site)
+        assert "/static/vendor/bootstrap/bootstrap.min.css" in html and "/static/vendor/inter/inter.css" in html, path
+        assert "/static/vendor/bootstrap/bootstrap.bundle.min.js" in html, path
+
+
+def test_the_own_copies_of_bootstrap_and_inter_are_served(client):
+    files = {
+        "/static/vendor/bootstrap/bootstrap.min.css": "text/css",
+        "/static/vendor/bootstrap/bootstrap.bundle.min.js": ("text/javascript", "application/javascript"),
+        "/static/vendor/inter/inter.css": "text/css",
+        "/static/vendor/inter/inter-latin.woff2": "font/woff2",
+        "/static/vendor/inter/inter-latin-ext.woff2": "font/woff2",  # ğ, ş, ı, İ of Turkish names
+    }
+    for path, kind in files.items():
+        response = client.get(path)
+        # both names of the JavaScript type are in use, depending on the system's list of file types
+        assert response.status_code == 200 and response.mimetype in (kind if isinstance(kind, tuple) else (kind,)), (
+            path, response.mimetype)
+        assert len(response.data) > 1000, path
+    font_css = client.get("/static/vendor/inter/inter.css").get_data(as_text=True)
+    assert "inter-latin.woff2" in font_css and "inter-latin-ext.woff2" in font_css
+    assert "U+0100-02BA" in font_css  # the latin-ext range has the Turkish letters
+    for licence in ("/static/vendor/bootstrap/LICENSE", "/static/vendor/inter/LICENSE.txt"):
+        assert client.get(licence).status_code == 200, licence  # MIT and SIL Open Font License
+
+
+# SHA-256 (base64) of Bootstrap 5.3.3 as published by jsDelivr (data.jsdelivr.com/v1/packages/npm/bootstrap@5.3.3)
+BOOTSTRAP_SHA256 = {
+    "bootstrap.min.css": "PI8n5gCcz9cQqQXm3PEtDuPG8qx9oFsFctPg0S5zb8g=",
+    "bootstrap.bundle.min.js": "CDOy6cOibCWEdsRiZuaHf8dSGGJRYuBGC+mjoJimHGw=",
+}
+
+
+def test_the_own_copy_of_bootstrap_is_the_published_one(client):
+    """The copy in static/vendor must stay byte for byte the published file: a changed file (also one where git
+    added Windows line endings) would fail here. static/vendor/.gitattributes keeps git from converting them."""
+    for name, expected in BOOTSTRAP_SHA256.items():
+        data = client.get(f"/static/vendor/bootstrap/{name}").data
+        assert base64.b64encode(hashlib.sha256(data).digest()).decode() == expected, name
 
 
 def test_create_form_category_label_follows_the_visible_field(client, student, hall):

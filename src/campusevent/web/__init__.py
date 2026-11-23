@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import mimetypes
 import os
 import secrets
 
@@ -33,6 +34,9 @@ def create_web_app(services: CampusEventApp | None = None, config: dict | None =
     services; production (``services`` left out) uses ``campusevent.app.create_app_from_env``, which
     reads DATABASE_URL, SECRET_KEY and SMTP_* from the environment.
     """
+    # The Inter font in static/vendor: Flask takes the type of a static file from the system's list of file
+    # types, and not every list has .woff2. Registering it sends the font as font/woff2 on every server.
+    mimetypes.add_type("font/woff2", ".woff2")
     flask_app = Flask(__name__)
     flask_app.config.update(
         SECRET_KEY=os.environ.get("SECRET_KEY") or secrets.token_hex(32),
