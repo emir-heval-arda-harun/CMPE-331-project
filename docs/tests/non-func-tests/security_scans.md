@@ -18,15 +18,15 @@ Results:
 
 ## Run it locally
 ```bash
-pip install bandit pip-audit
+pip install --only-binary :all: "bandit==1.9.4" "pip-audit==2.10.1"
 bandit -r src            # all findings
 bandit -r src -ll        # only Medium and High (the CI gate)
 pip-audit -r requirements.txt
 ```
 
-## Results (21.11.2026, `main` + this pull request)
+## Results (23.11.2026, `main` with task 3.4 + this pull request)
 - **pip-audit:** no known vulnerabilities in `requirements.txt`.
-- **bandit:** 2295 lines scanned, **0 High, 0 Medium, 2 Low**. Both Low findings were reviewed and are false positives:
+- **bandit:** 2760 lines scanned, **0 High, 0 Medium, 2 Low**. Both Low findings were reviewed and are false positives:
 
 | ID | Location | Finding | Why it is not a problem |
 |---|---|---|---|

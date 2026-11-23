@@ -87,7 +87,8 @@ jobs:
           python-version: "3.12"
           cache: pip
           cache-dependency-path: requirements-dev.txt
-      - run: pip install "bandit>=1.8" "pip-audit>=2.7"
+      # Exact versions and wheels only (SonarCloud githubactions:S8544, S8541): no setup scripts run.
+      - run: 'pip install --only-binary :all: "bandit==1.9.4" "pip-audit==2.10.1"'
       # Full report of every finding (including Low) for docs/tests/non-func-tests/security_scans.md.
       - name: bandit report (all severities)
         if: always()

@@ -16,19 +16,20 @@ python -m pytest --cov --cov-report=term --cov-report=html
 ```
 Set `TEST_DATABASE_URL` in your `.env` to include the database tests (see `docs/database/README.md`). The HTML report is written to `htmlcov/`. It is in `.gitignore`, so it is never committed.
 
-## Results (21.11.2026, `main` + this pull request)
-Measured with the same command as CI, on a local PostgreSQL 16: **327 passed, 36 failed**. All 36 failures are `NotImplementedError` from `EventService`, because task 3.4 is not merged yet.
+## Results (23.11.2026, `main` with task 3.4 + this pull request)
+Measured with the same command as CI, on a local PostgreSQL 16: **397 passed, 0 failed**.
 
 | Area | Line + branch coverage per file |
 |---|---|
-| Services | `auth.py` 96%, `profiles.py` 90%, `facilities.py` 100%, `events.py` 67% |
-| Data access (`repositories/`) | `db.py` 79%, all others 96–100% |
+| Services | `auth.py` 96%, `events.py` 96%, `facilities.py` 100%, `profiles.py` 90% |
+| Data access (`repositories/`) | `db.py` 79%, all others 95–100% |
 | Web UI (`web/`) | 92–100% |
-| **Total** (1567 statements, 238 branches) | **97%** |
+| **Total** (1903 statements, 316 branches) | **97%** |
 
-Without the database (`tests/db` skipped), the total is **91%**. The repositories drop to 58–79% in that case, which is why CI runs a PostgreSQL service.
+Without the database (`tests/db` skipped: 329 passed, 68 skipped), the total is **89%**. The repositories drop to 48–79% in that case, which is why CI runs a PostgreSQL service.
 
 **How to read the numbers:**
-- `events.py` (67%) is a skeleton: its methods only raise `NotImplementedError`. Its coverage will change when task 3.4 is merged, and CI will show the new value automatically.
 - Coverage only shows which code ran during the tests. It does not show that the results were checked. That is what the requirement tests are for: each test file is named after its use case (`tests/test_uc01_...` to `test_uc12_...`).
+- `db.py` (79%): the missed lines read `DATABASE_URL` from the environment, which the tests never do on purpose (they use `TEST_DATABASE_URL`), so they cannot write to a real database.
 - The traceability matrix (requirement → test → code) for the Testing Report builds on these per-file numbers.
+- Earlier snapshot (21.11.2026, before task 3.4): 327 passed, 36 failed (`EventService` skeleton), 97% of 1567 statements.
