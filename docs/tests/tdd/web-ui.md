@@ -13,6 +13,7 @@ The web tests run against in-memory stand-ins ([`tests/web/fakes.py`](../../../t
 | 18 Nov 2026 | `9386a76` (PR #14) | Admin Event Requests page and request statuses (CR-01, UC-12), again before any UC-12 backend. |
 | 20 Nov 2026 | PR #23, #24 merged | The real `AuthService` and `ProfileService` arrive, and the requirement tests of UC-01 to UC-03 pass with them. Since PR #31 (`178e0c9`), `test_works_with_the_real_auth_service` also runs sign up, verify and a new code through the pages with the real service. |
 | 21 Nov 2026 | review of PR #33 | First run of the event pages against the real `EventService`: the pages expect `get_event` and the errors `EventFullError`, `AlreadyJoinedError`, `PermissionDeniedError`; the run showed which of these the backend does not meet yet. The expectations came first, the backend is being changed to meet them. |
+| 23 Nov 2026 | #33 (with #38) merged | The real `EventService` meets what the pages expected: the requirement tests of UC-04 to UC-06 and UC-09 to UC-12 pass, the 7 performance tests with the real services run, and the event pages pass 36 of 36 checks on `main`. |
 
 ## 2. Red → green, repeated for each step of the code
 The web tests of a feature were committed in the **same commit** as the page code, so git does not show which line was typed first. To show the test-first order anyway, the web tests of each commit (`tests/web/` of that commit, including the stand-ins) were run on the code of the commit **before** it (red) and on the commit itself (green):
@@ -28,16 +29,21 @@ The web tests of a feature were committed in the **same commit** as the page cod
 | Team time rule: UTC in the services, Istanbul time on the pages | `3c434da` | 42 failed, 55 passed | 97 passed | the test helper `slot()` now gives times in UTC, as the real services keep them. 39 of the 42 tests stop at once because the conversion helper `slot_to_utc` does not exist yet in the old code (like "cannot be imported" on the facilities page). The other 3 fail on the rule itself: Create Event sends 18:00 to the service instead of 15:00 UTC, My Profile sends availability in Istanbul time (17 instead of 14), and the helper `to_utc` is missing |
 | *Send a new code* (UC-01 5a, UC-02 3a, PR #31) | `178e0c9` | 7 failed, 117 passed | 124 passed | all 7 tests of `test_web_resend_code.py`: the button, the new code replaces the old one, the same answer for every address (NFR-05), an empty address, the one-minute wait, no address in a link, the real `AuthService` |
 | Label for the category box (defect 11, PR #32) | `c66359c` | 2 failed, 120 passed | 122 passed | every form field has a label; the *Category* label follows the visible field |
+| No *Join*, *Leave* or *Cancel* after the start (defect 12, PR #42) | `3d1628e` | 3 failed, 136 passed | 139 passed | all 3 new tests: the buttons are gone after the start, they stay until the start minute, the real time is used when the service has no clock |
+| Event Requests in pages of 20, safe page numbers (defect 13, PR #43) | `4a51fc7` | 6 failed, 138 passed | 144 passed | 20 requests per page, a decision returns to the same page, a wrong page number (such as `²`) gives no error page (2 pages), no link behind a greyed-out *Previous* or *Next* (2 pages). The other 2 new tests are guards for behaviour that was already right |
+| Bootstrap and Inter from `static/`, no `autofocus` (defect 15, PR #44, open) | `656c402` | 4 failed, 136 passed | 140 passed | no field takes the focus by itself, nothing is loaded from other sites, the own copies are served, the Bootstrap file is the published one (SHA-256) |
+| Long words without spaces (defect 14, PR #45) | `00649ed` | 1 failed, 136 passed | 137 passed | long words break instead of widening the page |
 
 In every step all tests pass on the commit itself, so the change broke none of the older tests (no regression). Apart from the rows `3c434da` and `0cb56bb`, and one of the seven tests of `178e0c9` (it sets the clock through `auth_routes.time`, which the old code does not have), the red runs fail on the behaviour (a wrong status code, a missing text or form field), not because a name is missing.
 
-Run 21 Nov 2026, Python 3.14, pytest 9.2.
+Run 21 Nov 2026 (the last four rows 23 Nov 2026), Python 3.14, pytest 9.2.
 
 ## 3. Tests that caught a defect first
 Section 5 of the report lists the defects. These follow the red → green order:
 - **Defects 1 and 2** (PR #14): found by the web tests of UC-12 and BR-15 while the page was written (report, section 5): an error for a request that had left the list was not shown, and joining a waiting or rejected request of someone else gave 400 instead of 404. The fix is in the same commit (`9386a76`), so git does not show these runs; the replay of that commit is in section 2.
 - **Defects 3 and 4:** found by thinking about the time rule and by checking a downloaded calendar file. The test was written for the defect and fails on the code before the fix (rows `0cb56bb` and `e2eae80` above).
 - **Defect 11:** `test_every_form_field_has_a_label` was written while checking the report. It failed on the code of `main` and found exactly one field without a label. The first fix still left the category list without a name; the test failed again, and passed after the list got an `aria-label`.
+- **Defects 12 to 15** (23 Nov): found by the run against the real `EventService`, a re-check, the check of long texts and SonarQube. For each one a test was written that fails on the code before the fix (the last four rows of section 2); for defect 13 the wrong page number `²` itself is one of the test values.
 
 ## 4. Honest limits
 - The tests sit in the same commit as their code (section 2). The replay shows that the tests describe the new behaviour and fail without it, but not the minute-by-minute order of typing. Code and tests were written with an AI assistant (Claude Code), and a team member ran and checked each commit.
