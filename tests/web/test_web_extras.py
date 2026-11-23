@@ -117,6 +117,38 @@ def test_add_to_calendar_downloads_an_ics_file(client, student, hall, services):
     assert "@bilgiedu.net" not in text  # no e-mail addresses (NFR-05)
 
 
+def test_line_breaks_and_control_characters_cannot_add_lines_to_the_calendar_file(client, student, hall, services):
+    """Penetration test P4: a lone carriage return in the title or description started a new line in calendars
+    that read it as one, so an organizer could add an attendee or a second, made-up event to the file."""
+    organizer = make_user(services, "organizer@bilgiedu.net")
+    event = services.events.create_event(
+        organizer.id, "Party\rATTENDEE:mailto:x@evil.example", "music", hall.id, slot(day=20), 6,
+        "Line one\r\nline two\nline three\rEND:VEVENT\rBEGIN:VEVENT\x0bSUMMARY:Fake\x00",
+    )
+    text = client.get(f"/events/{event.id}/calendar.ics").data.decode()
+    assert "\r" not in text.replace("\r\n", "")  # every carriage return ends a line, as RFC 5545 asks
+    lines = text.split("\r\n")
+    assert [line.split(":")[0] for line in lines if line] == [
+        "BEGIN", "VERSION", "PRODID", "CALSCALE", "BEGIN", "UID", "DTSTAMP", "DTSTART", "DTEND",
+        "SUMMARY", "LOCATION", "DESCRIPTION", "END", "END",
+    ]  # no extra line: no ATTENDEE, no second BEGIN:VEVENT
+    assert "SUMMARY:Party\\nATTENDEE:mailto:x@evil.example" in lines
+    assert "DESCRIPTION:Line one\\nline two\\nline three\\nEND:VEVENT\\nBEGIN:VEVENTSUMMARY:Fake" in lines
+    assert not any(ord(ch) < 32 for line in lines for ch in line)  # no control characters are left
+
+
+def test_a_form_larger_than_one_megabyte_is_refused_with_a_friendly_page(client, student, hall, services):
+    """Penetration test P5: a 5 MB description was read and stored. Forms are now limited to 1 MB."""
+    form = {"title": "Big", "category": "chess", "facility_id": str(hall.id), "date": "2026-11-21",
+            "start": "10:00", "end": "11:00", "capacity": "4"}
+    response = client.post("/events/new", data={**form, "description": "B" * (1024 * 1024 + 1)})
+    assert response.status_code == 413
+    assert b"too large" in response.data and b"Traceback" not in response.data
+    assert not services.events.events  # nothing was stored
+    response = client.post("/events/new", data={**form, "description": "B" * 100_000})  # a long text is fine
+    assert response.status_code == 302
+
+
 def test_event_page_links_to_the_calendar_file(client, student, hall, services):
     organizer = make_user(services, "organizer@bilgiedu.net")
     event = services.events.create_event(organizer.id, "Game night", "board games", hall.id, slot(day=20), 6)

@@ -15,7 +15,7 @@ bp = Blueprint("auth", __name__)
 
 @bp.route("/signup", methods=["GET", "POST"])
 def signup():
-    if request.method == "GET":
+    if request.method != "POST":  # also HEAD: it must never run the form code (no CSRF check on HEAD)
         return render_template("signup.html", step="register")
 
     full_name = request.form.get("full_name", "").strip()
@@ -87,7 +87,7 @@ def resend_code():
 
 @bp.route("/login", methods=["GET", "POST"])
 def login():
-    if request.method == "GET":
+    if request.method != "POST":  # also HEAD: it must never run the form code (no CSRF check on HEAD)
         return render_template("login.html")
 
     email = request.form.get("email", "").strip()
