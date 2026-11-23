@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_macros.html" import date_panel, csrf, status_tag, icon, date_badge, fill %}
+{% from "_macros.html" import date_panel, csrf, status_tag, icon, date_badge, fill, pagination %}
 {% block title %}Find Events{% endblock %}
 {% block content %}
 <div class="page-head d-flex flex-wrap justify-content-between align-items-end gap-2 mb-3">
@@ -105,15 +105,5 @@
 </div>
 {% endfor %}
 
-{% if pages > 1 %}
-<nav aria-label="Pages of events" class="mt-4">
-  <ul class="pagination justify-content-center flex-wrap">
-    <li class="page-item {{ 'disabled' if page == 1 }}"><a class="page-link" href="{{ url_for('events.find_events', page=page - 1, **active_filters) }}">Previous</a></li>
-    {% for number in range(1, pages + 1) %}
-    <li class="page-item {{ 'active' if number == page }}" {{ 'aria-current="page"'|safe if number == page }}><a class="page-link" href="{{ url_for('events.find_events', page=number, **active_filters) }}">{{ number }}</a></li>
-    {% endfor %}
-    <li class="page-item {{ 'disabled' if page == pages }}"><a class="page-link" href="{{ url_for('events.find_events', page=page + 1, **active_filters) }}">Next</a></li>
-  </ul>
-</nav>
-{% endif %}
+{{ pagination(page, pages, 'events.find_events', 'Pages of events', active_filters) }}
 {% endblock %}

@@ -1,5 +1,7 @@
 """Web UI tests for UC-04 to UC-06 and UC-09 to UC-11."""
 
+from datetime import datetime
+
 from campusevent.models import EventStatus
 from tests.web.conftest import make_user
 from tests.web.fakes import slot
@@ -204,6 +206,45 @@ def test_only_the_organizer_can_cancel(client, student, hall, services):
     assert event.status == EventStatus.OPEN
 
 
+def test_started_event_shows_no_join_leave_or_cancel(client, student, hall, services):
+    """UC-06, UC-10, UC-11: the service refuses all three once the event has started, so the page does
+    not offer them. 'Now' is the clock of the service, so page and service agree."""
+    organizer = make_user(services, "organizer@bilgiedu.net")
+    joined = organized_event(services, hall, organizer, title="Joined match")
+    services.events.join_event(joined.id, student.id)
+    other = organized_event(services, hall, organizer, title="Other match", slot=slot(day=20, hour=19))
+    own = organized_event(services, hall, student, title="Own match", slot=slot(day=20, hour=17))
+    services.events.clock = lambda: datetime(2026, 11, 20, 16, 30)  # all three have started
+
+    for event in (joined, other, own):
+        page = client.get(f"/events/{event.id}").data
+        for action in ("join", "leave", "cancel"):
+            assert f"/events/{event.id}/{action}".encode() not in page, (event.title, action)
+        assert b"This event has started." in page
+    listing = client.get("/events").data
+    assert b"Joined match" in listing and b"Other match" in listing  # the stand-in still lists them
+    assert f"/events/{joined.id}/leave".encode() not in listing  # the Leave button on the card
+    assert f"/events/{other.id}/join".encode() not in listing
+
+
+def test_buttons_stay_until_the_start(client, student, hall, services):
+    """Boundary value: slot() starts 20 Nov 18:00 Istanbul = 15:00 UTC. At 15:00 itself the event has
+    started, as in the service (start <= now)."""
+    organizer = make_user(services, "organizer@bilgiedu.net")
+    event = organized_event(services, hall, organizer)
+    services.events.clock = lambda: datetime(2026, 11, 20, 14, 59)  # one minute before the start
+    assert f"/events/{event.id}/join".encode() in client.get(f"/events/{event.id}").data
+    services.events.clock = lambda: datetime(2026, 11, 20, 15, 0)  # the start itself
+    assert f"/events/{event.id}/join".encode() not in client.get(f"/events/{event.id}").data
+
+
+def test_without_a_service_clock_the_real_time_is_used(client, student, hall, services):
+    organizer = make_user(services, "organizer@bilgiedu.net")
+    event = organized_event(services, hall, organizer)  # 20 Nov 2026, already past in real time
+    del services.events.clock
+    assert f"/events/{event.id}/join".encode() not in client.get(f"/events/{event.id}").data
+
+
 def test_event_details_never_show_email_addresses(client, student, hall, services):
     other = make_user(services, "organizer@bilgiedu.net", name="Demo Organizer")
     event = organized_event(services, hall, other)
@@ -247,3 +288,22 @@ def test_activities_list_completed_events_newest_first(client, student, hall, se
     assert page.index("Newer") < page.index("Older")
     assert "Not done yet" not in page
     assert "Santral Event Hall" in page
+
+
+LONG_WORD = "Uzunisimliöğrencihesabı" * 4  # 92 letters without a space, within the 100 of a name
+
+
+def test_long_words_without_spaces_break_instead_of_widening_the_page(client, student, hall, services):
+    """NFR-01 (360 px): a name, title, category or link without spaces used to make the page wider than a phone
+    (up to 4,267 px with a long rejection reason). The test client cannot measure a layout, so the widths were
+    measured in the browser; this test keeps the two rules that fix it: long words may break anywhere, and the
+    role next to a long name keeps its width instead of being squeezed letter by letter; buttons keep their
+    labels whole."""
+    organizer = make_user(services, "organizer@bilgiedu.net", name=LONG_WORD)
+    event = organized_event(services, hall, organizer, title=LONG_WORD[:90])
+    services.events.join_event(event.id, student.id)
+    page = client.get(f"/events/{event.id}").data.decode()
+    base_css = page.split("</style>")[0]  # the first style block of base.html
+    assert "overflow-wrap: anywhere" in base_css and ".btn { overflow-wrap: normal; }" in base_css
+    assert f'<span class="fw-medium" style="min-width: 0;">{LONG_WORD}</span>' in page
+    assert '<span class="small text-muted ms-auto flex-shrink-0">Organizer</span>' in page
