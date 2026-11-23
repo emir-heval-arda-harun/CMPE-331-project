@@ -1,6 +1,6 @@
 name: CI/CD
 
-# Software Design Report §3.4: every push and pull request runs ruff and pytest;
+# Software Design Report §3.4: every push and pull request runs ruff, pytest (with coverage) and a security scan;
 # only a green build on main triggers the Render deploy hook.
 
 on:
@@ -34,6 +34,22 @@ jobs:
   test:
     name: Tests (pytest)
     runs-on: ubuntu-latest
+    # A throwaway PostgreSQL 16 so the database tests (tests/db) run in CI instead of being skipped.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: campusevent
+          POSTGRES_DB: campusevent_test
+          # No password at all: the database only lives for this job and is reachable only from the
+          # runner, so no credential is written in the repository.
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U campusevent -d campusevent_test"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgresql://campusevent@localhost:5432/campusevent_test
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -42,17 +58,62 @@ jobs:
           cache: pip
           cache-dependency-path: requirements-dev.txt
       - run: pip install -r requirements-dev.txt
-      - run: python -m pytest -q --junitxml=pytest-report.xml
-      - name: Upload test report
+      # Coverage settings (source, branch coverage) are in pyproject.toml; see docs/tests/coverage.
+      - run: >-
+          python -m pytest -q --junitxml=pytest-report.xml
+          --cov --cov-report=term --cov-report=xml --cov-report=html
+      - name: Coverage summary
+        if: always()
+        run: |
+          echo "## Code coverage" >> "$GITHUB_STEP_SUMMARY"
+          python -m coverage report --format=markdown >> "$GITHUB_STEP_SUMMARY" || true
+      - name: Upload test and coverage reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: pytest-report
-          path: pytest-report.xml
+          name: test-and-coverage-reports
+          path: |
+            pytest-report.xml
+            coverage.xml
+            htmlcov/
+
+  security:
+    name: Security scan (bandit, pip-audit)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+      # Exact versions and wheels only (SonarCloud githubactions:S8544, S8541): no setup scripts run.
+      - run: 'pip install --only-binary :all: "bandit==1.9.4" "pip-audit==2.10.1"'
+      # Full report of every finding (including Low) for docs/tests/non-func-tests/security_scans.md.
+      - name: bandit report (all severities)
+        if: always()
+        run: |
+          bandit -r src -f json -o bandit-report.json --exit-zero
+          echo "## bandit (static security analysis of src/)" >> "$GITHUB_STEP_SUMMARY"
+          bandit -r src -f txt --exit-zero | sed -n '/Run metrics/,$p' | sed 's/^/    /' >> "$GITHUB_STEP_SUMMARY"
+      # Gate: Medium or High severity findings fail the build.
+      - name: bandit (fail on Medium or High)
+        run: bandit -r src -ll
+      # Known vulnerabilities (PyPI advisory and OSV databases) in the packages installed on Render.
+      - name: pip-audit (fail on known vulnerabilities)
+        run: |
+          echo "## pip-audit (requirements.txt)" >> "$GITHUB_STEP_SUMMARY"
+          pip-audit -r requirements.txt --progress-spinner off -f markdown | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Upload security report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-report
+          path: bandit-report.json
 
   deploy:
     name: Deploy to Render
-    needs: [lint, test]
+    needs: [lint, test, security]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment: production
