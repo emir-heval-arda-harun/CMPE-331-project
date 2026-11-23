@@ -46,8 +46,8 @@
         {% for person in event.participants %}
         <li class="d-flex align-items-center gap-3">
           {{ avatar(person.name) }}
-          <span class="fw-medium">{{ person.name }}</span>
-          <span class="small text-muted ms-auto">{{ person.role }}</span>
+          <span class="fw-medium" style="min-width: 0;">{{ person.name }}</span>
+          <span class="small text-muted ms-auto flex-shrink-0">{{ person.role }}</span>
         </li>
         {% endfor %}
       </ul>
@@ -78,7 +78,9 @@
         </form>
         <p class="small text-muted mb-0">{{ 'You can withdraw the request while it waits for approval.' if event.pending else 'As the organizer you cannot leave the event; cancel it instead.' }}</p>
         {% endif %}
-        {% if not (event.can_join or event.can_leave or event.can_cancel) %}
+        {% if event.active and event.started %}
+        <p class="small text-muted mb-0">This event has started. Joining, leaving and cancelling are closed.</p>
+        {% elif not (event.can_join or event.can_leave or event.can_cancel) %}
         <p class="small text-muted mb-0">No actions available for this event.</p>
         {% endif %}
       </div>

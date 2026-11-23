@@ -86,3 +86,27 @@
   <span class="small text-muted">{{ count }}/{{ capacity }} participants</span>
 </span>
 {% endmacro %}
+
+{# Page links for a list of 20 per page (NFR-02). On the first and the last page Previous and Next are plain
+   text, not links, so they cannot be followed with the keyboard either. ``args`` keeps the filters. #}
+{% macro pagination(page, pages, endpoint, label, args={}) %}
+{% if pages > 1 %}
+<nav aria-label="{{ label }}" class="mt-4">
+  <ul class="pagination justify-content-center flex-wrap">
+    {% if page > 1 %}
+    <li class="page-item"><a class="page-link" href="{{ url_for(endpoint, page=page - 1, **args) }}">Previous</a></li>
+    {% else %}
+    <li class="page-item disabled"><span class="page-link" aria-disabled="true">Previous</span></li>
+    {% endif %}
+    {% for number in range(1, pages + 1) %}
+    <li class="page-item {{ 'active' if number == page }}" {{ 'aria-current="page"'|safe if number == page }}><a class="page-link" href="{{ url_for(endpoint, page=number, **args) }}">{{ number }}</a></li>
+    {% endfor %}
+    {% if page < pages %}
+    <li class="page-item"><a class="page-link" href="{{ url_for(endpoint, page=page + 1, **args) }}">Next</a></li>
+    {% else %}
+    <li class="page-item disabled"><span class="page-link" aria-disabled="true">Next</span></li>
+    {% endif %}
+  </ul>
+</nav>
+{% endif %}
+{% endmacro %}
