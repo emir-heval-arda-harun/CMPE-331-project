@@ -78,6 +78,11 @@ class UserRow(Base):
     password_hash: Mapped[str] = mapped_column(String(255))  # argon2id hash, never the password (BR-02)
     role: Mapped[str] = mapped_column(String(20), server_default=Role.STUDENT.value)
     is_verified: Mapped[bool] = mapped_column(Boolean, server_default=text("false"))
+    # Wrong passwords in a row and the end of the pause they caused (pentest P1, migration 0002).
+    failed_logins: Mapped[int] = mapped_column(Integer, server_default=text("0"))
+    login_paused_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Part of every session token; log out adds 1, so every copy of an older token stops working (pentest P3).
+    session_version: Mapped[int] = mapped_column(Integer, server_default=text("0"))
 
     interests: Mapped[list[ProfileInterestRow]] = relationship(
         cascade="all, delete-orphan", passive_deletes=True, order_by="ProfileInterestRow.interest"
@@ -95,6 +100,7 @@ class VerificationCodeRow(Base):
     code_hash: Mapped[str] = mapped_column(String(255))  # the code itself is only in the e-mail
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))  # 15 minutes after sending
     used: Mapped[bool] = mapped_column(Boolean, server_default=text("false"))
+    attempts: Mapped[int] = mapped_column(Integer, server_default=text("0"))  # wrong codes typed (pentest P2, #30)
 
 
 class ProfileInterestRow(Base):

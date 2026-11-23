@@ -245,11 +245,20 @@ def ics_for(uid: int, title: str, location: str, start: datetime, end: datetime,
     return "\r\n".join(lines) + "\r\n"
 
 
+# UC-02 2a: never tell which part was wrong. Pentest P1: logging in pauses after 5 wrong passwords in a row.
+LOGIN_FAILED = "Invalid e-mail or password. After 5 wrong tries in a row, logging in pauses for a few minutes."
+
 _MESSAGES = {
     exc.InvalidEmailDomainError: "Please use your university e-mail address.",
     exc.DuplicateEmailError: "An account with this e-mail address already exists.",
-    exc.InvalidVerificationCodeError: "The code is wrong or has expired. Please request a new one.",
-    exc.AuthenticationError: "Invalid e-mail or password.",
+    exc.InvalidVerificationCodeError: (
+        "The code is wrong or has expired. Please request a new one. If your address is already verified, "
+        "you can log in."
+    ),
+    exc.AuthenticationError: LOGIN_FAILED,
+    # A paused account gets the same answer as a wrong password, so the page does not tell that the address has
+    # an account (pentest A3); the sentence about the pause is in both.
+    exc.TooManyAttemptsError: LOGIN_FAILED,
     exc.EmailNotVerifiedError: "Please verify your e-mail address before logging in.",
     exc.PermissionDeniedError: "You are not allowed to do this.",
     exc.NotFoundError: "This item does not exist.",

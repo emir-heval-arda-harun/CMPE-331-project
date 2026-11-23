@@ -52,6 +52,27 @@ class UserRepository(Protocol):
     def mark_verified(self, user_id: int) -> None:
         ...
 
+    def record_wrong_code(self, code_id: int) -> None:
+        """Add 1 to the wrong attempts of a code (pentest P2, #30)."""
+        ...
+
+    def get_login_failures(self, user_id: int) -> tuple[int, datetime | None]:
+        """Wrong passwords in a row and the end of the log in pause (or None). The SQL version locks the user
+        row until the end of the transaction, so two log ins at the same moment cannot both count from the same
+        number (pentest P1)."""
+        ...
+
+    def set_login_failures(self, user_id: int, failures: int, paused_until: datetime | None) -> None:
+        ...
+
+    def get_session_version(self, user_id: int) -> int:
+        """Raise ``NotFoundError`` for an unknown id."""
+        ...
+
+    def next_session_version(self, user_id: int) -> None:
+        """Add 1 to the session version: every token with the old version stops working (pentest P3)."""
+        ...
+
 
 class InMemoryUserRepository:
     """Users kept in a dictionary (requirement tests and development).
@@ -63,6 +84,8 @@ class InMemoryUserRepository:
         self._users: dict[int, User] = {}
         self._password_hashes: dict[int, str] = {}
         self._codes: dict[int, VerificationCode] = {}
+        self._login_failures: dict[int, tuple[int, datetime | None]] = {}
+        self._session_versions: dict[int, int] = {}
         self._next_id = 1
         self._next_code_id = 1
 
@@ -108,6 +131,24 @@ class InMemoryUserRepository:
         self.get(user_id)
         self._users[user_id].is_verified = True
 
+    def record_wrong_code(self, code_id: int) -> None:
+        self._codes[code_id].attempts += 1
+
+    def get_login_failures(self, user_id: int) -> tuple[int, datetime | None]:
+        self.get(user_id)
+        return self._login_failures.get(user_id, (0, None))
+
+    def set_login_failures(self, user_id: int, failures: int, paused_until: datetime | None) -> None:
+        self.get(user_id)
+        self._login_failures[user_id] = (failures, paused_until)
+
+    def get_session_version(self, user_id: int) -> int:
+        self.get(user_id)
+        return self._session_versions.get(user_id, 0)
+
+    def next_session_version(self, user_id: int) -> None:
+        self._session_versions[user_id] = self.get_session_version(user_id) + 1
+
 
 # --------------------------------------------------------------------------- #
 # PostgreSQL
@@ -125,7 +166,12 @@ class SqlUserRepository:
     @staticmethod
     def _code(row: VerificationCodeRow) -> VerificationCode:
         return VerificationCode(
-            id=row.id, user_id=row.user_id, code_hash=row.code_hash, expires_at=_from_db(row.expires_at), used=row.used
+            id=row.id,
+            user_id=row.user_id,
+            code_hash=row.code_hash,
+            expires_at=_from_db(row.expires_at),
+            used=row.used,
+            attempts=row.attempts,
         )
 
     def _row(self, user_id: int) -> UserRow:
@@ -185,6 +231,41 @@ class SqlUserRepository:
     def mark_verified(self, user_id: int) -> None:
         self._row(user_id).is_verified = True
         self.session.flush()
+
+    def record_wrong_code(self, code_id: int) -> None:
+        # attempts = attempts + 1 in the database, so two wrong codes at the same moment both count
+        self.session.execute(
+            update(VerificationCodeRow)
+            .where(VerificationCodeRow.id == code_id)
+            .values(attempts=VerificationCodeRow.attempts + 1)
+        )
+
+    def get_login_failures(self, user_id: int) -> tuple[int, datetime | None]:
+        row = self.session.execute(
+            select(UserRow.failed_logins, UserRow.login_paused_until).where(UserRow.id == user_id).with_for_update()
+        ).one_or_none()
+        if row is None:
+            raise NotFoundError(f"User {user_id} does not exist")
+        failures, paused_until = row
+        return failures, (_from_db(paused_until) if paused_until is not None else None)
+
+    def set_login_failures(self, user_id: int, failures: int, paused_until: datetime | None) -> None:
+        self.session.execute(
+            update(UserRow)
+            .where(UserRow.id == user_id)
+            .values(failed_logins=failures, login_paused_until=_to_db(paused_until) if paused_until else None)
+        )
+
+    def get_session_version(self, user_id: int) -> int:
+        version = self.session.scalar(select(UserRow.session_version).where(UserRow.id == user_id))
+        if version is None:
+            raise NotFoundError(f"User {user_id} does not exist")
+        return version
+
+    def next_session_version(self, user_id: int) -> None:
+        self.session.execute(
+            update(UserRow).where(UserRow.id == user_id).values(session_version=UserRow.session_version + 1)
+        )
 
 
 def _constraint(error: IntegrityError) -> str | None:

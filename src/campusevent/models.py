@@ -50,6 +50,7 @@ class VerificationCode:
     code_hash: str
     expires_at: datetime  # naive UTC, 15 minutes after sending
     used: bool = False
+    attempts: int = 0  # wrong codes typed for this code; after 5 it stops working (pentest P2, #30)
 
     def is_valid(self, now: datetime) -> bool:
         return not self.used and now < self.expires_at
