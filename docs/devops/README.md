@@ -45,7 +45,22 @@ Blueprint with one web service and one managed PostgreSQL 16 database (free plan
 ## Local development
 ```bash
 cp .env.example .env
-pip install -r requirements.txt -r requirements-dev.txt ruff
+pip install -r requirements.txt -r requirements-dev.txt
 ruff check .
 python -m pytest
 ```
+
+## Locked versions for CI (`requirements-lock.txt`)
+CI installs its packages only from `requirements-lock.txt`: exact versions, a SHA-256 hash for every file, and wheels only:
+```bash
+pip install --only-binary :all: --require-hashes -r requirements-lock.txt
+```
+pip refuses a package whose hash does not match, and it never runs a package's setup script. This closes S1 and S2 of the SonarQube plan (`docs/tests/quality`, #39). The security job pins `bandit` and `pip-audit` the same way.
+
+- **Edit `requirements-dev.txt`, never the lock file by hand.** Then regenerate the lock with Python 3.12, the version CI uses, on Linux or macOS:
+  ```bash
+  pip install pip-tools
+  pip-compile --generate-hashes --allow-unsafe --strip-extras --no-emit-index-url --output-file requirements-lock.txt requirements-dev.txt
+  ```
+  Commit both files. To update all packages, add `--upgrade`. `pip-audit` in CI then checks the new versions.
+- The lock is made for Linux and Python 3.12, the CI runner. On Windows, keep using `pip install -r requirements.txt -r requirements-dev.txt`, because some packages need extra Windows-only dependencies (for example `colorama`) that the lock does not list.
