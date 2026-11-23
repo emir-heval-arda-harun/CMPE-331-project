@@ -17,7 +17,12 @@
        that fades out downwards. CSS only (no image download); the motion stops for visitors who ask their
        system for reduced motion. */
     body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; min-height: 100vh; position: relative;
+      /* a word without spaces (a long name, title, category or link) breaks where it has to, instead of making
+         the page wider than a phone (NFR-01, 360 px); normal words are not broken */
+      overflow-wrap: anywhere;
       background: linear-gradient(180deg, #e6efff 0%, #f0f5fd 40%, var(--ce-bg) 100%) fixed; }
+    /* Buttons have short fixed labels; without this a narrow button (Show on Facility Management) broke "Show" */
+    .btn { overflow-wrap: normal; }
     body::before { content: ""; position: fixed; inset: 0; z-index: 0; pointer-events: none;
       background: radial-gradient(circle at 1px 1px, rgba(20, 48, 94, .12) 1px, transparent 0) 0 0 / 26px 26px;
       -webkit-mask-image: linear-gradient(180deg, #000 0%, transparent 82%); mask-image: linear-gradient(180deg, #000 0%, transparent 82%); }

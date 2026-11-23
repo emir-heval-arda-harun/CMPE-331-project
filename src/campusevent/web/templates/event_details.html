@@ -46,8 +46,8 @@
         {% for person in event.participants %}
         <li class="d-flex align-items-center gap-3">
           {{ avatar(person.name) }}
-          <span class="fw-medium">{{ person.name }}</span>
-          <span class="small text-muted ms-auto">{{ person.role }}</span>
+          <span class="fw-medium" style="min-width: 0;">{{ person.name }}</span>
+          <span class="small text-muted ms-auto flex-shrink-0">{{ person.role }}</span>
         </li>
         {% endfor %}
       </ul>
