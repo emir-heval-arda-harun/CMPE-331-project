@@ -57,6 +57,8 @@ def create_web_app(services: CampusEventApp | None = None, config: dict | None =
         SESSION_COOKIE_HTTPONLY=True,
         SESSION_COOKIE_SAMESITE="Lax",
         SESSION_COOKIE_SECURE=os.environ.get("SESSION_COOKIE_SECURE", "1") == "1",
+        # The largest form is Create Event; 1 MB is far more than any real text and stops huge posts (pentest P5).
+        MAX_CONTENT_LENGTH=1024 * 1024,
     )
     flask_app.config.update(config or {})
     if not os.environ.get("SECRET_KEY") and "SECRET_KEY" not in (config or {}):
@@ -116,6 +118,11 @@ def create_web_app(services: CampusEventApp | None = None, config: dict | None =
     @flask_app.errorhandler(CSRFError)
     def handle_csrf_error(error: CSRFError):
         return render_template("error.html", message="Your form has expired. Please try again.", status=400), 400
+
+    @flask_app.errorhandler(413)
+    def handle_too_large(error):
+        message = "This form is too large. Please shorten the text and try again."
+        return render_template("error.html", message=message, status=413), 413
 
     @flask_app.errorhandler(404)
     def handle_not_found(error):

@@ -220,7 +220,12 @@ def relative_day(value: datetime, today: date | None = None) -> str:
 
 
 def _ics_text(value: str) -> str:
-    return value.replace("\\", "\\\\").replace(";", "\\;").replace(",", "\\,").replace("\r\n", "\\n").replace("\n", "\\n")
+    """A TEXT value of RFC 5545. Every kind of line break becomes the escaped ``\\n``: a lone carriage return would
+    start a new line in some calendars, so text typed by a user could add lines such as ``ATTENDEE:`` or a second
+    event. Other control characters are not allowed in TEXT and are dropped (tabs stay)."""
+    value = value.replace("\r\n", "\n").replace("\r", "\n")
+    value = "".join(ch for ch in value if ch in "\n\t" or (ord(ch) >= 32 and ch != "\x7f"))
+    return value.replace("\\", "\\\\").replace(";", "\\;").replace(",", "\\,").replace("\n", "\\n")
 
 
 def ics_for(uid: int, title: str, location: str, start: datetime, end: datetime, description: str = "") -> str:

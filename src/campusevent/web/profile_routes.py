@@ -34,7 +34,7 @@ def _slot_rows_from_form() -> list[dict]:
 @common.student_required
 def my_profile(user):
     profiles = common.services().profiles
-    if request.method == "GET":
+    if request.method != "POST":  # also HEAD: it must never run the form code (no CSRF check on HEAD)
         profile = profiles.get_profile(user.id)
         rows = [
             {"date": s.start.strftime("%Y-%m-%d"), "start": s.start.strftime("%H:%M"), "end": s.end.strftime("%H:%M")}
