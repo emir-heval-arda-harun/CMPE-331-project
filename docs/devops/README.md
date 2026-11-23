@@ -27,12 +27,12 @@ Blueprint with one web service and one managed PostgreSQL 16 database (free plan
 - **No e-mail:** `SMTP_*` are empty on purpose. Free Render web services cannot send on ports 25, 465 and 587, and the demo does not need it: the demo users of `scripts/seed_db.py` are already verified. New sign-ups cannot verify their e-mail on the live site.
 - Demo data loaded once with `scripts/seed_db.py` (External Database URL only in that one command). The demo password is kept outside the repository.
 - **Limits of the free plan:** the service sleeps after 15 minutes without requests, and the first request then takes about a minute (open the site a few minutes before a demo). The free database expires 30 days after creation, on **22 Dec 2026**; after that, create a new one and run `seed_db.py` again.
-- **Deploys:** `autoDeploy` is off; the CI `deploy` job calls the deploy hook only after a green build on `main`. Until the `RENDER_DEPLOY_HOOK_URL` secret is set in the `production` environment, deploy by hand: Render → `campusevent` → *Manual Deploy*.
+- **Deploys:** `autoDeploy` is off; the CI `deploy` job calls the deploy hook only after a green build on `main`. The `RENDER_DEPLOY_HOOK_URL` secret was added to the `production` environment on 23 Nov 2026. If it is ever missing, the job is skipped with a warning; then deploy by hand: Render → `campusevent` → *Manual Deploy*.
 
 ## One-time setup checklist
 1. Render: New → Blueprint → select this repository → apply `render.yaml`.
 2. Render: web service → Settings → Deploy Hook → copy the URL.
-3. GitHub: Settings → Secrets and variables → Actions → new secret `RENDER_DEPLOY_HOOK_URL`.
+3. GitHub: Settings → Environments → `production` → *Add environment secret* `RENDER_DEPLOY_HOOK_URL`.
 4. GitHub: Settings → Environments → create `production` (optional: required reviewers).
 5. GitHub: Settings → Branches → protect `main`: require a PR, require status checks `Lint (ruff)` and `Tests (pytest)` (turn on the test check once the backend is merged).
 6. After the first deploy: open the `onrender.com` URL and check HTTPS and the login page.
