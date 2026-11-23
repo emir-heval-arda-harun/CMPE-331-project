@@ -3,9 +3,8 @@
     Only colours, surfaces and type change here; the layout of the pages stays in base.html and the pages.
     Contrast: body text on the glass surfaces is at least 7:1, muted text at least 4.5:1 (WCAG AA). -#}
 {% macro head() %}
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+{# Inter from the app itself, not from Google Fonts (privacy, NFR-05; SonarQube Web:S5725). #}
+<link rel="stylesheet" href="{{ url_for('static', filename='vendor/inter/inter.css') }}">
 <style>
   .theme-glass {
     --g-text: #e8edf7; --g-strong: #ffffff; --g-muted: #bcc7dc; --g-faint: #b2bfd7;
@@ -22,8 +21,8 @@
   .theme-glass .page-head p, .theme-glass .page-head .text-muted { color: var(--g-muted) !important; font-size: 1.02rem; }
   .theme-glass .text-muted, .theme-glass .form-text { color: var(--g-muted) !important; }
   .theme-glass .text-dark { color: var(--g-strong) !important; }
-  .theme-glass a { color: #a5b4fc; }
-  .theme-glass a:hover { color: #c7d2fe; }
+  .theme-glass a, .theme-glass .btn-link { color: #a5b4fc; }
+  .theme-glass a:hover, .theme-glass .btn-link:hover { color: #c7d2fe; }
   .theme-glass hr { border-color: var(--g-line); opacity: 1; }
   .theme-glass .section-title { color: var(--g-faint); }
   .theme-glass.app main > .section-title { color: #c7d2fe; background: rgba(129, 140, 248, .14); box-shadow: inset 0 0 0 1px rgba(129, 140, 248, .28); }

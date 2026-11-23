@@ -3,8 +3,8 @@
 | Field | Value |
 |---|---|
 | Task | 2.3 UI/UX Design (owners: E. Arda & Emir; this version written by Emir) |
-| Version | 1.0, 20.11.2026 |
-| Status | Describes the web UI as built (PR #7, #14) with the visual refresh of PR #20 (all merged) |
+| Version | 1.1, 20.11.2026 (1.1: *Send a new code*, PR #31) |
+| Status | Describes the web UI as built (PR #7, #14, #31) with the visual refresh of PR #20 |
 | Builds on | [Requirements Specification](requirements_specification.md), [use cases](requirements/README.md), [early mockups](analysis/ui/README.md) of the Requirement Analysis Report, [Software Design Report](software_design_report.md) (layer 1) |
 | Code | [`src/campusevent/web/`](../src/campusevent/web/README.md) |
 | Screens | [`docs/design/ui/`](design/ui/) (taken from the demo, `scripts/run_demo.py`, on 19.11.2026) |
@@ -110,10 +110,10 @@ The admin sees all waiting requests, soonest first, with everything needed for a
 flowchart LR
   A[Sign up<br/>name, university e-mail, password] -->|error| A
   A --> B[Verify your e-mail<br/>6-digit code]
-  B -->|wrong or expired code| B
+  B -->|wrong or expired code:<br/>try again or Send a new code| B
   B --> C[Log in<br/>'Your e-mail address is verified.']
   C -->|wrong e-mail or password| C
-  C -->|account not verified yet| B
+  C -->|account not verified yet:<br/>enter the code or Send a new code| B
   C --> D[Start page of the role]
 ```
 The e-mail address is not put into the address of the verify page, so it does not end up in server logs. After login every role starts on its own page (section 3).
@@ -128,8 +128,8 @@ Screens of the student, then the admin. All screenshots are from the demo with t
 
 - Brand panel on the left (what CampusEvent does, in three points), form on a glass card on the right; on phones only the card.
 - *Show password* button on every password field; the sign-up page shows a **password strength guide** while typing.
-- Sign-up continues on a separate *Verify your e-mail* step for the 6-digit code ([screen](design/ui/03_verify_code.jpg)).
-- A failed login says only "Invalid e-mail or password", so the page does not reveal which accounts exist ([screen](design/ui/04_log_in_error.jpg)). An unverified account is offered the code page instead.
+- Sign-up continues on a separate *Verify your e-mail* step for the 6-digit code ([screen](design/ui/03_verify_code.jpg)). Under *Verify*, **Send a new code** sends a fresh code to the address typed in the form; older codes stop working (UC-01 5a). It is a second button of the same form, so it works without JavaScript. One browser can ask once a minute.
+- A failed login says only "Invalid e-mail or password", so the page does not reveal which accounts exist ([screen](design/ui/04_log_in_error.jpg)). An unverified account is offered the code page or a new code (UC-02 3a).
 
 ### 5.2 Find Events (UC-05, UC-06)
 ![Find Events](design/ui/05_find_events.jpg)
@@ -271,7 +271,7 @@ An empty page never stays blank; it explains why and offers the next step:
 ## 8. Accessibility, responsiveness and browsers
 - **Contrast (WCAG 2.1 AA).** Every text colour was measured against the glass surface over the brightest part of the background: body text 7.5:1, muted text 5.1:1, labels 4.7:1, pills 5.9:1 (minimum 4.5:1). On the darkest part all values are above 8:1.
 - **Touch targets** at least 40 px high; the *Leave* button was given the same height as the *You joined* label instead of being made smaller.
-- **Forms:** every field has a visible label; icons are decorative and hidden from screen readers; the participant bar has a text alternative ("3 of 8 places taken").
+- **Forms:** every field has a label: a visible one, except the box for a new interest on My Profile (its name is the *Interests* heading above it and a screen-reader label) and the category list on Create Event (a screen-reader label while the script has not shown the list). The *Other…* category box has its own label, *Your own category*. A test checks every field of every form (`test_every_form_field_has_a_label`). Icons are decorative and hidden from screen readers; the participant bar has a text alternative ("3 of 8 places taken").
 - **Colour is never the only signal:** statuses are written words, and the information of a coloured date tile (the date) is written on the tile.
 - **Keyboard:** native links, buttons and form fields; the reject box is a `<details>` element; the focus ring uses the accent colour.
 - **Motion:** the background and floating effects stop when the system asks for reduced motion.
@@ -282,8 +282,9 @@ An empty page never stays blank; it explains why and offers the next step:
 - Event pages and lists show **names only**; e-mail addresses never appear in pages or calendar files (NFR-05).
 - Requests that are waiting or rejected are visible only to their organizer (waiting ones also to the admin on *Event Requests*); for other students they do not exist (404, BR-15).
 - Availability on My Profile is private ("Your availability is private").
+- *Send a new code* answers the same for every address ("If this address belongs to an account that is not verified yet, a new code is on its way"), so it cannot be used to find out who has an account. The address is sent in the form, never in a link.
 - The screenshots in this document use invented demo accounts and events; no real person's data is shown.
-- **Third-party files.** The Inter typeface is loaded from **Google Fonts** (`fonts.googleapis.com`, `fonts.gstatic.com`) and Bootstrap from **jsDelivr**. To deliver these files, the visitor's browser contacts those servers, so Google and jsDelivr can see the visitor's IP address and the time of the visit (no account data and no page content are sent). Under KVKK (NFR-05) this is a transfer of personal data to a third party. The simplest fix is to serve the font and Bootstrap files from our own `static/` folder; then no request leaves our server. Until then, the privacy notice of the deployed site should mention it. This is listed as an open point in section 12.
+- **Third-party files.** At first the Inter typeface was loaded from **Google Fonts** and Bootstrap from **jsDelivr**, so the visitor's browser contacted those servers and Google and jsDelivr could see the visitor's IP address and the time of the visit; under KVKK (NFR-05) that is a transfer of personal data to a third party. Since 23.11.2026 both are served by the app itself from `static/vendor/` (Bootstrap 5.3.3, checked against the SHA-256 hashes published by jsDelivr; Inter as two WOFF2 files, latin and latin-ext for the Turkish letters), with their licences (MIT, SIL Open Font License) next to them. No request of a page leaves our server; `test_pages_load_nothing_from_other_sites` checks this on the pages of every role and on the error page (all pages use `base.html`). This also closes SonarQube finding S3 (#39).
 
 ## 10. From the early mockups to the final design
 The [mockups of the analysis](analysis/ui/README.md) were low-fidelity and light. The built UI keeps their structure (same screens, same fields) and changes the following:
@@ -297,7 +298,8 @@ The [mockups of the analysis](analysis/ui/README.md) were low-fidelity and light
 | Event approval | – | *Event Requests* page, waiting/rejected notes, corrected request | Change request CR-01 (UC-12) |
 | Student menu | Showed *Facilities* | Role-based menus | Students cannot use the facility page (NFR-04) |
 | Calendar | – | Add to calendar (.ics) | Students plan in their own calendar |
-| Time range filter, *Send a new code* | Shown | Not built | The service interface has no method for them yet (see 12) |
+| *Send a new code* | Shown | Built: a button on the verify page and on the log in page of an unverified account | `AuthService.resend_code` was added in task 3.2 |
+| Time range filter | Shown | Not built | `search_events` has no time parameter yet (see 12) |
 
 ## 11. Usability evaluation
 ### 11.1 Heuristic review (Nielsen's 10 heuristics)
@@ -315,7 +317,7 @@ The [mockups of the analysis](analysis/ui/README.md) were low-fidelity and light
 | Help and documentation | Short hints in the forms (capacity range, free times, password guide) |
 
 ### 11.2 Checks done
-- 98 automated UI tests (Flask test client) cover every screen, its error states and the access rules ([test section](testing/web_ui_test_section.md)).
+- Automated UI tests (Flask test client, `tests/web/`) cover every screen, its error states and the access rules. The number of tests and their latest results are kept in one place, the [test section](testing/web_ui_test_section.md), so that this document does not go out of date.
 - Automated browser walk-through in Firefox and WebKit at 1280 px and 360 px: student request, admin approve and reject, organizer view, withdraw, corrected request; no console errors, no horizontal scrolling.
 - Hands-on tests in the demo during development led to several changes: the *Leave* button on the card, its red colour and height, darker section labels on the background, the moon moved away from the buttons, and a readable rejection reason.
 
@@ -325,12 +327,11 @@ A task-based test with students who did not build the system (for example 5 stud
 ## 12. Open points
 | Point | Why open | Next step |
 |---|---|---|
-| *Send a new code* (UC-01) | No service method yet | Add `AuthService.resend_code`, then a link on the verify page |
 | Time range filter (UC-05) | `search_events` has no time parameter | Backend decision |
 | *Upcoming* list on My Activities | No service method for joined, still open events | Backend decision |
-| Remove a facility block | Not in UC-08 and not in the service | Issue #19 (Harun) |
+| Remove a facility block | Was not in UC-08 and not in the service | Being added in #22 (Harun, issue #19) |
 | Real Safari (Mac, iPhone) | Only WebKit on Windows was available | Check on a team member's device |
-| Inter from Google Fonts, Bootstrap from jsDelivr | Visitors' browsers contact these servers (see 9) | Serve the files from `static/` before the final delivery, or mention it in the privacy notice |
+| ~~Inter from Google Fonts, Bootstrap from jsDelivr~~ | Visitors' browsers contacted these servers (see 9) | **Done 23.11:** both are served from `static/vendor/` |
 
 ## 13. Traceability
 | Screen | Use cases | NFR |
