@@ -317,7 +317,7 @@ The [mockups of the analysis](analysis/ui/README.md) were low-fidelity and light
 | Help and documentation | Short hints in the forms (capacity range, free times, password guide) |
 
 ### 11.2 Checks done
-- 98 automated UI tests (Flask test client) cover every screen, its error states and the access rules ([test section](testing/web_ui_test_section.md)).
+- Automated UI tests (Flask test client, `tests/web/`) cover every screen, its error states and the access rules. The number of tests and their latest results are kept in one place, the [test section](testing/web_ui_test_section.md), so that this document does not go out of date.
 - Automated browser walk-through in Firefox and WebKit at 1280 px and 360 px: student request, admin approve and reject, organizer view, withdraw, corrected request; no console errors, no horizontal scrolling.
 - Hands-on tests in the demo during development led to several changes: the *Leave* button on the card, its red colour and height, darker section labels on the background, the moon moved away from the buttons, and a readable rejection reason.
 
