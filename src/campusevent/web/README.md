@@ -30,6 +30,7 @@ The left side of the sign up and log in pages shows a drawn campus skyline. To s
 - Presentation calls only service methods (design report, section 3.1). Services raise `CampusEventError` subclasses; `common.message_for` maps them to the messages of the use cases and `common.status_for` to HTTP codes.
 - Templates get view models with **names only, never e-mail addresses** (NFR-05).
 - CSRF token on every POST (Flask-WTF); session cookie is `Secure`, `HttpOnly`, `SameSite=Lax` (NFR-03). Set `SECRET_KEY` as an environment variable in production.
+- Every answer carries the security headers of `SECURITY_HEADERS` in `__init__.py` (NFR-03): `Strict-Transport-Security`, `X-Frame-Options: DENY` with CSP `frame-ancestors 'none'` (no framing by other sites), `X-Content-Type-Options: nosniff` and `Referrer-Policy: same-origin`. A full Content Security Policy for scripts and styles is not set yet: the templates still have inline `<style>` and `<script>` blocks.
 - Role checks: `student_required` / `admin_required` here **and** inside the services (NFR-04).
 - **Times:** services and the database keep naive **UTC**; people see and type **Istanbul time** (UTC+3, no summer time). The UI converts only at the border, with `common.to_utc` / `slot_to_utc` before a service call and `to_campus` / `slot_to_campus` before a page shows a time. Methods that take a `day` work with a UTC day, so for the facility schedule the UI asks for both UTC days of the Istanbul day, and for the date filter it filters by Istanbul date itself. *Add to calendar* files are written in UTC (`…Z`).
 - Pending and rejected requests are visible only to their organizer; for other students they do not exist (404), because BR-15 keeps them out of the public list.
@@ -46,6 +47,7 @@ Planned in the design report (class diagram 4.2) and used as they are:
 | `EventService.get_event(event_id) -> Event` | Event Details, join/leave/cancel result page | There is no way to read one event; raise `NotFoundError` for an unknown id |
 | `FacilityService.list_facilities() -> list[Facility]` | Create Event dropdown, facility name on every event | The pages show facility names and capacities |
 | `AuthService.get_user` must raise `NotFoundError` for unknown ids | Participant and organizer names | Names are looked up per user id |
+| `EventService.clock() -> datetime` (naive UTC; optional) | *Join*, *Leave* and *Cancel* buttons | They are hidden once the event has started, with the same "now" as the service; without it the page uses the real time |
 
 **Known gaps (use case text asks for them, the current service interface cannot):**
 - Time range filter (UC-05): `search_events` has no time parameter, so Find Events filters by keyword, category and date only.

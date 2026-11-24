@@ -11,8 +11,14 @@ from datetime import datetime, timedelta
 import pytest
 from sqlalchemy import delete
 
-from campusevent.auth import AuthService
-from campusevent.exceptions import DuplicateEmailError, NotFoundError, PermissionDeniedError
+from campusevent.auth import MAX_FAILED_LOGINS, AuthService
+from campusevent.exceptions import (
+    AuthenticationError,
+    DuplicateEmailError,
+    NotFoundError,
+    PermissionDeniedError,
+    TooManyAttemptsError,
+)
 from campusevent.models import Role, User, VerificationCode
 from campusevent.notifications import InMemoryEmailSender
 from campusevent.repositories.db import create_scoped_session
@@ -114,7 +120,7 @@ def test_latest_code_is_the_last_one_saved_in_naive_utc(repo, session):
     session.commit()
 
     latest = repo.get_latest_code(user.id)
-    assert latest == new == VerificationCode(new.id, user.id, "new-code-hash", datetime(2026, 11, 20, 12, 20), False)
+    assert latest == new == VerificationCode(new.id, user.id, "new-code-hash", datetime(2026, 11, 20, 12, 20), False, 0)
     assert latest.expires_at.tzinfo is None
 
 
@@ -145,3 +151,64 @@ def test_register_verify_and_login_with_postgresql(repo, session, fast_hasher):
 
     assert auth.get_user_by_token(token) == User(user.id, email, "Ayse", Role.STUDENT, True)
     assert session.get(UserRow, user.id).password_hash.startswith("$argon2id$")
+
+
+# --------------------------------------------------------------------------- #
+# Limits from the penetration test (migration 0002)
+# --------------------------------------------------------------------------- #
+def test_wrong_code_attempts_are_counted_in_the_database(repo, session):
+    user = repo.add(new_user("ali", verified=False), "argon2-hash")
+    code = repo.save_code(user.id, "code-hash", datetime(2026, 11, 20, 12, 15))
+    repo.record_wrong_code(code.id)
+    repo.record_wrong_code(code.id)
+    session.commit()
+
+    assert repo.get_latest_code(user.id).attempts == 2
+
+
+def test_login_failures_and_pause_in_naive_utc(repo, session):
+    user = repo.add(new_user("ali"), "argon2-hash")
+    session.commit()
+    assert repo.get_login_failures(user.id) == (0, None)
+
+    repo.set_login_failures(user.id, 5, datetime(2026, 11, 20, 12, 1))
+    session.commit()
+    failures, paused_until = repo.get_login_failures(user.id)
+    session.commit()  # get_login_failures locks the row until the end of the transaction
+    assert (failures, paused_until) == (5, datetime(2026, 11, 20, 12, 1)) and paused_until.tzinfo is None
+    with pytest.raises(NotFoundError):
+        repo.get_login_failures(-1)
+
+
+def test_session_version_goes_up_by_one(repo, session):
+    user = repo.add(new_user("ali"), "argon2-hash")
+    session.commit()
+    assert repo.get_session_version(user.id) == 0
+
+    repo.next_session_version(user.id)
+    session.commit()
+    assert repo.get_session_version(user.id) == 1
+    with pytest.raises(NotFoundError):
+        repo.get_session_version(-1)
+
+
+def test_pause_and_log_out_with_postgresql(repo, session, fast_hasher):
+    """P1 and P3 end to end: the failures are kept although every wrong log in answers with an error."""
+    sender = InMemoryEmailSender()
+    auth = AuthService(
+        ("bilgi.edu.tr",), sender, repo, uow=SqlUnitOfWork(session), hasher=fast_hasher, secret_key="test"
+    )
+    email = f"{PREFIX}deniz@bilgi.edu.tr"
+    auth.register(email, "S3cure-pass!", "Deniz")
+    auth.verify_email(email, sender.codes[email])
+    token = auth.login(email, "S3cure-pass!")
+
+    auth.logout(token)
+    with pytest.raises(AuthenticationError):
+        auth.get_user_by_token(token)
+
+    for _ in range(MAX_FAILED_LOGINS):
+        with pytest.raises(AuthenticationError):
+            auth.login(email, "wrong-password")
+    with pytest.raises(TooManyAttemptsError):
+        auth.login(email, "S3cure-pass!")

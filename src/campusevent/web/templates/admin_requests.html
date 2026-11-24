@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_macros.html" import date_panel, csrf, icon, date_badge %}
+{% from "_macros.html" import date_panel, csrf, icon, date_badge, pagination %}
 {% block title %}Event Requests{% endblock %}
 {% block content %}
 <div class="page-head mb-3">
@@ -10,7 +10,7 @@
 <div class="alert alert-warning" role="alert">{{ message }} The list below is up to date.</div>
 {% endfor %}
 {% if requests %}
-<p class="section-title mb-2">{{ requests | length }} {{ 'request' if requests | length == 1 else 'requests' }} waiting</p>
+<p class="section-title mb-2">{{ total }} {{ 'request' if total == 1 else 'requests' }} waiting{% if pages > 1 %} · page {{ page }} of {{ pages }}{% endif %}</p>
 <div class="d-grid gap-3">
   {% for item in requests %}
   <article class="card-soft event-card p-3" id="request-{{ item.id }}">
@@ -37,13 +37,13 @@
 
     <div class="d-flex flex-wrap gap-2 mt-3 align-items-start">
       <form method="post" action="{{ url_for('admin.approve_request', event_id=item.id) }}" class="m-0">
-        {{ csrf() }}
+        {{ csrf() }}<input type="hidden" name="page" value="{{ page }}">
         <button class="btn btn-success d-inline-flex align-items-center gap-1" type="submit">{{ icon('check', 18) }} Approve</button>
       </form>
       <details class="flex-grow-1" {{ 'open' if errors.get(item.id) or reasons.get(item.id) }}>
         <summary class="btn btn-outline-danger d-inline-flex align-items-center gap-1">{{ icon('x', 18) }} Reject…</summary>
         <form method="post" action="{{ url_for('admin.reject_request', event_id=item.id) }}" class="mt-2">
-          {{ csrf() }}
+          {{ csrf() }}<input type="hidden" name="page" value="{{ page }}">
           <label class="form-label small" for="reason-{{ item.id }}">Reason for the organizer (required)</label>
           <textarea class="form-control" id="reason-{{ item.id }}" name="reason" rows="2" maxlength="{{ reason_max }}" required
             placeholder="for example: The hall is reserved for exams that week.">{{ reasons.get(item.id, '') }}</textarea>
@@ -54,6 +54,7 @@
   </article>
   {% endfor %}
 </div>
+{{ pagination(page, pages, 'admin.event_requests', 'Pages of requests') }}
 {% else %}
 <div class="card-soft empty-state">
   <span class="empty-icon">{{ icon('check', 28) }}</span>

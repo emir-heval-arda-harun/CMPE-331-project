@@ -73,6 +73,10 @@ class FakeAuth:
         self.tokens[token] = user.id
         return token
 
+    def logout(self, token):
+        """Like AuthService.logout: the token (and every copy of it) stops working."""
+        self.tokens.pop(token, None)
+
     def get_user_by_token(self, token):
         if token not in self.tokens:
             raise exc.AuthenticationError()
@@ -143,6 +147,9 @@ class FakeFacilities:
         return facility
 
 
+FAKE_NOW = datetime(2026, 10, 31, 12, 0)  # naive UTC, like tests/conftest.py NOW
+
+
 class FakeEvents:
     """``auto_approve`` keeps the behaviour from before CR-01 for the older tests: a new event is open at
     once. With ``auto_approve=False`` (new tests and the demo) it starts as a pending request (UC-12)."""
@@ -152,6 +159,9 @@ class FakeEvents:
         self.facilities = facilities
         self.auto_approve = auto_approve
         self.events: dict[int, Event] = {}
+        # A fixed "now" like EventService.clock, before every test date (slot(): 19 Nov 2026 and later),
+        # so the pages offer Join, Leave and Cancel whatever the real date is. Tests can replace it.
+        self.clock = lambda: FAKE_NOW
 
     def create_event(self, organizer_id, title, category, facility_id, slot, capacity, description=""):
         if not title.strip() or not category.strip():

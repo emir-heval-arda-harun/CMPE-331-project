@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from datetime import date, datetime, time, timedelta, timezone
 from functools import wraps
 
@@ -12,6 +13,23 @@ from campusevent.app import CampusEventApp
 from campusevent.models import Role, TimeSlot, User
 
 TOKEN_KEY = "token"
+PAGE_SIZE = 20  # items per page on Find Events and Event Requests (design report, NFR-02)
+
+
+def page_number(text: str) -> int:
+    """A page number from a link or a form; anything else is page 1. Only ASCII digits and at most six of
+    them: "²" passes str.isdigit() but int() refuses it, and so does a number of more than 4,300 digits."""
+    if text.isascii() and text.isdigit() and len(text) <= 6 and int(text) > 0:
+        return int(text)
+    return 1
+
+
+def paginate(items: list, page_text: str) -> tuple[list, int, int]:
+    """The items of one page, the page number and the number of pages. A missing, wrong or too high page
+    number gives the first or the last page instead of an error."""
+    pages = max(1, math.ceil(len(items) / PAGE_SIZE))
+    page = min(page_number(page_text), pages)
+    return items[(page - 1) * PAGE_SIZE : page * PAGE_SIZE], page, pages
 
 
 def services() -> CampusEventApp:
@@ -169,6 +187,13 @@ def campus_day_in_utc(day: date) -> tuple[datetime, datetime]:
     return start, start + timedelta(days=1)
 
 
+def service_now() -> datetime:
+    """'Now' in naive UTC as the event service sees it, so a page offers only what the service allows
+    (e.g. no Join once an event has started). Falls back to the real time if the service has no clock."""
+    clock = getattr(services().events, "clock", None)
+    return clock() if callable(clock) else datetime.now(timezone.utc).replace(tzinfo=None)
+
+
 def campus_today(now: datetime | None = None) -> date:
     """Today's date on the campus. ``now`` is an aware datetime, only given by tests."""
     return (now or datetime.now(timezone.utc)).astimezone(CAMPUS_TZ).date()
@@ -195,7 +220,12 @@ def relative_day(value: datetime, today: date | None = None) -> str:
 
 
 def _ics_text(value: str) -> str:
-    return value.replace("\\", "\\\\").replace(";", "\\;").replace(",", "\\,").replace("\r\n", "\\n").replace("\n", "\\n")
+    """A TEXT value of RFC 5545. Every kind of line break becomes the escaped ``\\n``: a lone carriage return would
+    start a new line in some calendars, so text typed by a user could add lines such as ``ATTENDEE:`` or a second
+    event. Other control characters are not allowed in TEXT and are dropped (tabs stay)."""
+    value = value.replace("\r\n", "\n").replace("\r", "\n")
+    value = "".join(ch for ch in value if ch in "\n\t" or (ord(ch) >= 32 and ch != "\x7f"))
+    return value.replace("\\", "\\\\").replace(";", "\\;").replace(",", "\\,").replace("\n", "\\n")
 
 
 def ics_for(uid: int, title: str, location: str, start: datetime, end: datetime, description: str = "") -> str:
@@ -215,11 +245,20 @@ def ics_for(uid: int, title: str, location: str, start: datetime, end: datetime,
     return "\r\n".join(lines) + "\r\n"
 
 
+# UC-02 2a: never tell which part was wrong. Pentest P1: logging in pauses after 5 wrong passwords in a row.
+LOGIN_FAILED = "Invalid e-mail or password. After 5 wrong tries in a row, logging in pauses for a few minutes."
+
 _MESSAGES = {
     exc.InvalidEmailDomainError: "Please use your university e-mail address.",
     exc.DuplicateEmailError: "An account with this e-mail address already exists.",
-    exc.InvalidVerificationCodeError: "The code is wrong or has expired. Please request a new one.",
-    exc.AuthenticationError: "Invalid e-mail or password.",
+    exc.InvalidVerificationCodeError: (
+        "The code is wrong or has expired. Please request a new one. If your address is already verified, "
+        "you can log in."
+    ),
+    exc.AuthenticationError: LOGIN_FAILED,
+    # A paused account gets the same answer as a wrong password, so the page does not tell that the address has
+    # an account (pentest A3); the sentence about the pause is in both.
+    exc.TooManyAttemptsError: LOGIN_FAILED,
     exc.EmailNotVerifiedError: "Please verify your e-mail address before logging in.",
     exc.PermissionDeniedError: "You are not allowed to do this.",
     exc.NotFoundError: "This item does not exist.",

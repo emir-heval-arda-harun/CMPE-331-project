@@ -74,7 +74,7 @@ This project operates at the intersection of university campus life and event ma
 | Requirements Definition Report    | 11.10.2026 23:59  |
 | Requirement Analysis Report       | 18.10.2026 23:59  |
 | Software Design Report            | 15.11.2026 23:59  |
-| Software Testing Report           | 22.11.2026 23:59  |
+| Software Testing Report           | PR 25.11.2026, PDF 29.11.2026 23:59 (moved by the instructor on 17.11.2026) |
 | Codebase                          | 30.11.2026 23:59  |
 | Presentation                      | TBA (see sched.)  |
 	
