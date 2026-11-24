@@ -62,6 +62,6 @@ Every use case of this section has at least one test of the main flow. UC-01 to 
 |---|---|---|
 | 1 | Run the UI against the real services as soon as they exist and fix differences (integration test, task 4.2) | All |
 | 2 | The UI needs three service methods that are not in the design report: `EventService.get_event`, `FacilityService.list_facilities`, `AuthService.get_user` raising `NotFoundError` ([details](../../src/campusevent/web/README.md)) | Backend owners (Heval, E. Arda, Harun) |
-| 3 | Missing features because the service interface cannot do them: resend verification code (UC-01), time range filter (UC-05), "Upcoming" tab on My Activities (F-09). Free slot suggestions (UC-04 4a) are now done in the UI, with assumed opening hours 08:00–22:00 | Team decision |
+| 3 | Missing features because the service interface cannot do them: time range filter (UC-05), "Upcoming" tab on My Activities (F-09). Free slot suggestions (UC-04 4a) are now done in the UI, with assumed opening hours 08:00–22:00 | Team decision |
 | 4 | Check the pages on a real Safari (Mac or iPhone) (NFR-07) and the remaining 360 px cases of NFR-01 | Web UI owner |
 | 5 | Add a GitHub Actions run for `tests/web` (CI, task 3.7) | Onur |

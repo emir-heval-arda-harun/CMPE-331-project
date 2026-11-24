@@ -1,7 +1,8 @@
 """UC-07 and UC-08: the Facility Management page of the facility staff (task 3.6).
 
 One page, ``/facilities``: the facilities with their capacity, a form to add a facility, and the
-schedule of one facility on one day with its blocks and bookings and a form to block a time.
+schedule of one facility on one day with its blocks and bookings, a form to block a time and a
+Remove button on each block (UC-08 alt. 2b, issue #19).
 
 Times: the services keep naive UTC, staff see and type Istanbul time (``common.to_utc`` /
 ``common.slot_to_campus``). ``FacilityService`` works per UTC day, so the page asks for both UTC
@@ -16,7 +17,7 @@ from functools import wraps
 from flask import Blueprint, flash, redirect, render_template, request, url_for
 
 from campusevent import exceptions as exc
-from campusevent.models import Role, TimeSlot
+from campusevent.models import EventStatus, Role, TimeSlot
 from campusevent.web import common
 
 bp = Blueprint("facilities", __name__)
@@ -45,20 +46,22 @@ def _day_schedule(facility_id: int, day: date) -> list[dict]:
     utc_days = (utc_start.date(), utc_end.date())
     whole_day = TimeSlot(utc_start, utc_end)
 
-    blocks = {b.slot: b.reason for d in utc_days for b in facilities.get_blocks(facility_id, d)}
-    busy = {s for d in utc_days for s in facilities.get_schedule(facility_id, d)}
+    # A block or event that crosses midnight UTC is returned for both UTC days: keep it once, by id.
+    blocks = {b.id: b for d in utc_days for b in facilities.get_blocks(facility_id, d)}
+    events = {e.id: e for d in utc_days for e in facilities.get_bookings(facility_id, d)}
     rows = []
-    for slot in busy | set(blocks):
-        if not slot.overlaps(whole_day):
-            continue
-        local = common.slot_to_campus(slot)
-        is_block = slot in blocks
-        rows.append({
-            "start": local.start,
-            "end": local.end,
-            "kind": "block" if is_block else "event",
-            "label": blocks[slot] if is_block else "Event booking",
-        })
+    for block in blocks.values():
+        if block.slot.overlaps(whole_day):
+            local = common.slot_to_campus(block.slot)
+            rows.append({"start": local.start, "end": local.end, "kind": "block", "id": block.id,
+                         "label": block.reason, "note": ""})
+    for event in events.values():
+        if event.slot.overlaps(whole_day):
+            local = common.slot_to_campus(event.slot)
+            # Titles are public on Find Events; no organizer names or e-mail addresses here (NFR-05).
+            note = "waiting for approval" if event.status == EventStatus.PENDING else ""
+            rows.append({"start": local.start, "end": local.end, "kind": "event", "id": event.id,
+                         "label": event.title, "note": note})
     return sorted(rows, key=lambda r: (r["start"], r["end"]))
 
 
@@ -131,3 +134,17 @@ def add_block(user, facility_id: int):
     flash(f"{local.start.strftime('%d %b %Y, %H:%M')} – {local.end.strftime('%H:%M')} is blocked. "
           "Students cannot book this time.", "success")
     return redirect(url_for("facilities.manage", facility=facility_id, date=form["date"].strip()))
+
+
+@bp.post("/facilities/<int:facility_id>/blocks/<int:block_id>/remove")
+@staff_required
+def remove_block(user, facility_id: int, block_id: int):
+    """UC-08 alt. 2b: remove a block that was added by mistake (issue #19)."""
+    facilities = common.services().facilities
+    if facilities.get_block(block_id).facility_id != facility_id:  # the address must match the block
+        raise exc.NotFoundError()
+    block = facilities.remove_block(user.id, block_id)
+    local = common.slot_to_campus(block.slot)
+    flash(f"The block {local.start.strftime('%d %b %Y, %H:%M')} – {local.end.strftime('%H:%M')} "
+          f'("{block.reason}") is removed. Students can book this time again.', "success")
+    return redirect(url_for("facilities.manage", facility=facility_id, date=local.start.date().isoformat()))

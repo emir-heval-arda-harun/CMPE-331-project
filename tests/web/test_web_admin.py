@@ -121,6 +121,96 @@ def test_a_request_that_is_no_longer_pending_cannot_be_reviewed_again(client, re
     assert event.status == EventStatus.OPEN
 
 
+def many_requests(services, hall, count=25):
+    """Requests 01 to <count>, one per day at 16:00, so 'soonest first' is also the number order."""
+    organizer = make_user(services, "organizer@bilgiedu.net", name="Demo Organizer")
+    return [request_by(services, hall, f"Request {n:02d}", day=n, organizer=organizer) for n in range(1, count + 1)]
+
+
+def test_event_requests_shows_twenty_requests_per_page(client, reviewed, hall, admin):
+    """NFR-02: with 1,000 waiting requests the page was 3.6 MB, so it has pages of 20 like Find Events."""
+    many_requests(reviewed, hall)
+    log_in(client, "admin@bilgi.edu.tr")
+    first = client.get("/admin/requests").data
+    assert b"Request 20" in first and b"Request 21" not in first
+    assert b"25 requests waiting" in first and b"page 1 of 2" in first
+    second = client.get("/admin/requests?page=2").data
+    assert b"Request 21" in second and b"Request 25" in second and b"Request 20" not in second
+    assert b"Request 25" in client.get("/admin/requests?page=99").data  # after the last page: the last page
+    assert client.get("/admin/requests?page=abc").status_code == 200
+
+
+def test_deciding_a_request_returns_to_the_same_page(client, reviewed, hall, admin):
+    requests = many_requests(reviewed, hall)
+    log_in(client, "admin@bilgi.edu.tr")
+    assert b'name="page" value="2"' in client.get("/admin/requests?page=2").data
+    approved = client.post(f"/admin/requests/{requests[21].id}/approve", data={"page": "2"})
+    assert approved.headers["Location"].endswith("/admin/requests?page=2")
+    rejected = client.post(f"/admin/requests/{requests[22].id}/reject", data={"reason": "Full hall", "page": "2"})
+    assert rejected.headers["Location"].endswith("/admin/requests?page=2")
+    assert client.post(f"/admin/requests/{requests[0].id}/approve").headers["Location"].endswith("/admin/requests")
+
+
+def test_an_error_for_a_request_that_moved_to_another_page_is_still_shown(client, reviewed, hall, admin):
+    """The admin is on page 2; meanwhile a request of page 1 is decided, so request 21 moves to page 1.
+    The error about request 21 must not be lost because its card is no longer on page 2. (Without pages
+    every card was on the one page, so this guards the change to pages, it was not a defect before.)"""
+    requests = many_requests(reviewed, hall)
+    log_in(client, "admin@bilgi.edu.tr")
+    reviewed.events.approve_event(requests[0].id, admin.id)  # someone else, at the same time
+    response = client.post(f"/admin/requests/{requests[20].id}/reject", data={"reason": "", "page": "2"})
+    assert response.status_code == 400
+    assert b"a reason for the rejection" in response.data  # the stand-in and the real service say this
+    assert requests[20].status == EventStatus.PENDING
+
+
+ODD_PAGE_NUMBERS = ["²", "9" * 5000, "0", "-1", "1.5", "", " 2", "abc"]
+
+
+@pytest.mark.parametrize("url", ["/events", "/admin/requests"])
+def test_a_wrong_page_number_never_gives_an_error_page(client, reviewed, hall, admin, url):
+    """'²' passes str.isdigit() but int() refuses it, and Python refuses numbers over 4,300 digits; both gave a
+    server error (500) on Find Events before. Every wrong page number now shows the first page."""
+    requests = many_requests(reviewed, hall)  # 25: two pages, so 'the first page' can be told apart
+    if url == "/events":
+        for event in requests:
+            event.status = EventStatus.OPEN
+        make_user(reviewed, "student@bilgiedu.net")
+        log_in(client, "student@bilgiedu.net")
+    else:
+        log_in(client, "admin@bilgi.edu.tr")
+    for page in ODD_PAGE_NUMBERS:
+        response = client.get(url, query_string={"page": page})
+        assert response.status_code == 200 and b"page 1 of 2" in response.data, page
+
+
+def test_a_wrong_page_number_in_a_decision_returns_to_the_first_page(client, reviewed, hall, admin):
+    """The hidden field 'page' comes back from the browser, so it is read as carefully as a link. (Before the
+    pages every decision went back to the one page, so this guards the new code, it was not a defect.)"""
+    requests = many_requests(reviewed, hall, count=len(ODD_PAGE_NUMBERS))
+    log_in(client, "admin@bilgi.edu.tr")
+    for request, page in zip(requests, ODD_PAGE_NUMBERS):
+        response = client.post(f"/admin/requests/{request.id}/approve", data={"page": page})
+        assert response.status_code == 302 and response.headers["Location"].endswith("/admin/requests"), page
+
+
+@pytest.mark.parametrize("url", ["/events", "/admin/requests"])
+def test_the_first_and_last_page_have_no_link_backwards_or_forwards(client, reviewed, hall, admin, url):
+    """A greyed-out Previous or Next must not be a link: with the keyboard it could still be followed."""
+    requests = many_requests(reviewed, hall)  # 25 waiting requests: two pages on Event Requests
+    if url == "/events":
+        for event in requests:
+            event.status = EventStatus.OPEN  # 25 open events: two pages on Find Events
+        make_user(reviewed, "student@bilgiedu.net")
+        log_in(client, "student@bilgiedu.net")
+    else:
+        log_in(client, "admin@bilgi.edu.tr")
+    first, last = client.get(url).data, client.get(f"{url}?page=2").data
+    assert b"page=0" not in first and b'aria-disabled="true">Previous' in first
+    assert b"page=3" not in last and b'aria-disabled="true">Next' in last
+    assert b"page=2" in first and b"page=1" in last  # the other direction is still a link
+
+
 def test_the_reason_is_escaped_on_every_page(client, reviewed, hall, admin, services):
     event = request_by(reviewed, hall, organizer=make_user(services, "student@bilgiedu.net"))
     services.events.reject_event(event.id, admin.id, "<script>alert(1)</script>")

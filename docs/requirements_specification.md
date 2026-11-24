@@ -113,7 +113,7 @@ The functional requirements are written in **use case format**. Each use case is
 | [UC-05](requirements/UC-05_browse_and_filter_events.md) | Browse & filter events | Student | High | Filter by category, date, time, keyword. |
 | [UC-06](requirements/UC-06_join_event.md) | Join event | Student | High | Join if free places exist; event becomes Full at capacity. |
 | [UC-07](requirements/UC-07_facility_availability.md) | Facility schedule & conflicts | Student | High | Show busy slots; prevent overlapping bookings. |
-| [UC-08](requirements/UC-08_manage_facility_schedule.md) | Manage facility schedule | Facility Staff | Medium | Add facilities with capacity and blocked periods. |
+| [UC-08](requirements/UC-08_manage_facility_schedule.md) | Manage facility schedule | Facility Staff | Medium | Add facilities with capacity; add and remove blocked periods. |
 | [UC-09](requirements/UC-09_activity_history.md) | Track activity history | Student | Low | List completed events the student took part in. |
 | [UC-10](requirements/UC-10_leave_event.md) | Leave event | Student | Medium | A participant leaves; a full event becomes open again. |
 | [UC-11](requirements/UC-11_cancel_event.md) | Cancel event | Student (organizer) | Medium | The organizer cancels an event or withdraws a pending request; the facility slot becomes free. |
