@@ -79,7 +79,7 @@ Started exactly like on Render, `gunicorn --chdir src "campusevent.web:create_we
 Before #46, no response set HSTS, `Content-Security-Policy`, `X-Frame-Options`, `X-Content-Type-Options` or `Referrer-Policy`, so the pages could be framed (clickjacking) and HTTPS was not pinned in the browser. With #46 merged, the app started with the production command now sends on every response:
 `Strict-Transport-Security: max-age=31536000`, `X-Frame-Options: DENY`, `Content-Security-Policy: frame-ancestors 'none'`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: same-origin`.
 
-The CSP only covers framing. It does not restrict scripts and styles, because the templates still use inline `<script>` and `<style>` blocks. Since #44, Bootstrap and the Inter font are served by the app, so a full `'self'` policy would be possible once the inline blocks move to files. That is not needed for the delivery.
+The CSP only covers framing. It does not restrict scripts and styles, because the templates still use inline `<script>` and `<style>` blocks. A full policy (only our own site, a nonce for every inline script) is in #57; since #44, Bootstrap and the Inter font are served by the app, which makes that possible.
 
 ## Checks for the account owners
 The owner of this report has no Render access, so these items are for the people who have it.
@@ -104,7 +104,7 @@ Checked by Emir on 23.11.2026, with harmless `GET` requests only, from outside:
 | Session cookie | `Secure; HttpOnly; Path=/; SameSite=Lax` |
 | `/console`, `/.env`, `/.git/config` | `404` |
 | Server headers | `Server: cloudflare`, `x-render-origin-server: gunicorn`, no version number |
-| Security headers | Not yet there when checked, before #46 was deployed. Check again with the commands below |
+| Security headers | After #46 was deployed (checked by Harun and Emir on 23.11): `Strict-Transport-Security`, `X-Frame-Options: DENY`, `Content-Security-Policy: frame-ancestors 'none'`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: same-origin` |
 
 To repeat the checks after a deploy:
 ```bash
