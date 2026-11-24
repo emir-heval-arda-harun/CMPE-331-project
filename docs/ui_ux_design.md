@@ -225,7 +225,7 @@ Cards 1.1 rem radius, buttons 0.75 rem, chips and badges fully rounded. Buttons 
 | Icons | 23 line icons drawn inline as SVG (no extra download), hidden from screen readers | everywhere |
 
 ### 6.5 Background
-An animated drawing of the **campus at night**: a clock tower with a working clock, a library dome and a lit stadium, windows that switch on and off, stars, a moon and **fireworks** over the campus. It shows that CampusEvent is about life on campus. It runs on a canvas; parts that do not move are drawn once and copied each frame, it pauses while the tab is hidden, and visitors who ask their system for reduced motion get one still picture. Three other looks (night, dusk, neon) can be chosen with the `BACKGROUND` setting.
+An animated drawing of the **campus at night**: a clock tower with a working clock, a library dome and a lit stadium, windows that switch on and off, stars, a moon and **fireworks** over the campus. On screens narrower than 768 px there is no moon, because the page title can fill the whole width there and a white moon behind it would hide letters. It shows that CampusEvent is about life on campus. It runs on a canvas; parts that do not move are drawn once and copied each frame, it pauses while the tab is hidden, and visitors who ask their system for reduced motion get one still picture. Three other looks (night, dusk, neon) can be chosen with the `BACKGROUND` setting.
 
 ### 6.6 Alternatives considered
 The look was chosen step by step in the demo, by comparing working versions side by side:
@@ -319,7 +319,7 @@ The [mockups of the analysis](analysis/ui/README.md) were low-fidelity and light
 ### 11.2 Checks done
 - Automated UI tests (Flask test client, `tests/web/`) cover every screen, its error states and the access rules. The number of tests and their latest results are kept in one place, the [test section](testing/web_ui_test_section.md), so that this document does not go out of date.
 - Automated browser walk-through in Firefox and WebKit at 1280 px and 360 px: student request, admin approve and reject, organizer view, withdraw, corrected request; no console errors, no horizontal scrolling.
-- Hands-on tests in the demo during development led to several changes: the *Leave* button on the card, its red colour and height, darker section labels on the background, the moon moved away from the buttons, and a readable rejection reason.
+- Hands-on tests in the demo during development led to several changes: the *Leave* button on the card, its red colour and height, darker section labels on the background, the moon moved away from the buttons, and a readable rejection reason. On 24.11 a check at 360 px found the moon behind the title *Facility Management*, the footer line on the clock tower and two cut-off placeholders; all three were fixed.
 
 ### 11.3 Not done yet
 A task-based test with students who did not build the system (for example 5 students, 3 tasks each: join an event, organize one at a busy facility, fix a rejected request) would give real usability data. It fits into the integration test week (27–29 Nov).
