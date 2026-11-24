@@ -1,5 +1,7 @@
+# Development and CI packages. Edit this file, then regenerate requirements-lock.txt (see the top of that file).
 pytest>=8
 pytest-cov>=6
+ruff>=0.6
 flask>=3,<4
 flask-wtf>=1.2
 # Database (same as requirements.txt; CI installs only this file)
