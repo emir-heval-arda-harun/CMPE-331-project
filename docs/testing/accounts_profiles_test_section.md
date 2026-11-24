@@ -35,6 +35,21 @@ The whole `tests/db` folder (59 tests, including the 7 facility tests of that da
 
 **Code coverage** of this section's code with all its suites on PostgreSQL: **95 %** (statements and branches). `app.py`, `security.py`, `profile_repository.py` and `unit_of_work.py` 100 %, `auth.py` and `user_repository.py` 96 %, `notifications.py` 93 %, `profiles.py` 90 %. Without a database, as in CI: 87 %. Details and the lines that are not covered: [coverage file](../tests/coverage/accounts-profiles.md#code-coverage).
 
+### 2.1 Update of 23.11.2026: limits from the penetration test (#55)
+The penetration test (#48, [`pentest-web.md`](../tests/security/pentest-web.md)) found five hardening points in `AuthService` (issue #50). Harun fixed them in #55; Heval reviewed it. The use cases now say this as alternative flows: UC-01 1a and 5b, UC-02 2b, and log out in the UC-02 postconditions.
+
+| Finding | Rule now | Tests |
+|---|---|---|
+| P1 | 5 wrong passwords in a row pause logging in to that account: 1 minute, doubling up to 15; during a pause the answer is the same as for a wrong password | 4 unit (`test_p1_…`), 1 web, 2 database |
+| P2 (#30) | A code stops working after 5 wrong tries; at most one new code per minute and address | 4 unit (`test_p2_…`), 1 database |
+| P3 | Log out ends the session, every copy of the cookie and the account's other sessions | 2 unit (`test_p3_…`), 1 web, 2 database |
+| P6 | Unknown, unverified and already verified addresses get the same answer on the verify step | 1 unit (renamed `test_verifying_twice_gets_the_same_answer_as_a_wrong_code`), 1 web |
+| P7 | Very common passwords and passwords of one repeated character are refused | 7 unit (`test_p7_…`, 6 passwords and 1 accepted), 1 web |
+
+Test counts on `main` after #55: unit, accounts **52** (was 35); database, this section **56** (was 52: 4 new in `test_user_repository.py`); 4 new web tests in `tests/web/test_web_auth_limits.py`. The other suites of this section did not change. Since #36, CI runs the database tests on PostgreSQL too. On `main` (`f8459e5`, 23.11.2026) the whole suite gave **443 passed, 0 failed**, and the events backend is merged, so the 36 `NotImplementedError` failures above are gone.
+
+**Code coverage on 23.11.2026** (CI, whole suite on PostgreSQL, statements and branches): `auth.py` **95 %** (210 statements; the lines not covered are mostly the `rollback` branches of unexpected database errors), `user_repository.py` 97 %, `notifications.py` 95 %, `profiles.py` 90 %, `db.py` 79 %, the other files of this section 100 %. The whole project: **97 %**. See the [coverage file](../tests/coverage/accounts-profiles.md#update-of-23112026).
+
 ## 3. Traceability
 The matrix (requirement → tests → code, with the result of each requirement) is in [`docs/tests/coverage/accounts-profiles.md`](../tests/coverage/accounts-profiles.md#traceability-matrix). Every step and alternative flow of UC-01, UC-02 and UC-03, BR-01, BR-02, BR-03 and BR-14, and the database rules of the design report have at least one passing test.
 
