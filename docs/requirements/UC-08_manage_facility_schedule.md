@@ -25,10 +25,12 @@ The staff member opens **Facility Management**.
 - **1a. User is not facility staff:** the system refuses the request.
 - **1b. Capacity is less than 2:** the system rejects the input.
 - **2a. Block overlaps an existing block of the same facility:** the system rejects the input.
+- **2b. The staff member removes a block** (for example one added by mistake): after a confirmation the system deletes the block and its time can be booked again (UC-07). *Added after the review of the Facility Management page, issue #19.*
 
 ## Postconditions
 - Students cannot create events in blocked slots.
+- After 2b the removed time is free again for events.
 
 ## Business Rules
-- BR-09: Only facility staff manage facilities and blocks.
+- BR-09: Only facility staff manage facilities and blocks (add and remove).
 - BR-10: Blocks of one facility must not overlap each other.

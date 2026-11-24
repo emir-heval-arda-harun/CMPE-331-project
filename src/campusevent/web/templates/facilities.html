@@ -8,12 +8,17 @@
   .facility-list .list-group-item:hover { background: #eef3ff; }
   .facility-list .list-group-item.active { background: var(--ce-blue); color: #fff; }
   .facility-list .list-group-item.active .text-muted { color: rgba(255, 255, 255, .8) !important; }
-  .slot-row { display: flex; gap: .75rem; align-items: flex-start; padding: .7rem .9rem; border-radius: .7rem; }
-  .slot-row svg { flex: none; margin-top: .15rem; }
+  .slot-row { display: flex; gap: .75rem; align-items: center; padding: .7rem .9rem; border-radius: .7rem; }
+  .slot-row svg { flex: none; }
   .slot-row.block { background: #fff4d6; color: #6b4e00; }
   .slot-row.event { background: #fdecec; color: #7a1c14; }
   .slot-time { font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
   .slot-label { min-width: 0; overflow-wrap: anywhere; }
+  /* The Glass Night theme makes btn-outline-danger light red for dark backgrounds; on the light yellow
+     block row that was 1.7:1. #b91c1c on #fff4d6 is about 5.9:1 (WCAG AA needs 4.5:1). */
+  .slot-row.block .btn-outline-danger { color: #b91c1c; border-color: #b91c1c; background: transparent; }
+  .slot-row.block .btn-outline-danger:hover,
+  .slot-row.block .btn-outline-danger:focus-visible { color: #fff; background: #b91c1c; border-color: #b91c1c; }
 </style>
 <div class="page-head mb-3">
   <h1 class="h3 mb-1">Facility Management</h1>
@@ -84,7 +89,19 @@
         <div class="slot-row {{ row.kind }}">
           {{ icon('lock' if row.kind == 'block' else 'calendar', 18) }}
           <span class="slot-time">{{ row.start.strftime('%H:%M') }} – {{ row.end.strftime('%H:%M') }}</span>
-          <span class="slot-label">{% if row.kind == 'block' %}Blocked: {% endif %}{{ row.label }}</span>
+          <span class="slot-label flex-grow-1">
+            {% if row.kind == 'block' %}Blocked: {{ row.label }}{% else %}Event: {{ row.label }}{% if row.note %} <span class="small">({{ row.note }})</span>{% endif %}{% endif %}
+          </span>
+          {% if row.kind == 'block' %}
+          {# With JavaScript a confirmation window opens first (the browser's own confirm if Bootstrap's script is
+   missing). Without JavaScript the form is sent right away. #}
+          <form method="post" class="m-0 remove-block-form"
+                action="{{ url_for('facilities.remove_block', facility_id=selected.id, block_id=row.id) }}"
+                data-block="{{ row.start.strftime('%H:%M') }} – {{ row.end.strftime('%H:%M') }} ({{ row.label }})">
+            {{ csrf() }}
+            <button class="btn btn-sm btn-outline-danger py-0" type="submit" aria-label="Remove the block {{ row.start.strftime('%H:%M') }} – {{ row.end.strftime('%H:%M') }}">Remove</button>
+          </form>
+          {% endif %}
         </div>
         {% endfor %}
       </div>
@@ -133,4 +150,49 @@
     {% endif %}
   </div>
 </div>
+{% endblock %}
+
+{% block modals %}
+{# Confirmation before a block is removed (UC-08 alt. 2b), like Cancel event on the event page. #}
+<div class="modal fade" id="remove-block-modal" tabindex="-1" aria-labelledby="remove-block-title" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="border-radius: 1rem;">
+      <div class="modal-body p-4 text-center">
+        <h2 class="h5" id="remove-block-title">Remove this block?</h2>
+        <p class="text-muted mb-4"><span id="remove-block-text"></span><br>Students can book this time again.</p>
+        <div class="d-flex flex-wrap justify-content-center gap-2">
+          <button type="button" class="btn btn-light border px-4" data-bs-dismiss="modal">Keep the block</button>
+          <button type="button" class="btn btn-danger px-4" id="remove-block-confirm">Yes, remove it</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  (function () {
+    var pending = null;
+    document.querySelectorAll('.remove-block-form').forEach(function (form) {
+      form.addEventListener('submit', function (event) {
+        if (form.dataset.confirmed) { return; }
+        event.preventDefault();
+        if (window.bootstrap) {
+          pending = form;
+          document.getElementById('remove-block-text').textContent = form.dataset.block;
+          window.bootstrap.Modal.getOrCreateInstance(document.getElementById('remove-block-modal')).show();
+        } else if (window.confirm('Remove the block ' + form.dataset.block + '? Students can book this time again.')) {
+          form.dataset.confirmed = '1';
+          form.requestSubmit();
+        }
+      });
+    });
+    document.getElementById('remove-block-confirm').addEventListener('click', function () {
+      if (!pending) { return; }
+      pending.dataset.confirmed = '1';
+      pending.requestSubmit();
+    });
+  })();
+</script>
 {% endblock %}

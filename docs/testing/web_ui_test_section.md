@@ -1,6 +1,6 @@
 # Software Testing Report – Web UI section (task 3.5)
 
-**Status:** draft section for the team's Software Testing Report (task 4.1, due 22.11.2026). It covers only the web UI of UC-01 to UC-06, UC-09 to UC-11 and UC-12 (admin review of event requests, CR-01). The backend, the facility pages (UC-07, UC-08) and the integration tests are written by the other team members and must be added to the full report.
+**Status:** draft section for the team's Software Testing Report (task 4.1: pull request due 25.11.2026, PDF due 29.11.2026). It covers only the web UI of UC-01 to UC-06, UC-09 to UC-11 and UC-12 (admin review of event requests, CR-01). The backend, the facility pages (UC-07, UC-08) and the integration tests are written by the other team members and must be added to the full report.
 
 ## 1. Scope and approach
 The web UI (`src/campusevent/web/`, layer 1 of the [Software Design Report](../software_design_report.md)) is tested through the Flask test client: each test sends the HTTP requests of a user and checks the status code, the redirect and the text of the page.
@@ -62,6 +62,6 @@ Every use case of this section has at least one test of the main flow. UC-01 to 
 |---|---|---|
 | 1 | Run the UI against the real services as soon as they exist and fix differences (integration test, task 4.2) | All |
 | 2 | The UI needs three service methods that are not in the design report: `EventService.get_event`, `FacilityService.list_facilities`, `AuthService.get_user` raising `NotFoundError` ([details](../../src/campusevent/web/README.md)) | Backend owners (Heval, E. Arda, Harun) |
-| 3 | Missing features because the service interface cannot do them: resend verification code (UC-01), time range filter (UC-05), "Upcoming" tab on My Activities (F-09). Free slot suggestions (UC-04 4a) are now done in the UI, with assumed opening hours 08:00–22:00 | Team decision |
+| 3 | Missing features because the service interface cannot do them: time range filter (UC-05), "Upcoming" tab on My Activities (F-09). Free slot suggestions (UC-04 4a) are now done in the UI, with assumed opening hours 08:00–22:00 | Team decision |
 | 4 | Check the pages on a real Safari (Mac or iPhone) (NFR-07) and the remaining 360 px cases of NFR-01 | Web UI owner |
 | 5 | Add a GitHub Actions run for `tests/web` (CI, task 3.7) | Onur |

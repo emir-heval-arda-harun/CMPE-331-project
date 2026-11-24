@@ -9,8 +9,10 @@ services:
     branch: main
     autoDeploy: false
     buildCommand: pip install -r requirements.txt
-    # Entry point: the Flask app factory from task 3.5 (PR #7, campusevent.web).
-    startCommand: gunicorn --chdir src --bind 0.0.0.0:$PORT "campusevent.web:create_web_app()"
+    # 1) Apply new database migrations (does nothing when the database is up to date; the free plan
+    #    has no shell or pre-deploy command, so this runs at every start).
+    # 2) Start the Flask app factory from task 3.5 (campusevent.web).
+    startCommand: alembic upgrade head && gunicorn --chdir src --bind 0.0.0.0:$PORT "campusevent.web:create_web_app()"
     healthCheckPath: /login
     envVars:
       - key: PYTHON_VERSION
