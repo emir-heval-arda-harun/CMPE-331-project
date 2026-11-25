@@ -1,4 +1,3 @@
-[System.IO.File]::WriteAllText("$PWD\docs\tests\coverage\events.md", @'
 # Events Coverage
 
 Full-suite project coverage is 97% in [docs/tests/coverage/README.md](README.md), where data access repositories reach 95–100% when run against PostgreSQL in CI (`TEST_DATABASE_URL`).
@@ -26,4 +25,4 @@ The 44% figure seen when running only the Events tests covers only the subset of
 - Line 326: Guard in `complete_event` checking that only an open or full event can be completed.
 - Lines 330–332: Rollback in `complete_event` on error.
 - Lines 351–352: Concurrent update / conflict path when another request modifies the same slot or record.
-'@, [System.Text.UTF8Encoding]::new($false))
+
