@@ -1,4 +1,3 @@
-[System.IO.File]::WriteAllText("$PWD\docs\testing\events_test_section.md", @'
 # Events Testing Section
 
 ## Scope and Approach
@@ -30,4 +29,4 @@ Uses isolated in-memory fakes and a deterministic clock in `tests/test_event_ser
 ## Limits
 - Running only the Events tests reports 44% across the subset of files touched in that run; see `docs/tests/coverage/README.md` for the 97% full-suite coverage.
 - `tests/db/test_event_repository.py` requires PostgreSQL (`TEST_DATABASE_URL`) and browser/UI flows are outside this section.
-'@, [System.Text.UTF8Encoding]::new($false))
+
