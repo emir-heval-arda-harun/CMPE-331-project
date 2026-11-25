@@ -35,10 +35,11 @@ The web tests of a feature were committed in the **same commit** as the page cod
 | Long words without spaces (defect 14, PR #45) | `00649ed` | 1 failed, 136 passed | 137 passed | long words break instead of widening the page |
 | Security headers on every answer (section 6, item 9, PR #46) | `881fe77` | 2 failed, 148 passed | 150 passed | the headers on pages, a redirect, the 404 page, a static file and log out; the headers on the 500 page |
 | Findings of the penetration test in the web UI (P4, P5, P8, PR #49) | `452dbbb` | 3 failed, 148 passed | 151 passed | `HEAD` never runs the form code; no lines can be added to the calendar file; a form over 1 MB gets 413 |
+| Full Content-Security-Policy with a nonce (NFR-03, PR #57) | `1e1c7fd` | 2 failed, 154 passed | 156 passed | the policy allows only our own site and blocks an injected script; every `<script>` on every page has the nonce of its answer |
 
 In every step all tests pass on the commit itself, so the change broke none of the older tests (no regression). Apart from the rows `3c434da` and `0cb56bb`, and one of the seven tests of `178e0c9` (it sets the clock through `auth_routes.time`, which the old code does not have), the red runs fail on the behaviour (a wrong status code, a missing text or form field), not because a name is missing.
 
-Run 21 Nov 2026 (the last six rows 23 Nov 2026), Python 3.14, pytest 9.2.
+Run 21 Nov 2026 (the six rows before the last 23 Nov 2026, the last row 25 Nov 2026), Python 3.14, pytest 9.2.
 
 ## 3. Tests that caught a defect first
 Section 5 of the report lists the defects. These follow the red → green order:

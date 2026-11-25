@@ -1,6 +1,6 @@
 # Coverage – web UI (UC-01 to UC-06, UC-09 to UC-12)
 
-**Author:** Emir Gül · **Date of the results:** 25.11.2026 (first measured on 21.11.2026) · **Code:** `main` of 25.11.2026 (`4f29421`), with the events backend (task 3.4, #33 with #38), PR #42 to #46, #49, #61 and #62, the log in limits of #55 and the N+1 fix of #58 merged · Part of the Software Testing Report, see the [web UI section](../../testing/web_ui_test_section.md).
+**Author:** Emir Gül · **Date of the results:** 25.11.2026 (first measured on 21.11.2026) · **Code:** `main` of 25.11.2026 (`0c795fb`), with the events backend (task 3.4, #33 with #38), PR #42 to #46, #49, #57, #61 and #62, the log in limits of #55 and the N+1 fix of #58 merged · Part of the Software Testing Report, see the [web UI section](../../testing/web_ui_test_section.md).
 
 The facility page (UC-07, UC-08, `facility_routes.py`) is in Harun's [facilities coverage](facilities.md); the composition root tests (`tests/web/test_web_wiring.py`) are in Heval's [accounts and profiles coverage](accounts-profiles.md).
 
@@ -35,7 +35,7 @@ Requirement → rule → tests → code, with the result on 23.11.2026. All test
 | Event page | Unknown event: 404 page; an unknown status still opens; a deleted participant is "Unknown user" | Ev `test_unknown_event_returns_404_page`; Ext `test_event_with_a_status_the_page_does_not_know_still_opens`; Err `test_a_participant_whose_account_is_gone_is_shown_as_unknown_user` | `event_details`, `_Names` | ✅ |
 | Add to calendar | A UTC `.ics` file that every calendar reads | Ext `test_add_to_calendar_downloads_an_ics_file`, `test_event_page_links_to_the_calendar_file`; Err `test_calendar_file_of_an_event_without_description_has_no_empty_description_line`; Ext `test_line_breaks_and_control_characters_cannot_add_lines_to_the_calendar_file` | `common.ics_for`, `_ics_text`, `event_calendar` | ✅ (lines cannot be added: pentest P4, PR #49) |
 | Team time rule (#14, #16) | Services keep naive UTC; the pages show and take Istanbul time; "Today" is the Istanbul day | Ext `test_time_conversion_helpers_round_trip`, `test_an_event_just_after_midnight_belongs_to_its_istanbul_day`, `test_today_is_the_istanbul_date_even_when_the_server_runs_in_utc`, `test_relative_day_labels`, `test_event_cards_show_how_far_away_the_event_is` | `common.to_utc`, `to_campus`, `campus_today` | ✅ |
-| NFR-03, NFR-04 | CSRF tokens on every form; secure session cookie; staff cannot open student pages; a missing `SECRET_KEY` is logged | Acc `test_forms_are_protected_by_csrf_tokens`, `test_session_cookie_is_secure_by_default`, `test_staff_cannot_open_student_pages`; Adm `test_missing_secret_key_is_logged_as_a_warning`; Acc `test_every_kind_of_answer_has_the_security_headers`, `test_the_error_page_of_an_unexpected_error_has_the_security_headers` (PR #46), `test_head_requests_only_show_the_page_and_never_run_the_form` (pentest P8, PR #49); HTTPS and the headers of the live site checked by hand, see [non-functional tests](../non-func-tests/web-ui.md) | `create_web_app`, `SECURITY_HEADERS`, `common.login_required` | ✅ |
+| NFR-03, NFR-04 | CSRF tokens on every form; secure session cookie; staff cannot open student pages; a missing `SECRET_KEY` is logged | Acc `test_forms_are_protected_by_csrf_tokens`, `test_session_cookie_is_secure_by_default`, `test_staff_cannot_open_student_pages`; Adm `test_missing_secret_key_is_logged_as_a_warning`; Acc `test_every_kind_of_answer_has_the_security_headers`, `test_the_error_page_of_an_unexpected_error_has_the_security_headers` (PR #46), `test_head_requests_only_show_the_page_and_never_run_the_form` (pentest P8, PR #49); `test_the_content_security_policy_allows_only_our_own_site_and_no_injected_script`, `test_every_script_on_every_page_carries_the_nonce_of_its_answer` (PR #57); HTTPS and the headers of the live site checked by hand, see [non-functional tests](../non-func-tests/web-ui.md) | `create_web_app`, `SECURITY_HEADERS`, `CONTENT_SECURITY_POLICY`, `common.login_required` | ✅ |
 | NFR-05 | No e-mail addresses on pages; *Send a new code* does not tell who has an account | Ev `test_event_details_never_show_email_addresses`; Adm `test_requests_page_lists_pending_requests_soonest_first_without_e_mails`; Res `test_answer_is_the_same_for_unknown_and_verified_addresses`; Ext `test_pages_load_nothing_from_other_sites`, `test_the_own_copies_of_bootstrap_and_inter_are_served`, `test_the_own_copy_of_bootstrap_is_the_published_one` | templates, `resend_code`, `static/vendor/` | ✅ (Bootstrap and Inter from our own server: defect 15, PR #44) |
 | Security (XSS) | Text typed by users is escaped | Ev `test_text_in_events_is_escaped`; Adm `test_the_reason_is_escaped_on_every_page` | Jinja auto-escaping | ✅ |
 | Error handling | Unknown address 404; unexpected errors give a friendly page and are logged, without details | Err `test_unknown_address_shows_the_error_page`, `test_unexpected_error_shows_a_friendly_page_and_is_logged`; Ext `test_a_form_larger_than_one_megabyte_is_refused_with_a_friendly_page` (pentest P5, PR #49) | `handle_not_found`, `handle_unexpected`, `handle_too_large` | ✅ |
@@ -43,20 +43,20 @@ Requirement → rule → tests → code, with the result on 23.11.2026. All test
 | NFR-01, NFR-07 | Phone width, browsers, a label for every form field | Ext `test_every_form_field_has_a_label`, `test_create_form_category_label_follows_the_visible_field`, `test_no_field_takes_the_focus_by_itself`; Ev `test_long_words_without_spaces_break_instead_of_widening_the_page`; manual, Playwright and (23.11, long texts) Chromium, see [non-functional tests](../non-func-tests/web-ui.md) | all templates, `event_new.html`, `base.html` | ✅ (long words without spaces: defect 14, fixed in PR #45) |
 | Test setup | Two apps created in one test run do not share data, so tests cannot affect each other | Acc `test_new_accounts_get_their_own_empty_services` | `tests/web/fakes.py` | ✅ |
 
-**Requirements coverage:** 33 of 33 rows have passing web tests (100 %). Every one of the 154 tests of this section appears in the matrix, and all of them pass on `main`. The requirement tests of the team for these use cases pass as well: UC-01, UC-02 and UC-03 (10 of 10) with the real `AuthService` and `ProfileService` since 20.11, and UC-04 to UC-06, UC-09 to UC-12 with their NFR tests (33 of 33) with the real `EventService` since task 3.4 (#33) was merged on 23.11.
+**Requirements coverage:** 33 of 33 rows have passing web tests (100 %). Every one of the 156 tests of this section appears in the matrix, and all of them pass on `main`. The requirement tests of the team for these use cases pass as well: UC-01, UC-02 and UC-03 (10 of 10) with the real `AuthService` and `ProfileService` since 20.11, and UC-04 to UC-06, UC-09 to UC-12 with their NFR tests (33 of 33) with the real `EventService` since task 3.4 (#33) was merged on 23.11.
 
 ## Code coverage
-Measured with coverage.py 7.17, statements **and** branches, all web tests (`tests/web`, 188 tests, of them 154 of this section; 25.11, `main` `4f29421`; the same numbers as on `010dd2b` of 23.11, because #58, #61 and #62 change no Python file of the web UI), without a database (the web tests use in-memory services):
+Measured with coverage.py 7.17, statements **and** branches, all web tests (`tests/web`, 190 tests, of them 156 of this section; 25.11, `main` `0c795fb`; #57 adds 6 statements to `__init__.py`, all covered), without a database (the web tests use in-memory services):
 
 | File | Statements | Missed | Branches | Partial | Coverage |
 |---|---|---|---|---|---|
-| `src/campusevent/web/__init__.py` | 75 | 0 | 12 | 1 | **99 %** |
+| `src/campusevent/web/__init__.py` | 81 | 0 | 12 | 1 | **99 %** |
 | `src/campusevent/web/admin_routes.py` | 49 | 0 | 4 | 0 | **100 %** |
 | `src/campusevent/web/auth_routes.py` | 71 | 2 | 10 | 1 | **96 %** |
 | `src/campusevent/web/common.py` | 155 | 0 | 46 | 0 | **100 %** |
 | `src/campusevent/web/event_routes.py` | 147 | 0 | 20 | 0 | **100 %** |
 | `src/campusevent/web/profile_routes.py` | 36 | 0 | 6 | 0 | **100 %** |
-| **Total (this section)** | 533 | 2 | 98 | 2 | **99 %** |
+| **Total (this section)** | 539 | 2 | 98 | 2 | **99 %** |
 
 With `facility_routes.py` (Harun, 100 %) the whole web package is also 99 %.
 
