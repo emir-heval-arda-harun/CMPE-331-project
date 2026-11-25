@@ -20,10 +20,10 @@ Each entry gives: what the assistant got wrong, who caught it and how, why it ma
 | 8 | 18.11.2026 | #7 | Merged the pull request into `main` without an approving review | Emir, the next morning | `main` holds code nobody else has read; the team rule is broken | Review asked afterwards, approved the same day |
 | 9 | 18.11.2026 | #14, web UI | Times sent to the services in Istanbul time, not in UTC; calendar file without a time zone | Emir, own questions while checking | Every event and booking 3 hours off with the real services, with no error | `e2eae80`, `0cb56bb`, `3c434da` |
 | 10 | 19.11.2026 | #21, UI/UX document | Wrote "every field has a visible label"; one field on Create Event had no label at all | Emir, checking the test report | A screen reader cannot name the field (WCAG 1.3.1, 3.3.2); a false claim in a delivered document | #32 (`c66359c`) + a test for every form field |
-| 11 | 21.11.2026 | #33 / #38, `EventService` | `ValidationError` used instead of `PermissionDeniedError`, `EventFullError`, and `AlreadyJoinedError` | Harun & Emir, review of #33 | Wrong HTTP status codes (400 instead of 403/409); four requirement tests failed | `PermissionDeniedError` in #33; `1703b5f` and `12f519d` in #38 |
+| 11 | 21.11.2026 | #33 / #38, `EventService` | `ValidationError` used instead of `PermissionDeniedError`, `EventFullError`, and `AlreadyJoinedError` | Harun & Emir, review of #33 | Wrong HTTP status codes (400 instead of 403/409); four requirement tests failed | `PermissionDeniedError` in #33; `1703b5f` in #38 |
 | 12 | 21.11.2026 | #33 / #38, `EventService` | Past start times accepted; no completion/expiry settlement or past-time check on approval | Emir, review of #33 | Past events could be created, approved, listed, and joined; history and expiry stayed stuck | `1703b5f` and `12f519d` in #38 |
 | 13 | 21.11.2026 | #33 / #38, `EventService` | `get_event` method missing from `EventService` | Emir, review of #33 | Event detail, join, leave, cancel, and calendar actions returned 500 | `12f519d` in #38 |
-| 14 | 21–24.11.2026 | #52 / #58, `SqlEventRepository` | N+1 queries loading participants per event row | Emir, PostgreSQL testing (#52) | Whole pages took 2.1–3.2 s (3,000–4,500 SQL statements), exceeding NFR-02 | `selectinload` in #58 (0.22–0.35 s, 14–25 statements) |
+| 14 | 23.11.2026 | #52 / #58, `SqlEventRepository` | N+1 queries loading participants per event row | Emir, PostgreSQL testing (#52) | Whole pages took 2.1–3.2 s (3,000–4,500 SQL statements), exceeding NFR-02 | `selectinload` in #58 (`4f29421`: 0.32–0.48 s Find Events / 16–27 stmts, 0.47 s My Activities, 0.35–0.46 s Event Requests; #37) |
 
 Cases 1 to 3, 9, and 11 to 14 would have reached users or the demo (and case 10 users of screen readers). Cases 4 to 6 are about planning and the reports. Cases 7 and 8 are about how the repository is used.
 
@@ -101,20 +101,20 @@ Cases 1 to 3, 9, and 11 to 14 would have reached users or the demo (and case 10 
 - **What the assistant wrote:** `join_event` raised `ValidationError` when the event was full or the student had already joined, and `cancel_event` raised it when someone other than the organizer tried to cancel.
 - **Effect:** The pages turn `EventFullError` and `AlreadyJoinedError` into 409 and `PermissionDeniedError` into 403. With `ValidationError` they answered 400, and four requirement tests failed (`test_only_the_organizer_can_cancel`, `test_nfr04_only_the_organizer_can_cancel_an_event`, the full-event test, and the join-twice test).
 - **How it was caught:** Harun and Emir ran the whole suite against the real services while reviewing #33 (reviews of #33 by [Harun](https://github.com/emir-heval-arda-harun/CMPE-331-project/pull/33#pullrequestreview-6007205437), [Emir 1](https://github.com/emir-heval-arda-harun/CMPE-331-project/pull/33#pullrequestreview-6007187603) and [Emir 2](https://github.com/emir-heval-arda-harun/CMPE-331-project/pull/33#pullrequestreview-6007705849)). The assistant's own unit test for joining twice expected `ValidationError` as well, so it passed.
-- **Fix:** `PermissionDeniedError` for the non-organizer in #33; `EventFullError` and `AlreadyJoinedError` in #38 (commits `1703b5f` and `12f519d`).
+- **Fix:** `PermissionDeniedError` for the non-organizer in #33; `EventFullError` and `AlreadyJoinedError` in #38 (commit `1703b5f`).
 - **Lesson:** The assistant had not been given `exceptions.py` or the design report's error list, and wrote tests that agree with its own code. Errors follow the Software Design Report; roles raise `PermissionDeniedError` (`CLAUDE.md`).
 
 ### 12. Events in the past and statuses that never change
 - **What the assistant wrote:** `create_event` accepted a start time in the past; the lists and `join_event` did not look at the time. Nothing called `complete_event` or `expire_pending_requests`, and `approve_event` approved a request whose start time had passed.
 - **Effect:** Emir created an event for January 2025, approved it, saw it on Find Events, and a student joined it. The history stayed empty (BR-11) and pending requests never expired (BR-18).
-- **How it was caught:** Emir tried these cases on the real pages (reviews of #33 by [Harun](https://github.com/emir-heval-arda-harun/CMPE-331-project/pull/33#pullrequestreview-6007205437), [Emir 1](https://github.com/emir-heval-arda-harun/CMPE-331-project/pull/33#pullrequestreview-6007187603) and [Emir 2](https://github.com/emir-heval-arda-harun/CMPE-331-project/pull/33#pullrequestreview-6007705849)).
+- **How it was caught:** Emir tried these cases on the real pages (reviews of #33 by [Emir 1](https://github.com/emir-heval-arda-harun/CMPE-331-project/pull/33#pullrequestreview-6007187603) and [Emir 2](https://github.com/emir-heval-arda-harun/CMPE-331-project/pull/33#pullrequestreview-6007705849)).
 - **Fix:** In #38, commit `1703b5f` (test clock) and commit `12f519d` (`get_event`, past events, and settling): no events in the past, lists show upcoming events, `approve_event` refuses an expired request, and finished events and expired requests are settled before the lists are read.
 - **Lesson:** Anything that depends on the date is tested with a clock that the test controls, not only with the dates that happen to be in the fixtures.
 
 ### 13. `get_event` missing
 - **What the assistant did:** Implemented the methods named in the skeleton and the use cases, but not `get_event`, which Emir's pages call.
 - **Effect:** Event Details, join, leave, cancel and "Add to calendar" answered 500.
-- **How it was caught:** Emir ran his pages against the real `EventService`; with a stand-in `get_event` they all worked (reviews of #33 by [Harun](https://github.com/emir-heval-arda-harun/CMPE-331-project/pull/33#pullrequestreview-6007205437), [Emir 1](https://github.com/emir-heval-arda-harun/CMPE-331-project/pull/33#pullrequestreview-6007187603) and [Emir 2](https://github.com/emir-heval-arda-harun/CMPE-331-project/pull/33#pullrequestreview-6007705849)).
+- **How it was caught:** Emir ran his pages against the real `EventService`; with a stand-in `get_event` they all worked (reviews of #33 by [Emir 1](https://github.com/emir-heval-arda-harun/CMPE-331-project/pull/33#pullrequestreview-6007187603) and [Emir 2](https://github.com/emir-heval-arda-harun/CMPE-331-project/pull/33#pullrequestreview-6007705849)).
 - **Fix:** Commit `12f519d` in #38 adds `get_event(event_id)` (`NotFoundError` for an unknown id).
 - **Lesson:** The assistant is told which methods the other layers call, not only which use cases exist.
 
@@ -122,7 +122,7 @@ Cases 1 to 3, 9, and 11 to 14 would have reached users or the demo (and case 10 
 - **What the assistant wrote:** `_to_domain` reads `row.participants`, which loads the participants of each event with a separate `SELECT`.
 - **Effect:** With 1,000 open events, Find Events took 2.1 to 3.1 s, My Activities 3.2 s and Event Requests 2.8 to 3.1 s, with about 3,000 to 4,500 SQL statements per request, over the 2 s of NFR-02. The in-memory performance tests could not show it.
 - **How it was caught:** Emir measured the pages with the real services on PostgreSQL (issue #52).
-- **Fix:** #58 (merged 25.11) loads the participants of a whole list with one more query (`selectinload`) in the four list methods. According to #52, whole pages (Find Events, My Activities, Event Requests) take 0.22 to 0.35 s on the server with 14 to 25 statements.
+- **Fix:** #58 (merged 25.11) loads the participants of a whole list with one more query (`selectinload`) in the four list methods. Measured again on `main` (`4f29421`) on 25.11 with the same data, whole pages take 0.32–0.48 s on Find Events (16–27 statements), 0.47 s on My Activities, and 0.35–0.46 s on Event Requests (see #37, non-functional tests).
 - **Lesson:** Repository methods that return lists are measured on PostgreSQL with real amounts of data, not only in memory.
 
 Cases 11 to 14 are about the events backend (#33, #38, #52, and #58): wrong error types, time handling, a missing method, and a performance defect that only appeared on PostgreSQL.
