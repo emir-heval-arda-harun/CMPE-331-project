@@ -107,7 +107,9 @@
         var hz = b.createRadialGradient(w * 0.55, ground, 10, w * 0.55, ground, Math.max(w, h) * 0.6);
         hz.addColorStop(0, 'rgba(' + L.glow[0] + ', .38)'); hz.addColorStop(0.5, 'rgba(' + L.glow[1] + ', .08)'); hz.addColorStop(1, 'rgba(0,0,0,0)');
         b.fillStyle = hz; b.fillRect(0, 0, w, h);
-        if (L.moon) {
+        // Below 768 px (collapsed menu) the page title can fill the whole width, and a white moon behind it hides
+        // letters of the white title, so phones get the stars without the moon.
+        if (L.moon && w >= 768) {
           var mx = w * 0.7, my = Math.max(80, Math.min(120, h * 0.13)), mr = Math.max(20, Math.min(40, w * 0.028));  // open sky right of the page title
           var mg = b.createRadialGradient(mx, my, mr * 0.6, mx, my, mr * 4); mg.addColorStop(0, 'rgba(224, 231, 255, .35)'); mg.addColorStop(1, 'rgba(224, 231, 255, 0)');
           b.fillStyle = mg; b.beginPath(); b.arc(mx, my, mr * 4, 0, Math.PI * 2); b.fill();
