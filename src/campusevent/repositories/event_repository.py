@@ -13,7 +13,7 @@ from typing import Iterable, Protocol
 
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session, scoped_session
+from sqlalchemy.orm import Session, scoped_session, selectinload
 
 from campusevent.exceptions import FacilityConflictError, NotFoundError
 from campusevent.models import Event, EventStatus, TimeSlot
@@ -187,12 +187,18 @@ class SqlEventRepository:
     # ------------------------------------------------------------------ #
     def list_by_status(self, statuses: Iterable[EventStatus]) -> list[Event]:
         values = [EventStatus(s).value for s in statuses]
-        stmt = select(EventRow).where(EventRow.status.in_(values)).order_by(EventRow.start_time, EventRow.id)
+        stmt = (
+            select(EventRow)
+            .options(selectinload(EventRow.participants))
+            .where(EventRow.status.in_(values))
+            .order_by(EventRow.start_time, EventRow.id)
+        )
         return [self._to_domain(row) for row in self.session.scalars(stmt)]
 
     def list_by_participant(self, user_id: int) -> list[Event]:
         stmt = (
             select(EventRow)
+            .options(selectinload(EventRow.participants))
             .join(EventParticipantRow, EventParticipantRow.event_id == EventRow.id)
             .where(EventParticipantRow.user_id == user_id)
             .order_by(EventRow.start_time, EventRow.id)
@@ -200,7 +206,12 @@ class SqlEventRepository:
         return [self._to_domain(row) for row in self.session.scalars(stmt)]
 
     def list_by_organizer(self, user_id: int) -> list[Event]:
-        stmt = select(EventRow).where(EventRow.organizer_id == user_id).order_by(EventRow.start_time, EventRow.id)
+        stmt = (
+            select(EventRow)
+            .options(selectinload(EventRow.participants))
+            .where(EventRow.organizer_id == user_id)
+            .order_by(EventRow.start_time, EventRow.id)
+        )
         return [self._to_domain(row) for row in self.session.scalars(stmt)]
 
     def active_on(self, facility_id: int, day: date) -> list[Event]:
@@ -208,6 +219,7 @@ class SqlEventRepository:
         day_start = datetime.combine(day, time.min, tzinfo=timezone.utc)
         stmt = (
             select(EventRow)
+            .options(selectinload(EventRow.participants))
             .where(
                 EventRow.facility_id == facility_id,
                 EventRow.status.in_(ACTIVE_EVENT_STATUSES),
