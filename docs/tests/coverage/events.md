@@ -1,54 +1,29 @@
-@'
+[System.IO.File]::WriteAllText("$PWD\docs\tests\coverage\events.md", @'
+# Events Coverage
 
-\# Events Coverage
-
-
-
-Full-suite project coverage is tracked in \[docs/tests/coverage/README.md](README.md) (97%). When running only the Events unit/UC tests, module-level coverage is:
-
-
+Full-suite project coverage is 97% in [docs/tests/coverage/README.md](README.md), where data access repositories reach 95–100% when run against PostgreSQL in CI (`TEST_DATABASE_URL`).
 
 | File / Component | Coverage | Notes |
-
 |---|---|---|
+| `src/campusevent/events.py` | 96% (235 stmts, 11 miss, 60 branch, 2 partial) | Events service logic |
+| `src/campusevent/repositories/event_repository.py` (`SqlEventRepository`) | 95–100% (repositories range in CI with PostgreSQL) | Skipped locally without `TEST_DATABASE_URL`; runs in CI with PostgreSQL |
 
-| src/campusevent/events.py | 96% (235 stmts, 11 miss, 60 branch, 2 partial) | Core Events service logic |
+The 44% figure seen when running only the Events tests covers only the subset of files touched in that run; see [docs/tests/coverage/README.md](README.md) for the full-suite total (97%).
 
-| src/campusevent/repositories/event\_repository.py (SqlEventRepository) | Covered via tests/db/test\_event\_repository.py in CI | Skipped locally without TEST\_DATABASE\_URL; runs in CI with PostgreSQL |
+## Requirement -> Test -> Code Mapping
+- UC-04 (`test_uc04_create_event.py`, `test_event_service.py`) -> `EventService.create_event`
+- UC-05 (`test_uc05_browse_and_filter_events.py`, `test_event_service.py`) -> `EventService.search_events`
+- UC-06 (`test_uc06_join_event.py`, `test_event_service.py`) -> `EventService.join_event` (`test_student_cannot_join_twice` -> UC-06 2a, BR-07)
+- UC-09 (`test_uc09_activity_history.py`, `test_event_service.py`) -> `EventService.complete_event`, `EventService.get_activity_history`
+- UC-10 (`test_uc10_leave_event.py`, `test_event_service.py`) -> `EventService.leave_event`
+- UC-11 (`test_uc11_cancel_event.py`, `test_event_service.py`) -> `EventService.cancel_event` (`test_only_the_organizer_can_cancel` -> UC-11, NFR-04)
+- UC-12 (`test_uc12_review_event_requests.py`, `test_event_service.py`) -> `EventService.list_pending_events`, `approve_event`, `reject_event`, `expire_pending_requests`, `list_my_requests`
 
-
-
-> Note: Running only the Events tests shows 44% over the subset of files touched by those tests; see \[docs/tests/coverage/README.md](README.md) for the full-suite 97% total.
-
-
-
-\## Requirement -> Test -> Code Mapping
-
-\- UC-04 (test\_uc04\_create\_event.py, test\_event\_service.py) -> EventService.create\_event
-
-\- UC-05 (test\_uc05\_browse\_and\_filter\_events.py, test\_event\_service.py) -> EventService.search\_events
-
-\- UC-06 (test\_uc06\_join\_event.py, test\_event\_service.py) -> EventService.join\_event
-
-\- UC-09 (test\_uc09\_activity\_history.py, test\_event\_service.py) -> EventService.complete\_event, EventService.get\_activity\_history
-
-\- UC-10 (test\_uc10\_leave\_event.py, test\_event\_service.py) -> EventService.leave\_event
-
-\- UC-11 (test\_uc11\_cancel\_event.py, test\_event\_service.py) -> EventService.cancel\_event
-
-\- UC-12 (test\_uc12\_review\_event\_requests.py, test\_event\_service.py) -> EventService.list\_pending\_events, approve\_event, reject\_event, expire\_pending\_requests, list\_my\_requests
-
-
-
-\## Uncovered Lines in src/campusevent/events.py
-
-\- Line 37: Real system clock fallback when an explicit clock is not injected.
-
-\- Line 213 \& Lines 221-223: Rollback / error-handling paths after a failure during event or participation updates.
-
-\- Line 326 \& Lines 330-332: Rollback / guard paths after an error during request review or expiration handling.
-
-\- Lines 351-352: Race / conflict path when another request updates the same slot or record concurrently.
-
-'@ | Set-Content -Encoding UTF8 docs\\tests\\coverage\\events.md
-
+## Uncovered Lines in `src/campusevent/events.py`
+- Line 37: Real system clock fallback when no explicit clock is provided.
+- Line 213: `continue` in `expire_pending_requests` when a request is no longer pending.
+- Lines 221–223: Rollback in `expire_pending_requests` on error.
+- Line 326: Guard in `complete_event` checking that only an open or full event can be completed.
+- Lines 330–332: Rollback in `complete_event` on error.
+- Lines 351–352: Concurrent update / conflict path when another request modifies the same slot or record.
+'@, [System.Text.UTF8Encoding]::new($false))
