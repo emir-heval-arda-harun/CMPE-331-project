@@ -16,6 +16,7 @@ from __future__ import annotations
 import os
 import secrets
 import sys
+from datetime import datetime, time, timedelta, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -23,9 +24,10 @@ sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(ROOT))
 
 from campusevent.facilities import FacilityService  # noqa: E402
-from campusevent.models import Role  # noqa: E402
+from campusevent.models import Role, TimeSlot  # noqa: E402
 from campusevent.web import create_web_app  # noqa: E402
-from tests.web.fakes import make_fake_services, slot  # noqa: E402  (slot: Istanbul time in, UTC out)
+from campusevent.web.common import campus_today, slot_to_utc  # noqa: E402
+from tests.web.fakes import make_fake_services  # noqa: E402
 
 
 def load_env_file(path: Path = ROOT / ".env") -> None:
@@ -50,8 +52,18 @@ DEMO_ACCOUNTS = [
 ]
 
 
+def at(days: int, hour: int, hours: int = 1) -> TimeSlot:
+    """A slot ``days`` from today at ``hour`` campus (Istanbul) time, in naive UTC as the services keep it.
+    The demo events are therefore always in the coming days, whatever the date of the demo is."""
+    start = datetime.combine(campus_today() + timedelta(days=days), time(hour))
+    return slot_to_utc(TimeSlot(start, start + timedelta(hours=hours)))
+
+
 def build_services():
     services = make_fake_services(auto_approve=False)  # new events wait for the admin, as in CR-01
+    # The fakes keep the fixed time of the tests; the demo uses the real time, so Join, Leave and Cancel
+    # are offered as on the live site.
+    services.events.clock = lambda: datetime.now(timezone.utc).replace(tzinfo=None)
     # The real FacilityService (task 3.3) with the fake events, so the Facility Management page can add blocks.
     services.facilities = FacilityService(services.auth, events=services.events)
     services.events.facilities = services.facilities
@@ -65,19 +77,19 @@ def build_services():
     hall = services.facilities.add_facility(staff.id, "Santral Event Hall", 50)
     court = services.facilities.add_facility(staff.id, "Main Court", 20)
     services.facilities.add_facility(staff.id, "Indoor Sports Hall", 30)
-    services.facilities.add_block(staff.id, court.id, slot(day=21, hour=9, hours=3), "Physical education class")
+    services.facilities.add_block(staff.id, court.id, at(2, 9, hours=3), "Physical education class")
     services.facilities.add_facility(staff.id, "Study Room A", 8)
     games = services.events.create_event(
-        organizer.id, "Board game night", "board games", hall.id, slot(day=20, hour=18), 8, "Bring your own games."
+        organizer.id, "Board game night", "board games", hall.id, at(1, 18), 8, "Bring your own games."
     )
-    match = services.events.create_event(organizer.id, "Football friendly", "football", court.id, slot(day=21, hour=17), 10)
+    match = services.events.create_event(organizer.id, "Football friendly", "football", court.id, at(2, 17), 10)
     for event in (games, match):
         services.events.approve_event(event.id, admin.id)
     # One request in each review state, so the admin page and My Activities have something to show.
     services.events.create_event(
-        student.id, "Chess club meetup", "chess", hall.id, slot(day=22, hour=16), 12, "Beginners welcome."
+        student.id, "Chess club meetup", "chess", hall.id, at(3, 16), 12, "Beginners welcome."
     )
-    refused = services.events.create_event(student.id, "Late night karaoke", "music", hall.id, slot(day=23, hour=21), 30)
+    refused = services.events.create_event(student.id, "Late night karaoke", "music", hall.id, at(4, 21), 30)
     services.events.reject_event(refused.id, admin.id, "The hall closes at 22:00; please choose an earlier time.")
     return services
 
