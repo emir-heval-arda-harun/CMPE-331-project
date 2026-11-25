@@ -1,4 +1,3 @@
-[System.IO.File]::WriteAllText("$PWD\docs\tests\non-func-tests\events.md", @'
 # Events Non-Functional Tests
 
 ## NFR-02 - Search and Page Performance
@@ -8,4 +7,3 @@
 ## NFR-04 - Authorization and Ownership
 - `test_nfr04_only_the_organizer_can_cancel_an_event` in `tests/test_nfr.py`: passed.
 - `test_nfr04_only_an_admin_can_approve_or_reject_event_requests` in `tests/test_nfr.py`: passed.
-'@, [System.Text.UTF8Encoding]::new($false))
