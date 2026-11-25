@@ -49,7 +49,7 @@
 </main>
 {% endblock %}
 {% block scripts %}
-<script>
+<script nonce="{{ csp_nonce }}">
   // "Show password" button: switches the field between hidden and visible text.
   document.querySelectorAll('[data-toggle-password]').forEach(function (button) {
     button.addEventListener('click', function () {
