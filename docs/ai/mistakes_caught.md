@@ -20,9 +20,9 @@ Each entry gives: what the assistant got wrong, who caught it and how, why it ma
 | 8 | 18.11.2026 | #7 | Merged the pull request into `main` without an approving review | Emir, the next morning | `main` holds code nobody else has read; the team rule is broken | Review asked afterwards, approved the same day |
 | 9 | 18.11.2026 | #14, web UI | Times sent to the services in Istanbul time, not in UTC; calendar file without a time zone | Emir, own questions while checking | Every event and booking 3 hours off with the real services, with no error | `e2eae80`, `0cb56bb`, `3c434da` |
 | 10 | 19.11.2026 | #21, UI/UX document | Wrote "every field has a visible label"; one field on Create Event had no label at all | Emir, checking the test report | A screen reader cannot name the field (WCAG 1.3.1, 3.3.2); a false claim in a delivered document | #32 (`c66359c`) + a test for every form field |
-| 11 | 21.11.2026 | #33 / #38, `EventService` | `ValidationError` used instead of `PermissionDeniedError`, `EventFullError`, and `AlreadyJoinedError` | Harun & Emir, review of #33 | Wrong HTTP status codes (400 instead of 403/409); four requirement tests failed | `PermissionDeniedError` in #33; fixes in #38 |
-| 12 | 21.11.2026 | #33 / #38, `EventService` | Past start times accepted; no completion/expiry settlement or past-time check on approval | Emir, review of #33 | Past events could be created, approved, listed, and joined; history and expiry stayed stuck | Fixes and fixed test clock in #38 |
-| 13 | 21.11.2026 | #33 / #38, `EventService` | `get_event` method missing from `EventService` | Emir, review of #33 | Event detail, join, leave, cancel, and calendar actions returned 500 | `get_event` added in #38 |
+| 11 | 21.11.2026 | #33 / #38, `EventService` | `ValidationError` used instead of `PermissionDeniedError`, `EventFullError`, and `AlreadyJoinedError` | Harun & Emir, review of #33 | Wrong HTTP status codes (400 instead of 403/409); four requirement tests failed | `PermissionDeniedError` in #33; `1703b5f` and `12f519d` in #38 |
+| 12 | 21.11.2026 | #33 / #38, `EventService` | Past start times accepted; no completion/expiry settlement or past-time check on approval | Emir, review of #33 | Past events could be created, approved, listed, and joined; history and expiry stayed stuck | `1703b5f` and `12f519d` in #38 |
+| 13 | 21.11.2026 | #33 / #38, `EventService` | `get_event` method missing from `EventService` | Emir, review of #33 | Event detail, join, leave, cancel, and calendar actions returned 500 | `12f519d` in #38 |
 | 14 | 21–24.11.2026 | #52 / #58, `SqlEventRepository` | N+1 queries loading participants per event row | Emir, PostgreSQL testing (#52) | Whole pages took 2.1–3.2 s (3,000–4,500 SQL statements), exceeding NFR-02 | `selectinload` in #58 (0.22–0.35 s, 14–25 statements) |
 
 Cases 1 to 3, 9, and 11 to 14 would have reached users or the demo (and case 10 users of screen readers). Cases 4 to 6 are about planning and the reports. Cases 7 and 8 are about how the repository is used.
@@ -100,22 +100,22 @@ Cases 1 to 3, 9, and 11 to 14 would have reached users or the demo (and case 10 
 ### 11. Wrong error types in EventService
 - **What the assistant wrote:** `join_event` raised `ValidationError` when the event was full or the student had already joined, and `cancel_event` raised it when someone other than the organizer tried to cancel.
 - **Effect:** The pages turn `EventFullError` and `AlreadyJoinedError` into 409 and `PermissionDeniedError` into 403. With `ValidationError` they answered 400, and four requirement tests failed (`test_only_the_organizer_can_cancel`, `test_nfr04_only_the_organizer_can_cancel_an_event`, the full-event test, and the join-twice test).
-- **How it was caught:** Harun and Emir ran the whole suite against the real services while reviewing #33 (reviews of #33). The assistant's own unit test for joining twice expected `ValidationError` as well, so it passed.
-- **Fix:** `PermissionDeniedError` for the non-organizer in #33; `EventFullError` and `AlreadyJoinedError` in #38 (commits of #38).
+- **How it was caught:** Harun and Emir ran the whole suite against the real services while reviewing #33 (reviews of #33 by Harun, Emir 1, and Emir 2). The assistant's own unit test for joining twice expected `ValidationError` as well, so it passed.
+- **Fix:** `PermissionDeniedError` for the non-organizer in #33; `EventFullError` and `AlreadyJoinedError` in #38 (commits `1703b5f` and `12f519d`).
 - **Lesson:** The assistant had not been given `exceptions.py` or the design report's error list, and wrote tests that agree with its own code. Errors follow the Software Design Report; roles raise `PermissionDeniedError` (`CLAUDE.md`).
 
 ### 12. Events in the past and statuses that never change
 - **What the assistant wrote:** `create_event` accepted a start time in the past; the lists and `join_event` did not look at the time. Nothing called `complete_event` or `expire_pending_requests`, and `approve_event` approved a request whose start time had passed.
 - **Effect:** Emir created an event for January 2025, approved it, saw it on Find Events, and a student joined it. The history stayed empty (BR-11) and pending requests never expired (BR-18).
-- **How it was caught:** Emir tried these cases on the real pages (reviews of #33).
-- **Fix:** Commits of #38: no events in the past, lists show upcoming events, `approve_event` refuses an expired request, and finished events and expired requests are settled before the lists are read. The test app gets a fixed clock.
+- **How it was caught:** Emir tried these cases on the real pages (reviews of #33 by Harun, Emir 1, and Emir 2).
+- **Fix:** In #38, commit `1703b5f` (test clock) and commit `12f519d` (`get_event`, past events, and settling): no events in the past, lists show upcoming events, `approve_event` refuses an expired request, and finished events and expired requests are settled before the lists are read.
 - **Lesson:** Anything that depends on the date is tested with a clock that the test controls, not only with the dates that happen to be in the fixtures.
 
 ### 13. `get_event` missing
 - **What the assistant did:** Implemented the methods named in the skeleton and the use cases, but not `get_event`, which Emir's pages call.
 - **Effect:** Event Details, join, leave, cancel and "Add to calendar" answered 500.
-- **How it was caught:** Emir ran his pages against the real `EventService`; with a stand-in `get_event` they all worked (reviews of #33).
-- **Fix:** Commits of #38 add `get_event(event_id)` (`NotFoundError` for an unknown id).
+- **How it was caught:** Emir ran his pages against the real `EventService`; with a stand-in `get_event` they all worked (reviews of #33 by Harun, Emir 1, and Emir 2).
+- **Fix:** Commit `12f519d` in #38 adds `get_event(event_id)` (`NotFoundError` for an unknown id).
 - **Lesson:** The assistant is told which methods the other layers call, not only which use cases exist.
 
 ### 14. N+1 queries in `SqlEventRepository`
@@ -128,7 +128,7 @@ Cases 1 to 3, 9, and 11 to 14 would have reached users or the demo (and case 10 
 Cases 11 to 14 are about the events backend (#33, #38, #52, and #58): wrong error types, time handling, a missing method, and a performance defect that only appeared on PostgreSQL.
 
 ## What we changed in the way we work
-- **Peer review on every pull request** (branch protection on `main`, one approving review). All fourteen cases were caught by a person, in a review, while reading the assistant's output or by asking it a question, not by the assistant on its own.
+- **Peer review on every pull request** (branch protection on `main`, one approving review). All fourteen cases were caught by a person, in a review, while reading the assistant's output, by asking it a question, or by measuring, not by the assistant on its own.
 - **The assistant merges nothing without an approving review** and the explicit OK of the team member who works with it (case 8). It shows a review or a comment to that person before posting it.
 - **Claims are checked against the code:** every number, test name and "every …" in a report or document is compared with the code or a test, not only re-read (cases 6 and 10).
 - **`CLAUDE.md`** (#35) writes down the project rules the assistant got wrong or could easily get wrong: UTC in the services, where settings are read, transactions, roles, CSRF, secrets.
