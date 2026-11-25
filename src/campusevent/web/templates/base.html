@@ -232,7 +232,7 @@
     @media (max-width: 575.98px) { .auth-card { padding: 1.5rem 1.25rem; box-shadow: none; background: transparent; border: 0; }
       .auth-main { align-items: flex-start; padding-top: 2rem; background: rgba(255, 255, 255, .88); } }
   </style>
-  {% import "_backgrounds.html" as bgfx %}
+  {% import "_backgrounds.html" as bgfx with context %}{# with context: its script needs csp_nonce #}
   {{ bgfx.styles() }}
   {% import "_theme_glass.html" as glass %}
   {{ glass.head() }}
@@ -299,8 +299,8 @@
    Bootstrap's dark backdrop. #}
 {% block modals %}{% endblock %}
 
-<script src="{{ url_for('static', filename='vendor/bootstrap/bootstrap.bundle.min.js') }}"></script>
-<script>
+<script nonce="{{ csp_nonce }}" src="{{ url_for('static', filename='vendor/bootstrap/bootstrap.bundle.min.js') }}"></script>
+<script nonce="{{ csp_nonce }}">
   (function () {
     // A form is sent only once: after the first click its button is disabled and shows a spinner.
     document.addEventListener('submit', function (event) {

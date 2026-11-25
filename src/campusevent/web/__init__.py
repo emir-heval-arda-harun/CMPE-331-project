@@ -6,7 +6,7 @@ import mimetypes
 import os
 import secrets
 
-from flask import Flask, redirect, render_template, url_for
+from flask import Flask, g, redirect, render_template, url_for
 from flask_wtf.csrf import CSRFError, CSRFProtect
 
 from campusevent.app import CampusEventApp, create_app_from_env
@@ -24,14 +24,24 @@ SECURITY_HEADERS = {
     # After one visit over HTTPS the browser uses HTTPS only for a year, even if http:// is typed.
     # Browsers ignore it on plain HTTP, so the local demo is not affected.
     "Strict-Transport-Security": "max-age=31536000",
-    # No other site may show our pages in a frame (clickjacking); the CSP line is the newer form of the same rule.
+    # No other site may show our pages in a frame (clickjacking); frame-ancestors in CONTENT_SECURITY_POLICY is the
+    # newer form of the same rule.
     "X-Frame-Options": "DENY",
-    "Content-Security-Policy": "frame-ancestors 'none'",
     # The browser must not guess another type than the one the server sends.
     "X-Content-Type-Options": "nosniff",
     # Links to other sites do not tell them which of our pages the visitor came from (NFR-05).
     "Referrer-Policy": "same-origin",
 }
+
+# Content-Security-Policy (NFR-03): everything comes from our own site (Bootstrap and Inter too, since #44), and a
+# script runs only if it is a file of ours or carries the nonce of this answer. Text a user typed can therefore never
+# run as script, even if it reached a page unescaped. Styles may stay inline: the templates use style attributes,
+# and CSS cannot run code. data: is for the small SVG pictures inside the CSS.
+CONTENT_SECURITY_POLICY = (
+    "default-src 'self'; script-src 'self' 'nonce-{nonce}'; style-src 'self' 'unsafe-inline'; "
+    "img-src 'self' data:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; "
+    "form-action 'self'; frame-ancestors 'none'"
+)
 
 
 def _campus_photo_url(flask_app: Flask) -> str | None:
@@ -78,10 +88,16 @@ def create_web_app(services: CampusEventApp | None = None, config: dict | None =
         if end is not None:
             end()
 
+    @flask_app.before_request
+    def new_csp_nonce():
+        g.csp_nonce = secrets.token_urlsafe(16)  # a new one for every answer, so it cannot be guessed
+
     @flask_app.after_request
     def add_security_headers(response):
         for name, value in SECURITY_HEADERS.items():
             response.headers.setdefault(name, value)
+        nonce = g.get("csp_nonce") or secrets.token_urlsafe(16)
+        response.headers.setdefault("Content-Security-Policy", CONTENT_SECURITY_POLICY.format(nonce=nonce))
         return response
 
     csrf.init_app(flask_app)
@@ -108,7 +124,11 @@ def create_web_app(services: CampusEventApp | None = None, config: dict | None =
 
     @flask_app.context_processor
     def inject_user():
-        return {"current_user": common.current_user(), "campus_photo": _campus_photo_url(flask_app)}
+        return {
+            "current_user": common.current_user(),
+            "campus_photo": _campus_photo_url(flask_app),
+            "csp_nonce": g.get("csp_nonce", ""),
+        }
 
     @flask_app.errorhandler(CampusEventError)
     def handle_domain_error(error: CampusEventError):

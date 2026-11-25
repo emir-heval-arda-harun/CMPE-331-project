@@ -121,7 +121,7 @@
 {% endif %}
 {% endblock %}
 {% block scripts %}
-<script>
+<script nonce="{{ csp_nonce }}">
   (function () {
     var form = document.getElementById('cancel-form');
     if (form) {
