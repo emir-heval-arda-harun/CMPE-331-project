@@ -25,8 +25,8 @@ Verified test functions mapped to requirements and business rules:
 Uses isolated in-memory fakes and a deterministic clock in `tests/test_event_service.py`, and shared fixtures/helpers (`verified_user`, `admin_user`, `campus_hall`, `slot`, `open_event`) in the use-case test files.
 
 ## Defects Found
-- Reviews of #33 found incorrect exception types, a missing `get_event`, past events, and unchanged statuses, which were fixed in #38 (matching items 11–14 of #59).
-- N+1 query performance issues were identified in #52 and addressed in #58 (matching items 11–14 of #59).
+- Reviews of #33 found incorrect exception types, a missing `get_event`, past events, and unchanged statuses, which were fixed in #38 (matching items 11–13 of #59).
+- N+1 query performance issues were identified in #52 and addressed in #58 (matching item 14 of #59).
 
 ## Limits
 - Running only the Events tests reports 44% across the subset of files touched in that run; see `docs/tests/coverage/README.md` for the 97% full-suite coverage.
