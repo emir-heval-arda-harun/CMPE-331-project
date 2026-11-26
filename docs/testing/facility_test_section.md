@@ -1,6 +1,6 @@
 # Software Testing Report – Facilities section (tasks 3.3 and 3.6)
 
-**Author:** Harun Gündaş · **Status:** section for the team's Software Testing Report (task 4.1: pull request to Yeşim by 25.11.2026, PDF on Learn by 29.11.2026) · **Date of the results:** 20.11.2026
+**Author:** Harun Gündaş · **Status:** section for the team's Software Testing Report (task 4.1: pull request to Yeşim by 25.11.2026, PDF on Learn by 29.11.2026) · **Date of the results:** 20.11.2026, updated 26.11.2026 after the instructor's review
 
 It covers UC-07 *View facility schedule and check conflicts* and UC-08 *Manage facility schedule*: the backend (`FacilityService`, `FacilityRepository`, task 3.3, PR #13), the Facility Management page (task 3.6, PR #15) and removing a block (issue #19, PR #22). The results below are for `main` together with PR #22. The other use cases are in the sections of the other team members, for example the [Web UI section](web_ui_test_section.md).
 
@@ -20,14 +20,14 @@ The facility part is tested on three levels, from the inside out:
 
 **Why test doubles:** when these tests were written, `AuthService.register` (task 3.2) and the event service (task 3.4) still raised `NotImplementedError`. The stand-ins follow the interface of the class diagram (Software Design Report 4.2), so the facility rules could be tested before those tasks were done.
 
-**Tools:** pytest 9.2, Flask 3.1 test client, SQLAlchemy 2.1, psycopg 3.3, PostgreSQL 16.16 (local), coverage.py 7.17 (branch coverage), ruff. CI (GitHub Actions) runs ruff and pytest on every push and pull request; it has no database, so the database tests are skipped there and were run locally.
+**Tools:** pytest 9.2, Flask 3.1 test client, SQLAlchemy 2.1, psycopg 3.3, PostgreSQL 16.16 (local), coverage.py 7.17 (branch coverage), ruff. CI (GitHub Actions) runs ruff and pytest on every push and pull request. Since #36 the CI test job has its own PostgreSQL 16, so the database tests run there too and are no longer skipped (CI run 45851087074 of `main` at `22825b5`, 26.11.2026: 446 passed, 0 skipped).
 
 ## 2. Results
 
 | Suite | Tests | Passed | Failed | Where |
 |---|---|---|---|---|
 | Unit, `tests/test_facility_service.py` | 41 | 41 | 0 | local and CI |
-| Database, `tests/db/test_facility_repository.py` | 9 | 9 | 0 | local PostgreSQL 16.16 (skipped in CI) |
+| Database, `tests/db/test_facility_repository.py` | 9 | 9 | 0 | local PostgreSQL 16.16 and CI (PostgreSQL 16, since #36) |
 | Web UI, `tests/web/test_web_facilities.py` | 26 | 26 | 0 | local and CI |
 | Requirement tests for UC-07, UC-08 and the facility part of NFR-04 | 6 | 6 | 0 | `main` since #33 (23.11.2026), see below |
 
@@ -35,10 +35,10 @@ The facility part is tested on three levels, from the inside out:
 
 `ruff check .` is clean.
 
-**The 6 requirement tests:** they create users with `AuthService.register` and events with `EventService.create_event`, so they could not run before tasks 3.2 and 3.4. With Heval's PR #23 (register and log in), 3 of them pass: `test_student_cannot_manage_facilities`, `test_nfr04_student_cannot_manage_facilities` and `test_nfr04_student_cannot_block_a_facility`. The other 3 (`test_schedule_shows_existing_events`, `test_overlapping_event_in_same_facility_is_rejected`, `test_staff_blocks_facility_and_events_cannot_use_it`) stop at `EventService.create_event` (task 3.4) with `NotImplementedError`, before they reach `FacilityService`. The same rules are covered by the unit and web tests; the 3 tests are run again in integration testing (task 4.2). First check on 21 Nov 2026: with Arda's events backend (PR #33, not merged yet) merged locally into `main`, all 3 pass (UC-04, UC-07 and UC-08: 9 of 9 tests). **Since #33 was merged on 23 Nov 2026, all 6 pass on `main`** (checked again on 23 Nov: 6 of 6, and the 76 unit, database and web tests of the facility part still pass).
+**The 6 requirement tests: all 6 pass on `main` since #33 (23 Nov 2026).** How they got there: they create users with `AuthService.register` and events with `EventService.create_event`, so they could not run before tasks 3.2 and 3.4. With Heval's PR #23 (register and log in), 3 of them pass: `test_student_cannot_manage_facilities`, `test_nfr04_student_cannot_manage_facilities` and `test_nfr04_student_cannot_block_a_facility`. The other 3 (`test_schedule_shows_existing_events`, `test_overlapping_event_in_same_facility_is_rejected`, `test_staff_blocks_facility_and_events_cannot_use_it`) stop at `EventService.create_event` (task 3.4) with `NotImplementedError`, before they reach `FacilityService`. The same rules are covered by the unit and web tests; the 3 tests are run again in integration testing (task 4.2). First check on 21 Nov 2026: with Arda's events backend (PR #33, not merged yet) merged locally into `main`, all 3 pass (UC-04, UC-07 and UC-08: 9 of 9 tests). **Since #33 was merged on 23 Nov 2026, all 6 pass on `main`** (checked again on 23 Nov: 6 of 6, and the 76 unit, database and web tests of the facility part still pass).
 
 ## 3. Traceability
-The matrix (requirement → tests → code, with the result of each requirement) is in [`docs/tests/coverage/facilities.md`](../tests/coverage/facilities.md#traceability-matrix). Every rule of UC-07 and UC-08 has at least one passing unit or web test; 3 requirement tests wait for task 3.4 (section 2).
+The matrix (requirement → tests → code, with the result of each requirement) is in [`docs/tests/coverage/facilities.md`](../tests/coverage/facilities.md#traceability-matrix). Every rule of UC-07 and UC-08 has at least one passing unit or web test, and all 6 requirement tests pass on `main` since #33 (section 2).
 
 ## 4. Test design
 - **Equivalence classes and boundary values.** Capacity: 1 (refused), 2 (smallest accepted), 0, negative, 2.5, `"10"` as text and `True` (all refused). Name: empty, only spaces, 100 characters (accepted), 101 characters (refused). Reason: empty, only spaces, 201 characters (refused).
@@ -64,9 +64,9 @@ The matrix (requirement → tests → code, with the result of each requirement)
 | 9 | Emir, after the Glass Night theme | The facility names in the list were dark text on the dark glass and could hardly be read | Glass colours for the facility list in `_theme_glass.html` (Emir's PR #28) |
 
 ## 6. Limits and what integration testing (task 4.2) must check
-- The unit tests use stand-ins for `AuthService` and the event repository. After task 3.4 the 3 waiting requirement tests of section 2 were run with the real services and pass (23 Nov 2026). The real `EventRepository.active_on` is covered by the database tests of #38 (pending, open and full events that overlap the UTC day).
+- The unit tests use stand-ins for `AuthService` and the event repository. The 6 requirement tests of section 2 use the real services, and all 6 pass on `main` since #33 (23 Nov 2026). The real `EventRepository.active_on` is covered by the database tests of #38 (pending, open and full events that overlap the UTC day).
 - `check_bookable` must be called by `EventService.create_event` **after** `uow.begin()` and before the event is stored, so the row lock covers the whole booking.
-- The database tests run only on a computer with `TEST_DATABASE_URL`; CI skips them, so the 97 % of the repository is a local result. A PostgreSQL service in CI would run them on every pull request (suggestion for task 3.7).
+- The database tests need `TEST_DATABASE_URL`. Since #36 CI sets it for its own PostgreSQL 16, so they run on every push and pull request. The coverage figures (97 % of the repository) were measured locally; CI measures the whole package with `pytest --cov`.
 - **Render (checked 22 Nov 2026, `main` at `c98923c`, demo data from `scripts/seed_db.py`):** https://campusevent-86ax.onrender.com. Facility staff log in and get the Facility Management page with the 4 demo facilities and a schedule (200); a student gets 403 on `/facilities` (NFR-04). The session cookie is `Secure; HttpOnly; SameSite=Lax` (NFR-03). Find Events still answered 500 there, because `EventService` on `main` was the skeleton.
 - **Render again (checked 23 Nov 2026, after #33 was merged; deployed by the CI `deploy` job from `main` at `65f1781`):** Find Events, Event Details, My Activities (with the activity history of completed events) and Create Event answer 200 for a student; Event Requests answers 200 for the admin and 403 for facility staff (NFR-04). On Facility Management, the schedule of Santral Event Hall for 24 Nov shows the booking "18:00 – 21:00 Event: Board game night" next to the blocks, so the facility side and the event side now work together on the live site.
 - The SonarQube analysis (`docs/tests/quality`) is done for the whole repository, not per section.
