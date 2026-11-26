@@ -24,8 +24,9 @@ Each entry gives: what the assistant got wrong, who caught it and how, why it ma
 | 12 | 21.11.2026 | #33 / #38, `EventService` | Past start times accepted; no completion/expiry settlement or past-time check on approval | Emir, review of #33 | Past events could be created, approved, listed, and joined; history and expiry stayed stuck | `1703b5f` and `12f519d` in #38 |
 | 13 | 21.11.2026 | #33 / #38, `EventService` | `get_event` method missing from `EventService` | Emir, review of #33 | Event detail, join, leave, cancel, and calendar actions returned 500 | `12f519d` in #38 |
 | 14 | 23.11.2026 | #52 / #58, `SqlEventRepository` | N+1 queries loading participants per event row | Emir, PostgreSQL testing (#52) | Whole pages took 2.1–3.2 s (3,000–4,500 SQL statements), exceeding NFR-02 | `selectinload` in #58 (`4f29421`: 0.32–0.48 s Find Events / 16–27 stmts, 0.47 s My Activities, 0.35–0.46 s Event Requests; #37) |
+| 15 | 23.11.2026 | #36 / #54, CI security job | pip-audit piped through `tee` without `pipefail`, so the gate could never fail; the AI-assisted review of #36 approved it as well | Onur, while adding the lock file (#54) | A package with a known vulnerability would pass CI and be deployed to Render | `8a8ed8b` in #54 (`shell: bash`) |
 
-Cases 1 to 3, 9, and 11 to 14 would have reached users or the demo (and case 10 users of screen readers). Cases 4 to 6 are about planning and the reports. Cases 7 and 8 are about how the repository is used.
+Cases 1 to 3, 9, and 11 to 14 would have reached users or the demo (and case 10 users of screen readers). Cases 4 to 6 are about planning and the reports. Cases 7 and 8 are about how the repository is used. Case 15 is about the CI pipeline: a security check that looked green but could not fail.
 
 ## Details
 
@@ -127,9 +128,18 @@ Cases 1 to 3, 9, and 11 to 14 would have reached users or the demo (and case 10 
 
 Cases 11 to 14 are about the events backend (#33, #38, #52, and #58): wrong error types, time handling, a missing method, and a performance defect that only appeared on PostgreSQL.
 
+### 15. A security gate that could not fail
+- **What the assistant wrote:** The security job of #36 (`0a9f522`) ran `pip-audit -r requirements.txt … | tee -a "$GITHUB_STEP_SUMMARY"` to put the report on the run page. A step without `shell:` runs as `bash -e`, without `pipefail`, so the step took the exit code of `tee`, which is always 0.
+- **Effect:** The step was named "fail on known vulnerabilities", but a package with a known vulnerability would still pass, and the green `main` would deploy it to Render. Onur reproduced it with `jinja2==3.1.2`: exit 0 under `bash -e`, exit 1 under `bash -eo pipefail`.
+- **Missed in review too:** Heval's review of #36 was written with the assistant ([review](https://github.com/emir-heval-arda-harun/CMPE-331-project/pull/36#pullrequestreview-6014836325)). It said the security job was green, which was true, but it checked that the job passed, not that it could fail. Author and reviewer, both working with the assistant, missed the same gap.
+- **How it was caught:** Onur, while adding the hashed lock file for SonarQube S1/S2 in #54.
+- **Fix:** `8a8ed8b` in #54: `shell: bash` (GitHub runs it with `-eo pipefail`), and the lock file is audited as well. `docs/tests/non-func-tests/security_scans.md` keeps the old result with a dated correction. Heval's review of #54 says openly that the review of #36 missed it ([review](https://github.com/emir-heval-arda-harun/CMPE-331-project/pull/54#pullrequestreview-6027875983)).
+- **Lesson:** A check is only tested when we have seen it fail. For every new gate in CI, the reviewer asks "what makes this red?" and, where possible, tries it once with a bad input.
+
 ## What we changed in the way we work
-- **Peer review on every pull request** (branch protection on `main`, one approving review). All fourteen cases were caught by a person, in a review, while reading the assistant's output, by asking it a question, or by measuring, not by the assistant on its own.
+- **Peer review on every pull request** (branch protection on `main`, one approving review). All fifteen cases were caught by a person, in a review, while reading the assistant's output, by asking it a question, or by measuring, not by the assistant on its own.
 - **The assistant merges nothing without an approving review** and the explicit OK of the team member who works with it (case 8). It shows a review or a comment to that person before posting it.
+- **A gate is checked by making it fail:** a new CI check is accepted only after someone has seen it go red on a bad input, not just green (case 15).
 - **Claims are checked against the code:** every number, test name and "every …" in a report or document is compared with the code or a test, not only re-read (cases 6 and 10).
 - **`CLAUDE.md`** (#35) writes down the project rules the assistant got wrong or could easily get wrong: UTC in the services, where settings are read, transactions, roles, CSRF, secrets.
 - **Reviewers test like users:** real Turkish input, the real database, the live deployment, not only the assistant's tests.
