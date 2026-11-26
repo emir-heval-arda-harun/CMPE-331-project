@@ -1,0 +1,83 @@
+# Software Testing Report – Accounts, profiles and database section (tasks 3.1 and 3.2)
+
+**Author:** Heval Hüseyin Demir · **Status:** section for the team's Software Testing Report (task 4.1: pull request to Yeşim by 25.11.2026, PDF on Learn by 29.11.2026, see #26) · **Date of the results:** 20.11.2026
+
+It covers UC-01 *Register and verify e-mail*, UC-02 *Log in* and UC-03 *Manage profile*: the database layer (task 3.1, PR #12: schema, Alembic migration, `UnitOfWork`), the account and profile services (task 3.2: PR #17 roles, PR #23 accounts, PR #24 profiles) and the wiring of the SQL classes and the mail server (PR #25). The results below are for `main` together with PRs #23, #24 and #25. The web pages of these use cases are in the [Web UI section](web_ui_test_section.md); the facility part is in the [facilities section](facility_test_section.md).
+
+The parts the instructor asked for on 17.11 are in their own files:
+- **Traceability matrix with code and requirements coverage:** [`docs/tests/coverage/accounts-profiles.md`](../tests/coverage/accounts-profiles.md)
+- **Non-functional tests and their results:** [`docs/tests/non-func-tests/accounts-profiles.md`](../tests/non-func-tests/accounts-profiles.md)
+- **TDD evidence (tests first, red → green on `main`):** [`docs/tests/tdd/accounts-profiles.md`](../tests/tdd/accounts-profiles.md)
+
+## 1. Scope and approach
+
+| Level | What is tested | Test doubles | Files | Run |
+|---|---|---|---|---|
+| Unit | `AuthService` (register, verify, new code, log in, session token, roles), `ProfileService`, `create_app` wiring, `SmtpEmailSender` | `InMemoryUserRepository`, `InMemoryProfileRepository`, `InMemoryUnitOfWork`; a recording e-mail sender; a fake clock for code and token expiry; a fake SMTP server; argon2id with small cost settings so the suite stays fast (still salted hashes) | [`tests/test_auth_accounts.py`](../../tests/test_auth_accounts.py), [`tests/test_auth_roles.py`](../../tests/test_auth_roles.py), [`tests/test_profiles.py`](../../tests/test_profiles.py), [`tests/test_wiring.py`](../../tests/test_wiring.py), [`tests/web/test_web_wiring.py`](../../tests/web/test_web_wiring.py) | `python -m pytest tests/test_auth_accounts.py tests/test_auth_roles.py tests/test_profiles.py tests/test_wiring.py tests/web/test_web_wiring.py` |
+| Database | The schema and its constraints, the migration, `SqlUnitOfWork`, `SqlUserRepository`, `SqlProfileRepository`, and the services on a **real PostgreSQL 16** database, also across several web requests | none | [`tests/db/test_schema.py`](../../tests/db/test_schema.py), [`tests/db/test_unit_of_work.py`](../../tests/db/test_unit_of_work.py), [`tests/db/test_user_repository.py`](../../tests/db/test_user_repository.py), [`tests/db/test_profile_repository.py`](../../tests/db/test_profile_repository.py), [`tests/db/test_app_with_database.py`](../../tests/db/test_app_with_database.py) | `python -m pytest tests/db` (needs `TEST_DATABASE_URL`, see [database README](../database/README.md)) |
+| Requirement | The team's acceptance tests for UC-01, UC-02, UC-03 and NFR-03 through `create_app()` | none (real services, in-memory storage) | [`tests/test_uc01_register_and_verify.py`](../../tests/test_uc01_register_and_verify.py), [`tests/test_uc02_login.py`](../../tests/test_uc02_login.py), [`tests/test_uc03_manage_profile.py`](../../tests/test_uc03_manage_profile.py), [`tests/test_nfr.py`](../../tests/test_nfr.py) | `python -m pytest tests/test_uc01_register_and_verify.py tests/test_uc02_login.py tests/test_uc03_manage_profile.py tests/test_nfr.py -k "uc0 or nfr03"` |
+
+**Why in-memory repositories in the unit tests:** the services only talk to the repository and `UnitOfWork` interfaces of class diagram 4.2, so the same rules can be tested fast and without a database. The SQL versions of the same interfaces are tested separately on PostgreSQL, and `tests/db/test_app_with_database.py` runs the real app with the SQL classes from sign-up to saving a profile.
+
+**Tools:** pytest, Flask test client, SQLAlchemy 2.1, psycopg 3, Alembic, argon2-cffi, PostgreSQL 16.16 (local, Windows, Python 3.14), coverage.py (branch coverage), ruff. CI (GitHub Actions) runs ruff and pytest on every push and pull request; it had no database on 20.11, so `tests/db` was skipped there and was run locally. Since #36 (23.11), CI runs `tests/db` on a PostgreSQL 16 service too.
+
+## 2. Results
+
+| Suite | Tests | Passed | Failed | Where |
+|---|---|---|---|---|
+| Unit, accounts (`test_auth_accounts.py`) | 35 | 35 | 0 | local and CI |
+| Unit, roles (`test_auth_roles.py`) | 12 | 12 | 0 | local and CI |
+| Unit, profiles (`test_profiles.py`) | 17 | 17 | 0 | local and CI |
+| Unit, wiring and mail (`test_wiring.py`, `web/test_web_wiring.py`) | 14 | 14 | 0 | local and CI |
+| Database, this section (`tests/db` without the facility file) | 52 | 52 | 0 | PostgreSQL 16.16, local and in the coverage run (skipped in normal CI) |
+| Requirement tests UC-01, UC-02, UC-03, NFR-03 | 12 (10 UC + 2 NFR-03) | 12 | 0 | local and CI, with #23 and #24; the coverage run has the 10 UC tests, the 2 NFR-03 tests were run separately |
+
+The whole `tests/db` folder (59 tests, including the 7 facility tests of that day) passed on PostgreSQL. The whole suite gave **303 passed, 36 failed**; all 36 failures are `NotImplementedError` from `EventService` (tasks 3.4 / 3.6), the same as in CI. `ruff check .` is clean.
+
+**Code coverage** of this section's code with all its suites on PostgreSQL: **95 %** (statements and branches). `app.py`, `security.py`, `profile_repository.py` and `unit_of_work.py` 100 %, `auth.py` and `user_repository.py` 96 %, `notifications.py` 93 %, `profiles.py` 90 %. Without a database, as in CI: 87 %. Details and the lines that are not covered: [coverage file](../tests/coverage/accounts-profiles.md#code-coverage).
+
+### 2.1 Update of 23.11.2026: limits from the penetration test (#55)
+The penetration test (#48, [`pentest-web.md`](../tests/security/pentest-web.md)) found five hardening points in `AuthService` (issue #50). Harun fixed them in #55; Heval reviewed it. The use cases now say this as alternative flows: UC-01 1a and 5b, UC-02 2b, and log out in the UC-02 postconditions.
+
+| Finding | Rule now | Tests |
+|---|---|---|
+| P1 | 5 wrong passwords in a row pause logging in to that account: 1 minute, doubling up to 15; during a pause the answer is the same as for a wrong password | 4 unit (`test_p1_…`), 1 web, 2 database |
+| P2 (#30) | A code stops working after 5 wrong tries; at most one new code per minute and address | 4 unit (`test_p2_…`), 1 database |
+| P3 | Log out ends the session, every copy of the cookie and the account's other sessions | 2 unit (`test_p3_…`), 1 web, 2 database |
+| P6 | Unknown, unverified and already verified addresses get the same answer on the verify step | 1 unit (renamed `test_verifying_twice_gets_the_same_answer_as_a_wrong_code`), 1 web |
+| P7 | Very common passwords and passwords of one repeated character are refused | 7 unit (`test_p7_…`, 6 passwords and 1 accepted), 1 web |
+
+Test counts on `main` after #55: unit, accounts **52** (was 35); database, this section **56** (was 52: 4 new in `test_user_repository.py`); 4 new web tests in `tests/web/test_web_auth_limits.py`. The other suites of this section did not change. Since #36, CI runs the database tests on PostgreSQL too. On `main` (`f8459e5`, 23.11.2026) the whole suite gave **443 passed, 0 failed**, and the events backend is merged, so the 36 `NotImplementedError` failures above are gone.
+
+**Code coverage on 23.11.2026** (CI, whole suite on PostgreSQL, statements and branches): `auth.py` **95 %** (210 statements; the lines not covered are mostly the `rollback` branches of unexpected database errors), `user_repository.py` 97 %, `notifications.py` 95 %, `profiles.py` 90 %, `db.py` 79 %, the other files of this section 100 %. The whole project: **97 %**. See the [coverage file](../tests/coverage/accounts-profiles.md#update-of-23112026).
+
+## 3. Traceability
+The matrix (requirement → tests → code, with the result of each requirement) is in [`docs/tests/coverage/accounts-profiles.md`](../tests/coverage/accounts-profiles.md#traceability-matrix). Every step and alternative flow of UC-01, UC-02 and UC-03, BR-01, BR-02, BR-03 and BR-14, and the database rules of the design report have at least one passing test.
+
+## 4. Test design
+- **Equivalence classes and boundary values.** E-mail: exact university domains only (`ayse@bilgiedu.net.evil.com`, `ayse@mail.bilgiedu.net`, `ayse@gmail.com` refused), malformed addresses (empty, no `@`, a space, 254+ characters). Password: empty, 7 characters (refused), 129 characters (refused). Full name: empty, only spaces, 101 characters (refused). Interest: 60 characters (accepted), 61 (refused). Event capacity in the database: 1 (refused).
+- **Time boundaries.** The verification code works just before 15 minutes and not after (`test_code_works_just_before_it_expires`, `test_code_does_not_work_after_15_minutes`). The session token stops working after 24 hours. Time slots must end after they start. Times are stored as naive UTC and read back unchanged (team time rule, #16).
+- **Normalization.** E-mail is trimmed and lower-cased before it is stored, compared or used to log in; the database also refuses the same e-mail in another case (`ux_user_email_lower`). Interests are trimmed, inner spaces joined, lower-cased and kept once (BR-14), including the Turkish capital İ.
+- **Negative tests with "nothing changed" checks.** Every refused register or profile change checks that nothing was stored, no e-mail was sent and the `UnitOfWork` rolled back (`test_rejected_input_stores_nothing_and_sends_nothing`, `test_invalid_change_keeps_the_saved_profile`). In the database, each constraint is tested with a row that breaks it and the exact constraint name in the error.
+- **Security-oriented tests.** An unknown e-mail and a wrong password give the same message; an unverified user with a wrong password is not told that the account exists; a changed, made-up or other-key token is refused; passwords and codes are stored only as argon2id hashes, and the same password gives two different stored values.
+- **Integration inside this section.** The SQL repositories are used together with the real services (`test_register_verify_and_login_with_postgresql`, `test_profile_service_with_postgresql`), and the whole app is driven through the web pages with PostgreSQL behind it (`test_sign_up_log_in_and_save_profile_across_requests`).
+- **Migration tests.** The migration creates the eight tables, `tables.py` matches it (Alembic autogenerate compare), and it can be undone and done again.
+
+## 5. Defects found while testing
+
+| # | Found by | Defect | Fix |
+|---|---|---|---|
+| 1 | Review of #24 by Emir | `str.lower()` turns the Turkish `"İ"` into `"i"` plus a combining dot, so `"İngilizce"` and `"ingilizce"` were stored as two interests (against BR-14), and the stored text showed a double dot in some fonts | `_clean_interests` maps `"İ"` to `"i"` before lower-casing; new test `test_turkish_capital_i_becomes_a_plain_i` (commit c7de164 in #24) |
+| 2 | Preparing the deployment (PR #25) | `create_app` always used the in-memory repositories, so the deployed app stored nothing in PostgreSQL and sent no e-mails | PR #25: `create_app(database_url=...)` uses the SQL classes with one session and one `UnitOfWork` per request; `SmtpEmailSender`; tests in `test_wiring.py` and `test_app_with_database.py` |
+| 3 | Review of #25 by Onur | Render free web services block outgoing traffic on ports 25, 465 and 587, so the Gmail-on-587 example would not send codes on Render | Brevo on port 2525 with STARTTLS, which `SmtpEmailSender` already supports; documented by Onur in task 4.4 |
+| 4 | Setting up the local test database | The PostgreSQL installer fails on Windows with the Turkish locale (`locale name "Turkish_Türkiye.1254" contains non-ASCII characters`) | Setup problem, not code: choose locale *English, United States*; written in the [database README](../database/README.md) |
+
+## 6. Limits and what integration testing (task 4.2) must check
+Status on 26.11.2026. The first list was written on 20.11; the items marked *done* were closed later.
+
+- **Event part (done):** on 20.11, 36 requirement tests still stopped at `EventService` (`NotImplementedError`). Since #33 (23.11) they pass, `create_app` creates `SqlEventRepository` with the same session as the other SQL repositories, and the whole suite runs on PostgreSQL in CI: **446 passed, 0 failed** on `main` (`22825b5`, 26.11).
+- **Order of interests (open, accepted):** the SQL repository returns interests in alphabetical order (the table has no position column); the in-memory one keeps the order the student typed. Pages must not depend on the order.
+- **Wrong code attempts (done):** on 20.11 there was no limit on wrong verification codes (Harun's review of #23). Since #55 (23.11), a code stops working after 5 wrong tries and a new code can be asked for at most once a minute per address (P2, section 2.1).
+- **Small coverage gaps (open):** a non-text interest, a slot that is not a `TimeSlot` and the rollback paths when a repository fails have no automated test (see the coverage file).
+- **Database tests in CI (done):** since #36 (23.11), CI starts a PostgreSQL 16 service and runs `tests/db` on every push and pull request.
+- **On Render (done, task 4.4):** the start command runs `alembic upgrade head` before the app starts, the demo users come from `scripts/seed_db.py`, and `SECRET_KEY` is generated by Render. The live site is served only over HTTPS with a `Secure; HttpOnly; SameSite=Lax` session cookie (NFR-03; checked in the facilities section on 22.11 and in the [deployment penetration test](../tests/security/deployment.md)). It runs **without SMTP on purpose**: Render's free plan blocks the SMTP ports, and the demo users are already verified (#35); a relay on port 2525 is supported by `SmtpEmailSender` if real sign-ups are needed.
