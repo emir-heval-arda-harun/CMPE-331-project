@@ -7,6 +7,7 @@ It covers UC-01 *Register and verify e-mail*, UC-02 *Log in* and UC-03 *Manage p
 The parts the instructor asked for on 17.11 are in their own files:
 - **Traceability matrix with code and requirements coverage:** [`docs/tests/coverage/accounts-profiles.md`](../tests/coverage/accounts-profiles.md)
 - **Non-functional tests and their results:** [`docs/tests/non-func-tests/accounts-profiles.md`](../tests/non-func-tests/accounts-profiles.md)
+- **TDD evidence (tests first, red → green on `main`):** [`docs/tests/tdd/accounts-profiles.md`](../tests/tdd/accounts-profiles.md)
 
 ## 1. Scope and approach
 
@@ -18,7 +19,7 @@ The parts the instructor asked for on 17.11 are in their own files:
 
 **Why in-memory repositories in the unit tests:** the services only talk to the repository and `UnitOfWork` interfaces of class diagram 4.2, so the same rules can be tested fast and without a database. The SQL versions of the same interfaces are tested separately on PostgreSQL, and `tests/db/test_app_with_database.py` runs the real app with the SQL classes from sign-up to saving a profile.
 
-**Tools:** pytest, Flask test client, SQLAlchemy 2.1, psycopg 3, Alembic, argon2-cffi, PostgreSQL 16.16 (local, Windows, Python 3.14), coverage.py (branch coverage), ruff. CI (GitHub Actions) runs ruff and pytest on every push and pull request; it has no database, so `tests/db` is skipped there and was run locally.
+**Tools:** pytest, Flask test client, SQLAlchemy 2.1, psycopg 3, Alembic, argon2-cffi, PostgreSQL 16.16 (local, Windows, Python 3.14), coverage.py (branch coverage), ruff. CI (GitHub Actions) runs ruff and pytest on every push and pull request; it had no database on 20.11, so `tests/db` was skipped there and was run locally. Since #36 (23.11), CI runs `tests/db` on a PostgreSQL 16 service too.
 
 ## 2. Results
 
@@ -72,9 +73,11 @@ The matrix (requirement → tests → code, with the result of each requirement)
 | 4 | Setting up the local test database | The PostgreSQL installer fails on Windows with the Turkish locale (`locale name "Turkish_Türkiye.1254" contains non-ASCII characters`) | Setup problem, not code: choose locale *English, United States*; written in the [database README](../database/README.md) |
 
 ## 6. Limits and what integration testing (task 4.2) must check
-- **Event part:** 36 requirement tests still stop at `EventService` (`NotImplementedError`). When task 3.4 is done, `SqlEventRepository` must be created in the `if database_url:` block of `create_app` with the same session, and the whole suite must be run on PostgreSQL.
-- **Order of interests:** the SQL repository returns interests in alphabetical order (the table has no position column); the in-memory one keeps the order the student typed. Pages must not depend on the order.
-- **Wrong code attempts:** there is no limit on wrong verification codes yet (6 digits, valid 15 minutes). Accepted for the demo; open as an issue for later (Harun's review of #23).
-- **Small coverage gaps:** a non-text interest, a slot that is not a `TimeSlot` and the rollback paths when a repository fails have no automated test yet (see the coverage file).
-- **CI has no database:** `tests/db` runs only on a computer with `TEST_DATABASE_URL`. A PostgreSQL service in CI would run it on every pull request (suggestion for task 3.7).
-- **On Render (task 4.4):** run `alembic upgrade head` (and `scripts/seed_db.py` for the demo users), set `SECRET_KEY` and the `SMTP_*` settings, and check once that a real verification code arrives and that the site is served only over HTTPS (NFR-03).
+Status on 26.11.2026. The first list was written on 20.11; the items marked *done* were closed later.
+
+- **Event part (done):** on 20.11, 36 requirement tests still stopped at `EventService` (`NotImplementedError`). Since #33 (23.11) they pass, `create_app` creates `SqlEventRepository` with the same session as the other SQL repositories, and the whole suite runs on PostgreSQL in CI: **446 passed, 0 failed** on `main` (`22825b5`, 26.11).
+- **Order of interests (open, accepted):** the SQL repository returns interests in alphabetical order (the table has no position column); the in-memory one keeps the order the student typed. Pages must not depend on the order.
+- **Wrong code attempts (done):** on 20.11 there was no limit on wrong verification codes (Harun's review of #23). Since #55 (23.11), a code stops working after 5 wrong tries and a new code can be asked for at most once a minute per address (P2, section 2.1).
+- **Small coverage gaps (open):** a non-text interest, a slot that is not a `TimeSlot` and the rollback paths when a repository fails have no automated test (see the coverage file).
+- **Database tests in CI (done):** since #36 (23.11), CI starts a PostgreSQL 16 service and runs `tests/db` on every push and pull request.
+- **On Render (done, task 4.4):** the start command runs `alembic upgrade head` before the app starts, the demo users come from `scripts/seed_db.py`, and `SECRET_KEY` is generated by Render. The live site is served only over HTTPS with a `Secure; HttpOnly; SameSite=Lax` session cookie (NFR-03; checked in the facilities section on 22.11 and in the [deployment penetration test](../tests/security/deployment.md)). It runs **without SMTP on purpose**: Render's free plan blocks the SMTP ports, and the demo users are already verified (#35); a relay on port 2525 is supported by `SmtpEmailSender` if real sign-ups are needed.
