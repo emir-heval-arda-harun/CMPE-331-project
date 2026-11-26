@@ -82,6 +82,8 @@ After #55 (limits from the penetration test) and #36 (coverage in CI with the da
 | `src/campusevent/repositories/db.py` | 22 | 4 | 6 | 0 | **79 %** |
 | Whole project | 2033 | 51 | 340 | 17 | **97 %** |
 
+**Final run (26.11.2026, CI run 45879648843 of `main` at `439b670`, 473 passed):** every file of this table has the same numbers; the whole project is 2039 statements, 44 missed, 340 branches, 14 partial, **97 %**.
+
 The lines of `auth.py` that are not covered are the `except` / `rollback` branches of unexpected database errors (205–207, 249–251, 267–269) and two guard lines (142, 289). Run `python -m pytest --cov` to get the same table.
 
 ### How to measure

@@ -20,7 +20,7 @@ The facility part is tested on three levels, from the inside out:
 
 **Why test doubles:** when these tests were written, `AuthService.register` (task 3.2) and the event service (task 3.4) still raised `NotImplementedError`. The stand-ins follow the interface of the class diagram (Software Design Report 4.2), so the facility rules could be tested before those tasks were done.
 
-**Tools:** pytest 9.2, Flask 3.1 test client, SQLAlchemy 2.1, psycopg 3.3, PostgreSQL 16.16 (local), coverage.py 7.17 (branch coverage), ruff. CI (GitHub Actions) runs ruff and pytest on every push and pull request. Since #36 the CI test job has its own PostgreSQL 16, so the database tests run there too and are no longer skipped (CI run 45851087074 of `main` at `22825b5`, 26.11.2026: 446 passed, 0 skipped).
+**Tools:** pytest 9.2, Flask 3.1 test client, SQLAlchemy 2.1, psycopg 3.3, PostgreSQL 16.16 (local), coverage.py 7.17 (branch coverage), ruff. CI (GitHub Actions) runs ruff and pytest on every push and pull request. Since #36 the CI test job has its own PostgreSQL 16, so the database tests run there too and are no longer skipped (final CI run 45879648843 of `main` at `439b670`, 26.11.2026: 473 passed, 0 skipped).
 
 ## 2. Results
 

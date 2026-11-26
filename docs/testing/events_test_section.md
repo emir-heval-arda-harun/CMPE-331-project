@@ -7,10 +7,10 @@ Covers the Events domain across UC-04, UC-05, UC-06, UC-09, UC-10, UC-11, and UC
 - Unit and use-case suite: 56 passed, 0 failed (30 requirement tests across UC-04, UC-05, UC-06, UC-09, UC-10, UC-11, and UC-12 plus 26 unit tests in `tests/test_event_service.py`).
 - Database tests: 8 tests in `tests/db/test_event_repository.py` are skipped locally without PostgreSQL and run in CI with `TEST_DATABASE_URL`, covering `SqlEventRepository`.
 - Environment: Verified locally on Python 3.14.8 (`pytest-9.2.0`), while CI runs on Python 3.12 with `TEST_DATABASE_URL`.
-- Coverage: `src/campusevent/events.py` reaches 96% (235 statements, 11 missed, 60 branches, 2 partial), and `src/campusevent/repositories/event_repository.py` (`SqlEventRepository`) reaches 95% (123 statements, 5 missed, 18 branches, 2 partial) on `main` (`0c795fb`, 446 passed, 97% full-suite coverage in `docs/tests/coverage/README.md`).
+- Coverage: `src/campusevent/events.py` reaches 96% (235 statements, 11 missed, 60 branches, 2 partial), and `src/campusevent/repositories/event_repository.py` (`SqlEventRepository`) reaches 95% (123 statements, 5 missed, 18 branches, 2 partial) on `main` (`439b670`, the final CI run 45879648843 of the report: 473 passed, 97% full-suite coverage, see `docs/tests/coverage/README.md`).
 
 ## Traceability
-The full matrix (requirement → rule → tests → code → result) is in [`docs/tests/coverage/events.md`](../tests/coverage/events.md#traceability-matrix). It lists all 30 requirement tests, all 26 unit tests and all 8 database tests of this part in 29 rows, one per rule. All 29 rows pass on `main` (`22825b5`, 26.11.2026). In short:
+The full matrix (requirement → rule → tests → code → result) is in [`docs/tests/coverage/events.md`](../tests/coverage/events.md#traceability-matrix). It lists all 30 requirement tests, all 26 unit tests and all 8 database tests of this part in 29 rows, one per rule. All 29 rows pass on `main` (`439b670`, final CI run, 26.11.2026). In short:
 
 | Use case | Business rules | Requirement tests | Unit tests | Database tests | NFR tests | Result |
 |---|---|---|---|---|---|---|
