@@ -29,9 +29,9 @@ All 36 open issues are in two places outside the application code: the October U
 
 | Group in the [plan](README.md) | Rule | Count | Status on 26.11.2026 |
 |---|---|---|---|
-| S2 | `text:S8565` no lock file | 1 | To be marked *Accepted*: the lock file `requirements-lock.txt` exists since #54, but the rule only recognises `uv.lock`, `poetry.lock`, `pdm.lock`, `pylock.toml` or a fully pinned `requirements.txt` |
+| S2 | `text:S8565` no lock file | 1 | **Accepted** on 26.11.2026 after this copy was saved: the lock file `requirements-lock.txt` exists since #54, but the rule only recognises `uv.lock`, `poetry.lock`, `pdm.lock`, `pylock.toml` or a fully pinned `requirements.txt` |
 | B1 | `Web:S5254` `<html>` without `lang` | 9 | Fixed in #39 (`lang="en"` in the mockups); gone from `main` after the merge |
-| C1 | `Web:S6853` form label without a linked control | 26 | To be marked *Accepted*: mockups, not part of the app; the real forms link every label (`for`/`id`) |
+| C1 | `Web:S6853` form label without a linked control | 26 | **Accepted** on 26.11.2026 after this copy was saved: mockups, not part of the app; the real forms link every label (`for`/`id`) |
 | **Total** | | **36** | |
 
 ## All open issues
