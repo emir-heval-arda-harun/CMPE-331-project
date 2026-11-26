@@ -14,7 +14,8 @@ Verified test functions mapped to requirements and business rules:
 - `test_student_cannot_join_twice` -> UC-06 2a, BR-07
 - `test_event_becomes_full_and_rejects_new_participants` -> UC-06, BR-08
 - `test_completed_events_appear_in_history` -> UC-09, BR-11
-- `test_full_event_becomes_open_again_when_a_participant_leaves` -> UC-10, BR-08 (and `BR-12` for organizer leave restriction)
+- `test_full_event_becomes_open_again_when_a_participant_leaves` -> UC-10, BR-08
+- `test_organizer_cannot_leave_and_non_participant_cannot_leave` -> UC-10, BR-12 (`tests/test_event_service.py`)
 - `test_only_the_organizer_can_cancel` -> UC-11, BR-13, NFR-04
 - `test_organizer_withdraws_pending_request_and_frees_the_slot` -> UC-11, BR-13, BR-16
 - `test_approved_request_becomes_open_and_listed` -> UC-12, BR-15, BR-17
