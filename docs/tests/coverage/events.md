@@ -5,7 +5,7 @@ Full-suite project coverage is 97% in [docs/tests/coverage/README.md](README.md)
 | File / Component | Coverage | Notes |
 |---|---|---|
 | `src/campusevent/events.py` | 96% (235 stmts, 11 miss, 60 branch, 2 partial) | Events service logic |
-| `src/campusevent/repositories/event_repository.py` (`SqlEventRepository`) | Not measured separately; all repositories 95–100% in the coverage README | Skipped locally without `TEST_DATABASE_URL`; runs in CI with PostgreSQL |
+| `src/campusevent/repositories/event_repository.py` (`SqlEventRepository`) | 95% (123 stmts, 5 miss, 18 branch, 2 partial) on `main` (`0c795fb`) | Skipped locally without `TEST_DATABASE_URL`; runs in CI with PostgreSQL |
 
 The 44% figure seen when running only the Events tests covers only the subset of files touched in that run; see [docs/tests/coverage/README.md](README.md) for the full-suite total (97%).
 
@@ -25,3 +25,6 @@ The 44% figure seen when running only the Events tests covers only the subset of
 - Line 326: Guard in `complete_event` checking that only an open or full event can be completed.
 - Lines 330–332: Rollback in `complete_event` on error.
 - Lines 351–352: Concurrent update / conflict path when another request modifies the same slot or record.
+
+## Uncovered Lines in `src/campusevent/repositories/event_repository.py`
+- Missed lines/branches (`0c795fb`): `78`, `116->exit`, `149`, `183–185`.
