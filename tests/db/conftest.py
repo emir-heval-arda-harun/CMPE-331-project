@@ -2,7 +2,7 @@
 
 Set TEST_DATABASE_URL (as an environment variable or in your local .env) to an empty database
 that is used only for tests: the tests delete and re-create all tables in it. See
-docs/database/README.md. CI has no database yet, so there these tests are skipped.
+docs/database/README.md. CI runs them on its own PostgreSQL 16 (#36).
 """
 
 from __future__ import annotations
