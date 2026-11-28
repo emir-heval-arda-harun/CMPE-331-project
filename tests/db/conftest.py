@@ -2,7 +2,7 @@
 
 Set TEST_DATABASE_URL (as an environment variable or in your local .env) to an empty database
 that is used only for tests: the tests delete and re-create all tables in it. See
-docs/database/README.md. CI has no database yet, so there these tests are skipped.
+docs/database/README.md. CI runs them on its own PostgreSQL 16 (#36).
 """
 
 from __future__ import annotations
@@ -30,6 +30,8 @@ def _setting(name: str) -> str | None:
 def test_database_url() -> str:
     url = _setting("TEST_DATABASE_URL")
     if not url:
+        if os.environ.get("CI"):  # GitHub Actions sets CI: there a missing database is a broken setup
+            pytest.fail("TEST_DATABASE_URL is not set in CI, the database tests would be skipped silently")
         pytest.skip("TEST_DATABASE_URL is not set, database tests skipped (see docs/database/README.md)")
     if url == _setting("DATABASE_URL"):
         pytest.fail("TEST_DATABASE_URL must be a different database than DATABASE_URL: the tests delete all tables")
