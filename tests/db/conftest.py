@@ -30,6 +30,8 @@ def _setting(name: str) -> str | None:
 def test_database_url() -> str:
     url = _setting("TEST_DATABASE_URL")
     if not url:
+        if os.environ.get("CI"):  # GitHub Actions sets CI: there a missing database is a broken setup
+            pytest.fail("TEST_DATABASE_URL is not set in CI, the database tests would be skipped silently")
         pytest.skip("TEST_DATABASE_URL is not set, database tests skipped (see docs/database/README.md)")
     if url == _setting("DATABASE_URL"):
         pytest.fail("TEST_DATABASE_URL must be a different database than DATABASE_URL: the tests delete all tables")

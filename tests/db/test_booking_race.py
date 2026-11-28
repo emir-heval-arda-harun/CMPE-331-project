@@ -10,6 +10,11 @@ own database session, like two web requests. The first request is held inside it
 the lock, before the commit); the test checks in `pg_stat_activity` that the second one really waits for
 a lock, and only then lets the first one finish. Without the lock both would pass the check.
 
+The tests (and the lock) rely on PostgreSQL's default isolation level READ COMMITTED: after the wait, the
+second request's next query sees the first one's commit. `SqlUnitOfWork` starts the transaction at the
+first query (`require_role`, before `uow.begin()`), so with REPEATABLE READ the snapshot would be taken
+before the lock and the second request would not see the new event or block.
+
 Skipped without TEST_DATABASE_URL (see docs/database/README.md); CI runs them on PostgreSQL 16 (#36).
 Every row created here has a name or e-mail starting with PREFIX and is deleted after the test.
 """
@@ -113,6 +118,7 @@ def wait_until_a_request_waits_for_a_lock(engine):
     deadline = time.monotonic() + TIMEOUT
     query = text(
         "SELECT count(*) FROM pg_stat_activity WHERE datname = current_database() AND wait_event_type = 'Lock'"
+        " AND query ILIKE '%FOR UPDATE%'"  # the facility lock, not an unrelated wait
     )
     while time.monotonic() < deadline:
         with engine.connect() as connection:
@@ -126,6 +132,7 @@ def race(services, engine, first, second, hold_target, hold_name):
     """Start ``first``, hold it after it took the lock, start ``second``, check that it waits, release."""
     holding, release = hold_inside_transaction(hold_target, hold_name)
     first_thread, first_outcome = in_thread(services, first)
+    second_thread = None
     try:
         assert holding.wait(TIMEOUT), "the first request did not reach its transaction"
         second_thread, second_outcome = in_thread(services, second)
@@ -133,8 +140,10 @@ def race(services, engine, first, second, hold_target, hold_name):
         assert second_thread.is_alive()  # still waiting while the first one holds the lock
     finally:
         release.set()
-    first_thread.join(TIMEOUT)
-    second_thread.join(TIMEOUT)
+        # also after a failed check, so no request is still running when the fixtures delete the rows
+        for thread in (first_thread, second_thread):
+            if thread is not None:
+                thread.join(TIMEOUT)
     assert not first_thread.is_alive() and not second_thread.is_alive()
     return first_outcome, second_outcome
 
@@ -177,6 +186,7 @@ def test_r01_staff_block_waits_for_a_booking_in_progress_and_is_refused(services
 
     assert "error" not in first
     assert isinstance(second.get("error"), FacilityConflictError)
+    assert events_of(engine, hall.id) == ["Board game night"]  # the booking is stored
     assert services.facilities.get_blocks(hall.id, SLOT.start.date()) == []
     services.end_request()
 
@@ -195,3 +205,32 @@ def test_r01_booking_waits_for_a_block_in_progress_and_is_refused(services, engi
     assert "error" not in first and first["result"].reason == "Maintenance"
     assert isinstance(second.get("error"), FacilityConflictError)
     assert events_of(engine, hall.id) == []
+    assert [b.reason for b in services.facilities.get_blocks(hall.id, SLOT.start.date())] == ["Maintenance"]
+    services.end_request()
+
+
+def test_r01_a_booking_in_another_facility_does_not_wait(services, engine, people, hall):
+    """The lock is per facility: while a booking of one hall is in progress, another hall can be booked."""
+    other = services.facilities.add_facility(people["staff"], PREFIX + "Library Room", 30)
+    services.end_request()
+    holding, release = hold_inside_transaction(services.events.events, "add")
+    first_thread, first = in_thread(
+        services,
+        lambda: services.events.create_event(people["ayse"], "Board game night", "games", hall.id, SLOT, 20),
+    )
+    try:
+        assert holding.wait(TIMEOUT), "the first request did not reach its transaction"
+        second_thread, second = in_thread(
+            services,
+            lambda: services.events.create_event(people["mert"], "Chess club", "games", other.id, SLOT, 20),
+        )
+        second_thread.join(TIMEOUT)
+        assert not second_thread.is_alive()  # finished while the first request still holds its lock
+        assert first_thread.is_alive()
+    finally:
+        release.set()
+        first_thread.join(TIMEOUT)
+
+    assert "error" not in first and "error" not in second
+    assert events_of(engine, hall.id) == ["Board game night"]
+    assert events_of(engine, other.id) == ["Chess club"]
