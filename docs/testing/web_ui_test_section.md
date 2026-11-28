@@ -28,8 +28,8 @@ The parts the instructor asked for on 17.11 are in their own files:
 | All web tests (with the facility page, 26, the log in limits of #55, 4, the composition root, 3, and the demo script of #61, 1) | 190 | 190 | 0 |
 | Requirement tests of UC-01, UC-02, UC-03 (`tests/test_uc01_*` to `test_uc03_*`) | 10 | 10 | 0 |
 | Requirement tests of UC-04 to UC-06, UC-09 to UC-12 and their NFR tests | 33 | 33 | 0 (with the real `EventService`, task 3.4, on `main` since 23.11) |
-| The whole repository (`python -m pytest`, without a database) | 472 | 400 | 0; the 72 database tests are skipped without `TEST_DATABASE_URL` (PostgreSQL) |
-| The whole repository with a PostgreSQL 18 database (`TEST_DATABASE_URL` set, as in CI) | 472 | 472 | 0 |
+| The whole repository (`python -m pytest`, without a database) | 473 | 400 | 0; the 73 database tests are skipped without `TEST_DATABASE_URL` (PostgreSQL) |
+| The whole repository in CI with PostgreSQL 16 (final CI run 45879648843 of `main` at `439b670`, 26.11.2026) | 473 | 473 | 0 |
 
 **Code coverage** of the web UI of this section: **99 %** of statements and branches (539 statements, 98 branches); five of the six files are at 100 % or 99 %. Details and the two uncovered lines: [coverage file](../tests/coverage/web-ui.md#code-coverage).
 

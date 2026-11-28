@@ -60,6 +60,8 @@ Measured with coverage.py 7.17, statements **and** branches, all web tests (`tes
 
 With `facility_routes.py` (Harun, 100 %) the whole web package is also 99 %.
 
+**Final run (26.11.2026, CI run 45879648843 of `main` at `439b670`, 473 passed, whole suite on PostgreSQL 16):** the same numbers for every file of this table.
+
 **Found by the measurement:** the first run gave 97 %. Eight error and edge paths had no test (the start page for visitors, an unknown address, an unexpected error, a refused token, approving a request that is no longer waiting, a busy slot until closing time, a deleted participant, a calendar file without description). They now have tests in `test_web_error_paths.py`; all of them passed at once, so no code had to change.
 
 **Not covered:**

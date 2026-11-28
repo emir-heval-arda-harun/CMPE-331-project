@@ -5,12 +5,12 @@ Full-suite project coverage is 97% in [docs/tests/coverage/README.md](README.md)
 | File / Component | Coverage | Notes |
 |---|---|---|
 | `src/campusevent/events.py` | 96% (235 stmts, 11 miss, 60 branch, 2 partial) | Events service logic |
-| `src/campusevent/repositories/event_repository.py` (`SqlEventRepository`) | 95% (123 stmts, 5 miss, 18 branch, 2 partial) on `main` (`0c795fb`) | Skipped locally without `TEST_DATABASE_URL`; runs in CI with PostgreSQL |
+| `src/campusevent/repositories/event_repository.py` (`SqlEventRepository`) | 95% (123 stmts, 5 miss, 18 branch, 2 partial) on `main` (`439b670`, final run) | Skipped locally without `TEST_DATABASE_URL`; runs in CI with PostgreSQL |
 
 The 44% figure seen when running only the Events tests covers only the subset of files touched in that run; see [docs/tests/coverage/README.md](README.md) for the full-suite total (97%).
 
 ## Traceability matrix
-Requirement → rule → tests → code, with the result on `main` (CI run 45851087074 of `22825b5`, 26.11.2026: 446 passed, 0 failed). Req = the requirement tests `tests/test_uc04_*` to `tests/test_uc12_*`, Unit = `tests/test_event_service.py`, DB = `tests/db/test_event_repository.py` (PostgreSQL 16 in CI), NFR = `tests/test_nfr.py`. All 30 requirement tests, all 26 unit tests and all 8 database tests of the events part are in the table.
+Requirement → rule → tests → code, with the result on `main` (CI run 45879648843 of `439b670`, 26.11.2026, the final run of the report: 473 passed, 0 failed). Req = the requirement tests `tests/test_uc04_*` to `tests/test_uc12_*`, Unit = `tests/test_event_service.py`, DB = `tests/db/test_event_repository.py` (PostgreSQL 16 in CI), NFR = `tests/test_nfr.py`. All 30 requirement tests, all 26 unit tests and all 8 database tests of the events part are in the table.
 
 | Requirement | Rule | Tests | Code | Result |
 |---|---|---|---|---|
@@ -55,4 +55,4 @@ Requirement → rule → tests → code, with the result on `main` (CI run 45851
 - Lines 351–352: Concurrent update / conflict path when another request modifies the same slot or record.
 
 ## Uncovered Lines in `src/campusevent/repositories/event_repository.py`
-- Missed lines/branches (`0c795fb`): `78`, `116->exit`, `149`, `183–185`.
+- Missed lines/branches (`439b670`): `78`, `116->exit`, `149`, `183–185`.

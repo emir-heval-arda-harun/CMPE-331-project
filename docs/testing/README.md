@@ -2,7 +2,7 @@
 
 **Team:** Heval Hüseyin Demir (project manager), Emre Arda Kum, Emir Gül, Harun Gündaş, Onur Alioğlu · **Reviewer:** Yeşim · **Date:** 26.11.2026
 
-This is the opening section of the report. It explains what we tested and how, gives the most important tests and results, and shows how to read the other sections. The numbers below come from the CI run of `main` on 26.11.2026 (commit `22825b5`). After the five report pull requests (#18, #29, #37, #39, #63) are merged, every number in the report is taken again from one final CI run.
+This is the opening section of the report. It explains what we tested and how, gives the most important tests and results, and shows how to read the other sections. All numbers of the report that describe the state of the code come from **one CI run**: run [45879648843](https://github.com/emir-heval-arda-harun/CMPE-331-project/actions/runs/45879648843) of `main` at `439b670` on 26.11.2026, after the five report pull requests (#18, #29, #37, #39, #63) were merged. Numbers with an earlier date in the parts (for example in the TDD tables) are history and are marked with their date.
 
 ## 1. What we tested
 CampusEvent is the campus event and facility web application of the CMPE 331 team project (Flask, PostgreSQL 16, live on Render: https://campusevent-86ax.onrender.com). The report covers:
@@ -34,9 +34,9 @@ The results in parts 2 to 8 are those of the date at the top of each part. Secti
 | Level | What is tested | Where | Tests on `main` |
 |---|---|---|---|
 | Requirement (acceptance) | One file per use case (`tests/test_uc01_…` to `test_uc12_…`) and `tests/test_nfr.py`, through `create_app()` with the real services. Written with the requirements, before the code | local and CI | 51 (44 UC + 7 NFR) |
-| Unit | `AuthService`, `ProfileService`, `FacilityService`, `EventService`, the wiring of `create_app` and the mail sender, with in-memory repositories and a test clock | local and CI | 158 |
+| Unit | `AuthService`, `ProfileService`, `FacilityService`, `EventService`, the wiring of `create_app` and the mail sender, with in-memory repositories and a test clock | local and CI | 159 |
 | Database | Schema and constraints, the Alembic migration, the SQL repositories, row locks, and the services on a real PostgreSQL 16 database | CI (PostgreSQL service) and local | 73 |
-| Web UI | Every page through the Flask test client: status codes, forms, error messages, access rules, Istanbul time, privacy, performance with 1,000 events | local and CI | 164 |
+| Web UI | Every page through the Flask test client: status codes, forms, error messages, access rules, Istanbul time, privacy, performance with 1,000 events | local and CI | 190 |
 | Manual and browser | Phone width (360–375 px); Chromium, Firefox and WebKit; the live site; penetration tests | by hand, Playwright | see parts 2 to 6 |
 
 **Tools:** Python 3.12, pytest, the Flask test client, coverage.py with branch coverage (pytest-cov), ruff, bandit, pip-audit, SonarQube Cloud, Playwright, PostgreSQL 16.
@@ -50,10 +50,31 @@ python -m pytest --cov          # the database tests need TEST_DATABASE_URL (Pos
 ```
 
 ## 4. Results
-CI run of `main` on 26.11.2026 (`22825b5`), whole suite on PostgreSQL 16:
+CI run [45879648843](https://github.com/emir-heval-arda-harun/CMPE-331-project/actions/runs/45879648843) of `main` at `439b670` on 26.11.2026, whole suite on PostgreSQL 16.16 (Python 3.12):
 
-- **446 tests passed, 0 failed, 0 skipped.** `ruff check .` is clean. bandit finds no medium or high issue in `src/`, and pip-audit finds no known vulnerability.
-- **Code coverage 97 %** of 2,039 statements and 340 branches. The services are at 90–100 %, the SQL repositories at 95–100 %, the web layer at 94–100 %. The missed lines are explained in the coverage files and in [part 7](../tests/coverage/README.md).
+- **473 tests passed, 0 failed, 0 skipped** (51 requirement, 159 unit, 73 database, 190 web). `ruff check .` is clean. bandit finds no medium or high issue in `src/`, and pip-audit finds no known vulnerability. The green run deployed this commit to Render.
+- **Code coverage 97 %** of 2,039 statements and 340 branches (44 statements missed, 14 branches partial):
+
+| Layer | File | Statements | Missed | Branches | Partial | Coverage |
+|---|---|---|---|---|---|---|
+| Services | `auth.py` | 210 | 11 | 54 | 1 | 95 % |
+| | `profiles.py` | 50 | 5 | 18 | 2 | 90 % |
+| | `facilities.py` | 120 | 0 | 26 | 0 | 100 % |
+| | `events.py` | 235 | 11 | 60 | 2 | 96 % |
+| | `notifications.py` | 51 | 2 | 8 | 1 | 95 % |
+| | `app.py`, `models.py`, `security.py`, `exceptions.py`, `__init__.py` | 172 | 0 | 8 | 0 | 100 % |
+| Data access | `user_repository.py` | 140 | 2 | 10 | 2 | 97 % |
+| | `profile_repository.py` | 32 | 0 | 2 | 0 | 100 % |
+| | `facility_repository.py` | 132 | 2 | 12 | 2 | 97 % |
+| | `event_repository.py` | 123 | 5 | 18 | 2 | 95 % |
+| | `db.py` | 22 | 4 | 6 | 0 | 79 % |
+| | `tables.py`, `unit_of_work.py` | 121 | 0 | 2 | 0 | 100 % |
+| Web UI | `web/__init__.py` | 81 | 0 | 12 | 1 | 99 % |
+| | `web/auth_routes.py` | 71 | 2 | 10 | 1 | 96 % |
+| | the other 5 files of `web/` | 479 | 0 | 94 | 0 | 100 % |
+| **Total** | | **2,039** | **44** | **340** | **14** | **97 %** |
+
+The missed lines are explained in the coverage files of parts 2 to 5 and in [part 7](../tests/coverage/README.md). Most of them are `rollback` branches of unexpected database errors and the reading of `DATABASE_URL`, which the tests do not use on purpose.
 - **SonarQube:** no finding in the Python code or the templates; the open findings and the plan for them are in [part 8](../tests/quality/README.md).
 - **Defects:** the tests and reviews found defects in every part. Each part lists them with the fix, for example the slow pages on PostgreSQL (part 4 and 5, fixed in #58) and the limits from the penetration tests (part 6, fixed in #55 and #57).
 

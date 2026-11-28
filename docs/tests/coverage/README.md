@@ -16,7 +16,19 @@ python -m pytest --cov --cov-report=term --cov-report=html
 ```
 Set `TEST_DATABASE_URL` in your `.env` to include the database tests (see `docs/database/README.md`). The HTML report is written to `htmlcov/`. It is in `.gitignore`, so it is never committed.
 
-## Results (23.11.2026, `main` with task 3.4 + this pull request)
+## Final results (26.11.2026, CI run 45879648843 of `main` at `439b670`)
+The final numbers of the report, from one CI run after the five report pull requests were merged ([run 45879648843](https://github.com/emir-heval-arda-harun/CMPE-331-project/actions/runs/45879648843)): **473 passed, 0 failed, 0 skipped** on PostgreSQL 16.16.
+
+| Area | Line + branch coverage per file |
+|---|---|
+| Services | `auth.py` 95%, `events.py` 96%, `facilities.py` 100%, `notifications.py` 95%, `profiles.py` 90%; `app.py`, `models.py`, `security.py`, `exceptions.py` 100% |
+| Data access (`repositories/`) | `db.py` 79%, `event_repository.py` 95%, `facility_repository.py` 97%, `user_repository.py` 97%, all others 100% |
+| Web UI (`web/`) | `__init__.py` 99%, `auth_routes.py` 96%, the other 5 files 100% |
+| **Total** (2039 statements, 340 branches; 44 statements missed, 14 branches partial) | **97%** |
+
+The table per file with the missed lines is in the [opening section](../../testing/README.md#4-results).
+
+## Earlier results (23.11.2026, `main` with task 3.4 + this pull request)
 Measured with the same command as CI, on a local PostgreSQL 16: **397 passed, 0 failed**.
 
 | Area | Line + branch coverage per file |
